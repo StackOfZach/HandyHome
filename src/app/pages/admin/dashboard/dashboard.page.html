@@ -1,0 +1,704 @@
+<!-- Admin Dashboard Layout -->
+<div class="admin-dashboard h-screen flex bg-gray-50">
+  <!-- Sidebar Navigation -->
+  <div class="sidebar w-64 bg-white shadow-lg flex flex-col">
+    <!-- Logo/Header -->
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex items-center">
+        <div class="bg-red-100 rounded-lg p-2 mr-3">
+          <ion-icon name="shield-checkmark" class="text-xl text-red-600"></ion-icon>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-gray-800">Admin Panel</h2>
+          <p class="text-xs text-gray-500" *ngIf="userProfile">{{ userProfile.fullName }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 px-4 py-6 space-y-2">
+      <button 
+        (click)="setActiveSection('dashboard')"
+        [class]="'nav-item w-full text-left p-3 rounded-lg transition-colors flex items-center ' + (activeSection === 'dashboard' ? 'bg-red-50 text-red-600 border-l-4 border-red-600' : 'text-gray-600 hover:bg-gray-50')"
+      >
+        <ion-icon name="analytics" class="mr-3"></ion-icon>
+        Dashboard
+      </button>
+      
+      <button 
+        (click)="setActiveSection('workers')"
+        [class]="'nav-item w-full text-left p-3 rounded-lg transition-colors flex items-center ' + (activeSection === 'workers' ? 'bg-red-50 text-red-600 border-l-4 border-red-600' : 'text-gray-600 hover:bg-gray-50')"
+      >
+        <ion-icon name="hammer" class="mr-3"></ion-icon>
+        Worker Management
+      </button>
+      
+      <button 
+        (click)="setActiveSection('clients')"
+        [class]="'nav-item w-full text-left p-3 rounded-lg transition-colors flex items-center ' + (activeSection === 'clients' ? 'bg-red-50 text-red-600 border-l-4 border-red-600' : 'text-gray-600 hover:bg-gray-50')"
+      >
+        <ion-icon name="people" class="mr-3"></ion-icon>
+        Client Management
+      </button>
+      
+      <button 
+        (click)="setActiveSection('bookings')"
+        [class]="'nav-item w-full text-left p-3 rounded-lg transition-colors flex items-center ' + (activeSection === 'bookings' ? 'bg-red-50 text-red-600 border-l-4 border-red-600' : 'text-gray-600 hover:bg-gray-50')"
+      >
+        <ion-icon name="calendar" class="mr-3"></ion-icon>
+        Booking Management
+      </button>
+      
+      <button 
+        (click)="setActiveSection('reports')"
+        [class]="'nav-item w-full text-left p-3 rounded-lg transition-colors flex items-center ' + (activeSection === 'reports' ? 'bg-red-50 text-red-600 border-l-4 border-red-600' : 'text-gray-600 hover:bg-gray-50')"
+      >
+        <ion-icon name="warning" class="mr-3"></ion-icon>
+        Reports & Disputes
+      </button>
+      
+      <button 
+        (click)="setActiveSection('services')"
+        [class]="'nav-item w-full text-left p-3 rounded-lg transition-colors flex items-center ' + (activeSection === 'services' ? 'bg-red-50 text-red-600 border-l-4 border-red-600' : 'text-gray-600 hover:bg-gray-50')"
+      >
+        <ion-icon name="construct" class="mr-3"></ion-icon>
+        Services Management
+      </button>
+      
+      <button 
+        (click)="setActiveSection('finance')"
+        [class]="'nav-item w-full text-left p-3 rounded-lg transition-colors flex items-center ' + (activeSection === 'finance' ? 'bg-red-50 text-red-600 border-l-4 border-red-600' : 'text-gray-600 hover:bg-gray-50')"
+      >
+        <ion-icon name="card" class="mr-3"></ion-icon>
+        Finance
+      </button>
+      
+      <button 
+        (click)="setActiveSection('notifications')"
+        [class]="'nav-item w-full text-left p-3 rounded-lg transition-colors flex items-center ' + (activeSection === 'notifications' ? 'bg-red-50 text-red-600 border-l-4 border-red-600' : 'text-gray-600 hover:bg-gray-50')"
+      >
+        <ion-icon name="notifications" class="mr-3"></ion-icon>
+        Notifications
+      </button>
+      
+      <button 
+        (click)="setActiveSection('settings')"
+        [class]="'nav-item w-full text-left p-3 rounded-lg transition-colors flex items-center ' + (activeSection === 'settings' ? 'bg-red-50 text-red-600 border-l-4 border-red-600' : 'text-gray-600 hover:bg-gray-50')"
+      >
+        <ion-icon name="settings" class="mr-3"></ion-icon>
+        Settings
+      </button>
+    </nav>
+
+    <!-- Logout Button -->
+    <div class="p-4 border-t border-gray-200">
+      <button 
+        (click)="logout()"
+        class="w-full p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center"
+      >
+        <ion-icon name="log-out-outline" class="mr-2"></ion-icon>
+        Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="main-content flex-1 flex flex-col">
+    <!-- Top Header -->
+    <header class="bg-white border-b border-gray-200 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-800">{{ getSectionTitle() }}</h1>
+        <div class="flex items-center space-x-4">
+          <div class="text-sm text-gray-500">
+            {{ getCurrentDate() }}
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <main class="flex-1 overflow-y-auto p-6">
+      <!-- Dashboard Overview -->
+      <div *ngIf="activeSection === 'dashboard'">
+        <!-- Analytics Cards -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-gray-800 mb-6">Analytics Overview</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Total Clients Card -->
+            <div class="rounded-xl shadow-lg p-6 text-center bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+              <div class="flex items-center justify-center mb-4">
+                <ion-icon name="people" class="text-4xl"></ion-icon>
+              </div>
+              <h3 class="text-3xl font-bold mb-2">{{ analytics.totalClients || 0 }}</h3>
+              <p class="text-blue-100">Total Clients</p>
+            </div>
+
+            <!-- Total Workers Card -->
+            <div class="rounded-xl shadow-lg p-6 text-center bg-gradient-to-br from-green-500 to-green-600 text-white">
+              <div class="flex items-center justify-center mb-4">
+                <ion-icon name="hammer" class="text-4xl"></ion-icon>
+              </div>
+              <h3 class="text-3xl font-bold mb-2">{{ analytics.totalWorkers || 0 }}</h3>
+              <p class="text-green-100">Total Workers</p>
+            </div>
+
+            <!-- Pending Verifications Card -->
+            <div class="rounded-xl shadow-lg p-6 text-center bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
+              <div class="flex items-center justify-center mb-4">
+                <ion-icon name="hourglass" class="text-4xl"></ion-icon>
+              </div>
+              <h3 class="text-3xl font-bold mb-2">{{ analytics.pendingVerifications || 0 }}</h3>
+              <p class="text-yellow-100">Pending Verifications</p>
+            </div>
+
+            <!-- Active Bookings Card -->
+            <div class="rounded-xl shadow-lg p-6 text-center bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+              <div class="flex items-center justify-center mb-4">
+                <ion-icon name="calendar" class="text-4xl"></ion-icon>
+              </div>
+              <h3 class="text-3xl font-bold mb-2">{{ analytics.activeBookings || 0 }}</h3>
+              <p class="text-purple-100">Active Bookings</p>
+            </div>
+
+            <!-- Completed Bookings Card -->
+            <div class="rounded-xl shadow-lg p-6 text-center bg-gradient-to-br from-teal-500 to-teal-600 text-white">
+              <div class="flex items-center justify-center mb-4">
+                <ion-icon name="checkmark-circle" class="text-4xl"></ion-icon>
+              </div>
+              <h3 class="text-3xl font-bold mb-2">{{ analytics.completedBookings || 0 }}</h3>
+              <p class="text-teal-100">Completed Bookings</p>
+            </div>
+
+            <!-- Revenue Card -->
+            <div class="rounded-xl shadow-lg p-6 text-center bg-gradient-to-br from-red-500 to-pink-500 text-white">
+              <div class="flex items-center justify-center mb-4">
+                <ion-icon name="cash" class="text-4xl"></ion-icon>
+              </div>
+              <h3 class="text-3xl font-bold mb-2">₱{{ analytics.totalRevenue || 0 | number:'1.2-2' }}</h3>
+              <p class="text-red-100">Total Revenue</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">System Status</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <span class="text-gray-600">Database</span>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                <span class="text-green-600 text-sm font-medium">Online</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <span class="text-gray-600">Firebase Auth</span>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                <span class="text-green-600 text-sm font-medium">Active</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <span class="text-gray-600">Notifications</span>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                <span class="text-green-600 text-sm font-medium">Enabled</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Worker Management Section -->
+      <div *ngIf="activeSection === 'workers'">
+        <!-- Section Tabs -->
+        <div class="mb-6">
+          <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8">
+              <button 
+                (click)="setWorkerTab('pending')"
+                [class]="'py-4 px-1 border-b-2 font-medium text-sm transition-colors ' + (workerActiveTab === 'pending' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')"
+              >
+                <div class="flex items-center">
+                  <ion-icon name="hourglass" class="mr-2"></ion-icon>
+                  Pending Verification ({{ pendingWorkers.length }})
+                </div>
+              </button>
+              <button 
+                (click)="setWorkerTab('verified')"
+                [class]="'py-4 px-1 border-b-2 font-medium text-sm transition-colors ' + (workerActiveTab === 'verified' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')"
+              >
+                <div class="flex items-center">
+                  <ion-icon name="checkmark-circle" class="mr-2"></ion-icon>
+                  Verified Workers ({{ verifiedWorkers.length }})
+                </div>
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        <!-- Pending Verification Queue -->
+        <div *ngIf="workerActiveTab === 'pending'">
+          <!-- Header and Search -->
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-semibold text-gray-800">Worker Verification Queue</h2>
+              <button 
+                (click)="loadPendingWorkers()"
+                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+              >
+                <ion-icon name="refresh" class="mr-2"></ion-icon>
+                Refresh
+              </button>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="relative max-w-md">
+              <ion-icon name="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></ion-icon>
+              <input 
+                type="text" 
+                [(ngModel)]="pendingWorkerSearchTerm"
+                (ngModelChange)="filterPendingWorkers()"
+                placeholder="Search by name or address..."
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              >
+            </div>
+          </div>
+          
+          <div *ngIf="isLoadingWorkers" class="text-center py-8">
+            <ion-spinner color="primary"></ion-spinner>
+            <p class="mt-2 text-gray-500">Loading workers...</p>
+          </div>
+
+          <div *ngIf="!isLoadingWorkers && filteredPendingWorkers.length === 0 && pendingWorkerSearchTerm" class="bg-white rounded-xl shadow-lg p-8 text-center">
+            <ion-icon name="search" class="text-6xl text-gray-300 mb-4"></ion-icon>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">No Results Found</h3>
+            <p class="text-gray-500">No workers found matching "{{ pendingWorkerSearchTerm }}"</p>
+          </div>
+
+          <div *ngIf="!isLoadingWorkers && pendingWorkers.length === 0 && !pendingWorkerSearchTerm" class="bg-white rounded-xl shadow-lg p-8 text-center">
+            <ion-icon name="checkmark-circle" class="text-6xl text-green-500 mb-4"></ion-icon>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">All Caught Up!</h3>
+            <p class="text-gray-500">No workers pending verification at the moment.</p>
+          </div>
+
+          <!-- Workers Table -->
+          <div *ngIf="!isLoadingWorkers && filteredPendingWorkers.length > 0" class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Worker Name
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Address
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Skills
+                    </th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr *ngFor="let worker of filteredPendingWorkers" class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10">
+                          <div class="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                            <span class="text-sm font-medium text-red-600">
+                              {{ getInitials(worker.fullName) }}
+                            </span>
+                          </div>
+                        </div>
+                        <div class="ml-4">
+                          <div class="text-sm font-medium text-gray-900">{{ worker.fullName }}</div>
+                          <div class="text-sm text-gray-500">{{ worker.email }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="text-sm text-gray-900">{{ worker.fullAddress || 'Not provided' }}</div>
+                      <div class="text-sm text-gray-500">{{ worker.phone }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex flex-wrap gap-1">
+                        <span 
+                          *ngFor="let skill of getFirstFewSkills(worker.skills)" 
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {{ skill }}
+                        </span>
+                        <span 
+                          *ngIf="worker.skills && worker.skills.length > 3"
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600"
+                        >
+                          +{{ worker.skills.length - 3 }} more
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                      <div class="flex items-center justify-center space-x-2">
+                        <button 
+                          (click)="viewWorkerDetails(worker)"
+                          class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors flex items-center"
+                        >
+                          <ion-icon name="eye" class="text-sm mr-1"></ion-icon>
+                          View
+                        </button>
+                        <button 
+                          (click)="approveWorker(worker)"
+                          [disabled]="processingWorker === worker.uid"
+                          class="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-xs transition-colors flex items-center"
+                        >
+                          <ion-icon name="checkmark" class="text-sm mr-1"></ion-icon>
+                          Approve
+                        </button>
+                        <button 
+                          (click)="rejectWorker(worker)"
+                          [disabled]="processingWorker === worker.uid"
+                          class="bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-xs transition-colors flex items-center"
+                        >
+                          <ion-icon name="close" class="text-sm mr-1"></ion-icon>
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verified Workers -->
+        <div *ngIf="workerActiveTab === 'verified'">
+          <!-- Search Bar -->
+          <div class="mb-6">
+            <div class="relative max-w-md">
+              <ion-icon name="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></ion-icon>
+              <input 
+                type="text" 
+                [(ngModel)]="workerSearchTerm"
+                (ngModelChange)="filterVerifiedWorkers()"
+                placeholder="Search by name or skill..."
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              >
+            </div>
+          </div>
+
+          <div *ngIf="isLoadingWorkers" class="text-center py-8">
+            <ion-spinner color="primary"></ion-spinner>
+            <p class="mt-2 text-gray-500">Loading workers...</p>
+          </div>
+
+          <div *ngIf="!isLoadingWorkers && filteredVerifiedWorkers.length === 0" class="bg-white rounded-xl shadow-lg p-8 text-center">
+            <ion-icon name="people-outline" class="text-6xl text-gray-300 mb-4"></ion-icon>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">No Verified Workers</h3>
+            <p class="text-gray-500">No verified workers found matching your search.</p>
+          </div>
+
+          <!-- Verified Workers Table -->
+          <div *ngIf="!isLoadingWorkers && filteredVerifiedWorkers.length > 0" class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Worker Name
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Address
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Skills
+                    </th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr *ngFor="let worker of filteredVerifiedWorkers" class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10">
+                          <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                            <span class="text-sm font-medium text-green-600">
+                              {{ getInitials(worker.fullName) }}
+                            </span>
+                          </div>
+                        </div>
+                        <div class="ml-4">
+                          <div class="text-sm font-medium text-gray-900">{{ worker.fullName }}</div>
+                          <div class="text-sm text-gray-500">{{ worker.email }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="text-sm text-gray-900">{{ worker.fullAddress || 'Not provided' }}</div>
+                      <div class="text-sm text-gray-500">{{ worker.phone }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="flex flex-wrap gap-1">
+                        <span 
+                          *ngFor="let skill of getFirstFewSkills(worker.skills)" 
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {{ skill }}
+                        </span>
+                        <span 
+                          *ngIf="worker.skills && worker.skills.length > 3"
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600"
+                        >
+                          +{{ worker.skills.length - 3 }} more
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <ion-icon name="checkmark-circle" class="mr-1"></ion-icon>
+                        Verified
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                      <div class="flex items-center justify-center space-x-2">
+                        <button 
+                          (click)="viewWorkerDetails(worker)"
+                          class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors flex items-center"
+                        >
+                          <ion-icon name="eye" class="text-sm mr-1"></ion-icon>
+                          View
+                        </button>
+                        <button 
+                          (click)="suspendWorker(worker)"
+                          [disabled]="processingWorker === worker.uid"
+                          class="bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400 text-white px-3 py-1 rounded text-xs transition-colors flex items-center"
+                        >
+                          <ion-icon name="pause" class="text-sm mr-1"></ion-icon>
+                          Suspend
+                        </button>
+                        <button 
+                          (click)="banWorker(worker)"
+                          [disabled]="processingWorker === worker.uid"
+                          class="bg-gray-700 hover:bg-gray-800 disabled:bg-gray-400 text-white px-3 py-1 rounded text-xs transition-colors flex items-center"
+                        >
+                          <ion-icon name="ban" class="text-sm mr-1"></ion-icon>
+                          Ban
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other Sections Placeholder -->
+      <div *ngIf="activeSection !== 'dashboard' && activeSection !== 'workers'" class="bg-white rounded-xl shadow-lg p-8 text-center">
+        <ion-icon name="construct" class="text-6xl text-gray-300 mb-4"></ion-icon>
+        <h3 class="text-xl font-semibold text-gray-600 mb-2">{{ getSectionTitle() }}</h3>
+        <p class="text-gray-500">This section is under development.</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Worker Details Modal -->
+<ion-modal #workerDetailsModal [isOpen]="isWorkerModalOpen" (willDismiss)="closeWorkerModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Worker Details</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeWorkerModal()">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    
+    <ion-content class="ion-padding" *ngIf="selectedWorker">
+      <div class="space-y-6">
+        <!-- Personal Information -->
+        <div class="bg-white rounded-lg border p-4">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <ion-icon name="person" class="mr-2 text-blue-500"></ion-icon>
+            Personal Information
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-gray-500">Full Name</label>
+              <p class="text-gray-900">{{ selectedWorker.fullName }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Email</label>
+              <p class="text-gray-900">{{ selectedWorker.email }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Phone</label>
+              <p class="text-gray-900">{{ selectedWorker.phone }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Status</label>
+              <p class="text-gray-900">
+                <span [class]="getStatusBadgeClass(selectedWorker.status)">
+                  {{ selectedWorker.status | titlecase }}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Address Information -->
+        <div class="bg-white rounded-lg border p-4">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <ion-icon name="location" class="mr-2 text-green-500"></ion-icon>
+            Address Information
+          </h3>
+          <div>
+            <label class="text-sm font-medium text-gray-500">Full Address</label>
+            <p class="text-gray-900">{{ selectedWorker.fullAddress || 'Not provided' }}</p>
+          </div>
+          <div class="mt-3" *ngIf="selectedWorker.workRadius">
+            <label class="text-sm font-medium text-gray-500">Work Radius</label>
+            <p class="text-gray-900">{{ selectedWorker.workRadius }} km</p>
+          </div>
+        </div>
+
+        <!-- Skills and Availability -->
+        <div class="bg-white rounded-lg border p-4">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <ion-icon name="build" class="mr-2 text-purple-500"></ion-icon>
+            Skills & Availability
+          </h3>
+          <div class="mb-4">
+            <label class="text-sm font-medium text-gray-500 mb-2 block">Skills</label>
+            <div class="flex flex-wrap gap-2">
+              <span 
+                *ngFor="let skill of selectedWorker.skills" 
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+              >
+                {{ skill }}
+              </span>
+            </div>
+          </div>
+          <div *ngIf="selectedWorker.availableDays && selectedWorker.availableDays.length > 0">
+            <label class="text-sm font-medium text-gray-500 mb-2 block">Available Days</label>
+            <div class="flex flex-wrap gap-2">
+              <span 
+                *ngFor="let day of selectedWorker.availableDays" 
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
+              >
+                {{ day | titlecase }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        <div class="bg-white rounded-lg border p-4" *ngIf="selectedWorker.emergencyContact">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <ion-icon name="call" class="mr-2 text-red-500"></ion-icon>
+            Emergency Contact
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-gray-500">Contact Name</label>
+              <p class="text-gray-900">{{ selectedWorker.emergencyContact }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Contact Phone</label>
+              <p class="text-gray-900">{{ selectedWorker.emergencyPhone }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Identity Verification -->
+        <div class="bg-white rounded-lg border p-4">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <ion-icon name="shield-checkmark" class="mr-2 text-yellow-500"></ion-icon>
+            Identity Verification
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- ID Photo -->
+            <div class="text-center">
+              <label class="text-sm font-medium text-gray-500 block mb-3">Valid ID</label>
+              <div class="relative">
+                <img 
+                  *ngIf="selectedWorker.idPhotoData"
+                  [src]="selectedWorker.idPhotoData" 
+                  class="w-full h-40 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                  (click)="openPhotoModal(selectedWorker.idPhotoData, 'Valid ID')"
+                  alt="Worker ID"
+                />
+                <div 
+                  *ngIf="!selectedWorker.idPhotoData"
+                  class="w-full h-40 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center"
+                >
+                  <div class="text-center">
+                    <ion-icon name="image-outline" class="text-gray-400 text-3xl mb-2"></ion-icon>
+                    <p class="text-gray-500 text-sm">No ID photo provided</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Profile Photo -->
+            <div class="text-center">
+              <label class="text-sm font-medium text-gray-500 block mb-3">Profile Photo</label>
+              <div class="relative">
+                <img 
+                  *ngIf="selectedWorker.profilePhotoData"
+                  [src]="selectedWorker.profilePhotoData" 
+                  class="w-full h-40 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                  (click)="openPhotoModal(selectedWorker.profilePhotoData, 'Profile Photo')"
+                  alt="Worker Profile"
+                />
+                <div 
+                  *ngIf="!selectedWorker.profilePhotoData"
+                  class="w-full h-40 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center"
+                >
+                  <div class="text-center">
+                    <ion-icon name="person-outline" class="text-gray-400 text-3xl mb-2"></ion-icon>
+                    <p class="text-gray-500 text-sm">No profile photo provided</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons (only for pending workers) -->
+        <div class="bg-white rounded-lg border p-4" *ngIf="selectedWorker.status === 'pending_verification'">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Actions</h3>
+          <div class="flex space-x-4">
+            <button 
+              (click)="approveWorkerFromModal(selectedWorker)"
+              [disabled]="processingWorker === selectedWorker.uid"
+              class="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center"
+            >
+              <ion-icon name="checkmark" class="mr-2"></ion-icon>
+              {{ processingWorker === selectedWorker.uid ? 'Processing...' : 'Approve Worker' }}
+            </button>
+            <button 
+              (click)="rejectWorkerFromModal(selectedWorker)"
+              [disabled]="processingWorker === selectedWorker.uid"
+              class="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center"
+            >
+              <ion-icon name="close" class="mr-2"></ion-icon>
+              {{ processingWorker === selectedWorker.uid ? 'Processing...' : 'Reject Worker' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

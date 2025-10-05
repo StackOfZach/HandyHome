@@ -1,0 +1,11 @@
+/* Additional custom styles can be added here if needed */
+.login-container {
+  min-height: 100vh;
+}
+
+/* Custom focus styles for better accessibility */
+input:focus {
+  outline: none;
+}
+
+/* Loading spinner animation is handled by Tailwind */

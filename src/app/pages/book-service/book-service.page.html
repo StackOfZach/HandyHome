@@ -1,0 +1,791 @@
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+>
+  <!-- Custom Header -->
+  <div
+    class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-lg mb-4"
+  >
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <button
+          (click)="goBack()"
+          class="mr-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200"
+        >
+          <ion-icon
+            name="arrow-back-outline"
+            class="text-white text-xl"
+          ></ion-icon>
+        </button>
+        <h1 class="text-white text-2xl font-bold">Book Service</h1>
+      </div>
+      <div class="text-white text-sm opacity-80">
+        Step {{ currentStep }} of {{ totalSteps }}
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="mt-4">
+      <div class="w-full bg-white/20 rounded-full h-2">
+        <div
+          class="bg-white h-2 rounded-full transition-all duration-500"
+          [style.width.%]="getProgressPercentage()"
+        ></div>
+      </div>
+      <div class="flex justify-between mt-2 text-xs text-white/80">
+        <span [class.font-semibold]="currentStep >= 1">Service Details</span>
+        <span [class.font-semibold]="currentStep >= 2">Location</span>
+        <span [class.font-semibold]="currentStep >= 3">Media</span>
+        <span [class.font-semibold]="currentStep >= 4">Review</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="px-4 pb-48">
+    <!-- Step 1: Service Request Form -->
+    <div *ngIf="currentStep === 1" class="space-y-6">
+      <form [formGroup]="serviceForm" class="space-y-6">
+        <!-- Service Title -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <h3
+            class="text-lg font-bold text-handy-navy-800 mb-4 flex items-center"
+          >
+            <ion-icon
+              name="create-outline"
+              class="mr-2 text-handy-blue-500"
+            ></ion-icon>
+            Service Title
+          </h3>
+          <input
+            type="text"
+            formControlName="title"
+            placeholder="e.g., House Cleaning, Plumbing Repair, etc."
+            class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300"
+            [class.border-red-400]="serviceForm.get('title')?.invalid && serviceForm.get('title')?.touched"
+          />
+          <div
+            *ngIf="serviceForm.get('title')?.invalid && serviceForm.get('title')?.touched"
+            class="text-red-500 text-sm mt-2"
+          >
+            <span *ngIf="serviceForm.get('title')?.errors?.['required']"
+              >Service title is required</span
+            >
+            <span *ngIf="serviceForm.get('title')?.errors?.['minlength']"
+              >Title must be at least 5 characters</span
+            >
+          </div>
+        </div>
+
+        <!-- Job Description -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <h3
+            class="text-lg font-bold text-handy-navy-800 mb-4 flex items-center"
+          >
+            <ion-icon
+              name="document-text-outline"
+              class="mr-2 text-handy-blue-500"
+            ></ion-icon>
+            Job Description
+          </h3>
+          <textarea
+            formControlName="description"
+            rows="4"
+            placeholder="Describe the work you need done in detail..."
+            class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300 resize-none"
+            [class.border-red-400]="serviceForm.get('description')?.invalid && serviceForm.get('description')?.touched"
+          ></textarea>
+          <div
+            *ngIf="serviceForm.get('description')?.invalid && serviceForm.get('description')?.touched"
+            class="text-red-500 text-sm mt-2"
+          >
+            <span *ngIf="serviceForm.get('description')?.errors?.['required']"
+              >Description is required</span
+            >
+            <span *ngIf="serviceForm.get('description')?.errors?.['minlength']"
+              >Description must be at least 10 characters</span
+            >
+          </div>
+        </div>
+
+        <!-- Category Selection -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <h3
+            class="text-lg font-bold text-handy-navy-800 mb-4 flex items-center"
+          >
+            <ion-icon
+              name="grid-outline"
+              class="mr-2 text-handy-blue-500"
+            ></ion-icon>
+            Service Category
+          </h3>
+          <ion-item
+            class="rounded-xl border-2 border-gray-200 focus-within:border-handy-blue-500 transition-colors duration-300"
+            [class.border-red-400]="serviceForm.get('category')?.invalid && serviceForm.get('category')?.touched"
+          >
+            <ion-select
+              formControlName="category"
+              placeholder="Select a service category"
+              interface="popover"
+              class="w-full"
+            >
+              <ion-select-option
+                *ngFor="let category of serviceCategories"
+                [value]="category.id"
+              >
+                <div class="flex items-center py-2">
+                  <div
+                    class="w-8 h-8 rounded-lg flex items-center justify-center mr-3 bg-gradient-to-r"
+                    [ngClass]="category.color"
+                  >
+                    <ion-icon
+                      [name]="category.icon"
+                      class="text-white text-sm"
+                    ></ion-icon>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-handy-navy-800">
+                      {{ category.name }}
+                    </div>
+                    <div class="text-xs text-handy-navy-600">
+                      {{ category.description }}
+                    </div>
+                  </div>
+                </div>
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+          <div
+            *ngIf="serviceForm.get('category')?.invalid && serviceForm.get('category')?.touched"
+            class="text-red-500 text-sm mt-2"
+          >
+            Please select a category
+          </div>
+        </div>
+
+        <!-- Schedule -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <h3
+            class="text-lg font-bold text-handy-navy-800 mb-4 flex items-center"
+          >
+            <ion-icon
+              name="calendar-outline"
+              class="mr-2 text-handy-blue-500"
+            ></ion-icon>
+            Preferred Schedule
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                class="block text-sm font-semibold text-handy-navy-700 mb-2"
+                >Date</label
+              >
+              <input
+                type="date"
+                formControlName="scheduleDate"
+                class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300"
+                [class.border-red-400]="serviceForm.get('scheduleDate')?.invalid && serviceForm.get('scheduleDate')?.touched"
+                [min]="getMinDate()"
+              />
+            </div>
+            <div>
+              <label
+                class="block text-sm font-semibold text-handy-navy-700 mb-2"
+                >Time</label
+              >
+              <input
+                type="time"
+                formControlName="scheduleTime"
+                class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300"
+                [class.border-red-400]="serviceForm.get('scheduleTime')?.invalid && serviceForm.get('scheduleTime')?.touched"
+              />
+            </div>
+          </div>
+          <div
+            *ngIf="(serviceForm.get('scheduleDate')?.invalid && serviceForm.get('scheduleDate')?.touched) || (serviceForm.get('scheduleTime')?.invalid && serviceForm.get('scheduleTime')?.touched)"
+            class="text-red-500 text-sm mt-2"
+          >
+            Please select both date and time
+          </div>
+        </div>
+
+        <!-- Price Offer -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+          <h3
+            class="text-lg font-bold text-handy-navy-800 mb-4 flex items-center"
+          >
+            <ion-icon
+              name="cash-outline"
+              class="mr-2 text-handy-blue-500"
+            ></ion-icon>
+            Price Offer
+          </h3>
+          <div class="flex gap-4">
+            <div class="flex-1">
+              <label
+                class="block text-sm font-semibold text-handy-navy-700 mb-2"
+                >Amount (₱)</label
+              >
+              <input
+                type="number"
+                formControlName="price"
+                placeholder="0"
+                min="1"
+                class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300"
+                [class.border-red-400]="serviceForm.get('price')?.invalid && serviceForm.get('price')?.touched"
+              />
+            </div>
+            <div class="w-32">
+              <label
+                class="block text-sm font-semibold text-handy-navy-700 mb-2"
+                >Type</label
+              >
+              <select
+                formControlName="priceType"
+                class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300"
+              >
+                <option value="per-hour">Per Hour</option>
+                <option value="per-day">Per Day</option>
+                <option value="fixed-price">Fixed</option>
+              </select>
+            </div>
+          </div>
+          <div
+            *ngIf="serviceForm.get('price')?.invalid && serviceForm.get('price')?.touched"
+            class="text-red-500 text-sm mt-2"
+          >
+            <span *ngIf="serviceForm.get('price')?.errors?.['required']"
+              >Price is required</span
+            >
+            <span *ngIf="serviceForm.get('price')?.errors?.['min']"
+              >Price must be at least ₱1</span
+            >
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 2: Location Selection -->
+    <div *ngIf="currentStep === 2" class="space-y-6">
+      <!-- Add New Location Form -->
+      <!-- Saved Locations Section -->
+      <div
+        *ngIf="savedLocations.length > 0"
+        class="bg-white rounded-2xl shadow-lg p-6 mb-6"
+      >
+        <h3
+          class="text-lg font-bold text-handy-navy-800 mb-4 flex items-center"
+        >
+          <ion-icon
+            name="bookmark-outline"
+            class="mr-2 text-handy-blue-500"
+          ></ion-icon>
+          Your Saved Locations ({{ savedLocations.length }})
+        </h3>
+        <div class="space-y-3">
+          <div
+            *ngFor="let savedLocation of savedLocations"
+            class="border border-gray-200 rounded-xl p-4 hover:border-handy-blue-300 transition-colors"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center mb-2">
+                  <h4 class="font-semibold text-handy-navy-800">
+                    {{ savedLocation.contactPerson }}
+                  </h4>
+                  <span
+                    *ngIf="savedLocation.isDefault"
+                    class="ml-2 px-2 py-1 bg-handy-blue-100 text-handy-blue-800 text-xs rounded-full"
+                    >Default</span
+                  >
+                </div>
+                <p class="text-sm text-handy-navy-600 mb-1">
+                  {{ savedLocation.phoneNumber }}
+                </p>
+                <p class="text-sm text-handy-navy-600">
+                  {{ savedLocation.fullAddress }}
+                </p>
+              </div>
+              <div class="flex items-center space-x-2 ml-4">
+                <button
+                  (click)="addSavedLocationToBooking(savedLocation)"
+                  class="p-2 text-handy-blue-500 hover:bg-handy-blue-50 rounded-lg transition-colors"
+                  title="Add to booking"
+                >
+                  <ion-icon name="add-circle-outline"></ion-icon>
+                </button>
+                <button
+                  (click)="loadSavedLocationToForm(savedLocation)"
+                  class="p-2 text-handy-green-500 hover:bg-handy-green-50 rounded-lg transition-colors"
+                  title="Edit this location"
+                >
+                  <ion-icon name="create-outline"></ion-icon>
+                </button>
+                <button
+                  (click)="deleteSavedLocation(savedLocation.id)"
+                  class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Delete location"
+                >
+                  <ion-icon name="trash-outline"></ion-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <h3
+          class="text-lg font-bold text-handy-navy-800 mb-4 flex items-center"
+        >
+          <ion-icon
+            name="location-outline"
+            class="mr-2 text-handy-blue-500"
+          ></ion-icon>
+          Add Service Location
+        </h3>
+        <form [formGroup]="locationForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-semibold text-handy-navy-700 mb-2"
+              >Contact Person</label
+            >
+            <input
+              type="text"
+              formControlName="contactPerson"
+              placeholder="Full Name"
+              class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300"
+              [class.border-red-400]="locationForm.get('contactPerson')?.invalid && locationForm.get('contactPerson')?.touched"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-handy-navy-700 mb-2"
+              >Phone Number</label
+            >
+            <input
+              type="tel"
+              formControlName="phoneNumber"
+              placeholder="09123456789"
+              class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300"
+              [class.border-red-400]="locationForm.get('phoneNumber')?.invalid && locationForm.get('phoneNumber')?.touched"
+            />
+            <div
+              *ngIf="locationForm.get('phoneNumber')?.invalid && locationForm.get('phoneNumber')?.touched"
+              class="text-red-500 text-sm mt-1"
+            >
+              Please enter a valid 11-digit phone number starting with 09
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-handy-navy-700 mb-2"
+              >Full Address</label
+            >
+            <textarea
+              formControlName="fullAddress"
+              rows="3"
+              placeholder="House/Unit Number, Street, Barangay, City, Province"
+              class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300 resize-none"
+              [class.border-red-400]="locationForm.get('fullAddress')?.invalid && locationForm.get('fullAddress')?.touched"
+            ></textarea>
+          </div>
+
+          <!-- Map Controls -->
+          <div class="space-y-3">
+            <div class="flex space-x-2">
+              <button
+                type="button"
+                (click)="toggleLocationMap()"
+                class="flex-1 bg-handy-blue-100 hover:bg-handy-blue-200 text-handy-blue-700 font-semibold py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center"
+              >
+                <ion-icon name="map-outline" class="mr-2"></ion-icon>
+                {{ showLocationMap ? 'Hide Map' : 'Select from Map' }}
+              </button>
+              <button
+                type="button"
+                (click)="getCurrentLocationAndFillForm()"
+                class="flex-1 bg-handy-green-100 hover:bg-handy-green-200 text-handy-green-700 font-semibold py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center"
+              >
+                <ion-icon name="locate-outline" class="mr-2"></ion-icon>
+                Use Current Location
+              </button>
+            </div>
+
+            <!-- Map Component -->
+            <div *ngIf="showLocationMap" class="map-container-wrapper">
+              <app-map
+                #mapComponent
+                height="300px"
+                [allowPinPlacement]="true"
+                [showCurrentLocation]="true"
+                (pinPlaced)="onMapPinPlaced($event)"
+              ></app-map>
+              <p class="text-sm text-handy-navy-600 mt-2 text-center">
+                Tap on the map to select a location
+              </p>
+            </div>
+
+            <!-- Coordinate Display -->
+            <div
+              *ngIf="selectedMapCoordinates"
+              class="bg-handy-blue-50 rounded-lg p-3"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-semibold text-handy-blue-800">
+                    Selected Coordinates:
+                  </p>
+                  <p class="text-xs text-handy-blue-600">
+                    {{ selectedMapCoordinates.latitude.toFixed(6) }}, {{
+                    selectedMapCoordinates.longitude.toFixed(6) }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  (click)="selectedMapCoordinates = null; showLocationMap = false"
+                  class="text-handy-blue-500 hover:text-handy-blue-700"
+                  title="Clear coordinates"
+                >
+                  <ion-icon name="close-circle-outline"></ion-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            (click)="addLocation()"
+            class="w-full bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105"
+          >
+            <ion-icon name="add-outline" class="mr-2"></ion-icon>
+            Add Location
+          </button>
+        </form>
+      </div>
+
+      <!-- Added Locations -->
+      <div *ngIf="locations.length > 0" class="space-y-4">
+        <h3 class="text-lg font-bold text-handy-navy-800 px-2">
+          Service Locations ({{ locations.length }})
+        </h3>
+        <div
+          *ngFor="let location of locations"
+          class="bg-white rounded-2xl shadow-lg p-4 border-l-4"
+          [class.border-handy-blue-500]="location.isDefault"
+          [class.border-gray-300]="!location.isDefault"
+        >
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center mb-2">
+                <h4 class="font-semibold text-handy-navy-800">
+                  {{ location.contactPerson }}
+                </h4>
+                <span
+                  *ngIf="location.isDefault"
+                  class="ml-2 px-2 py-1 bg-handy-blue-100 text-handy-blue-800 text-xs rounded-full"
+                  >Default</span
+                >
+              </div>
+              <p class="text-sm text-handy-navy-600 mb-1">
+                {{ location.phoneNumber }}
+              </p>
+              <p class="text-sm text-handy-navy-600">
+                {{ location.fullAddress }}
+              </p>
+            </div>
+            <div class="flex items-center space-x-2 ml-4">
+              <button
+                *ngIf="!location.isDefault"
+                (click)="setDefaultLocation(location.id)"
+                class="p-2 text-handy-blue-500 hover:bg-handy-blue-50 rounded-lg transition-colors"
+                title="Set as default"
+              >
+                <ion-icon name="star-outline"></ion-icon>
+              </button>
+              <button
+                (click)="removeLocation(location.id)"
+                class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                title="Remove location"
+              >
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Add Media -->
+    <div *ngIf="currentStep === 3" class="space-y-6">
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <h3
+          class="text-lg font-bold text-handy-navy-800 mb-4 flex items-center"
+        >
+          <ion-icon
+            name="images-outline"
+            class="mr-2 text-handy-blue-500"
+          ></ion-icon>
+          Add Photos (Optional)
+        </h3>
+        <p class="text-handy-navy-600 text-sm mb-4">
+          Upload up to 5 photos to help workers understand your requirements
+          better.
+        </p>
+
+        <!-- File Input -->
+        <div class="mb-4">
+          <input
+            type="file"
+            #fileInput
+            (change)="onImageSelected($event)"
+            accept="image/*"
+            multiple
+            class="hidden"
+          />
+          <button
+            type="button"
+            (click)="fileInput.click()"
+            [disabled]="selectedImages.length >= 5"
+            class="w-full border-2 border-dashed border-handy-blue-300 rounded-xl p-6 text-center hover:border-handy-blue-500 hover:bg-handy-blue-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ion-icon
+              name="cloud-upload-outline"
+              class="text-3xl text-handy-blue-500 mb-2"
+            ></ion-icon>
+            <p class="text-handy-blue-600 font-semibold">
+              {{ selectedImages.length < 5 ? 'Click to upload photos' : 'Maximum
+              5 photos reached' }}
+            </p>
+            <p class="text-sm text-handy-navy-600">
+              {{ selectedImages.length }}/5 photos selected
+            </p>
+          </button>
+        </div>
+
+        <!-- Image Previews -->
+        <div
+          *ngIf="selectedImages.length > 0"
+          class="grid grid-cols-2 md:grid-cols-3 gap-4"
+        >
+          <div
+            *ngFor="let image of selectedImages; let i = index"
+            class="relative group"
+          >
+            <img
+              [src]="image"
+              alt="Preview"
+              class="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
+            />
+            <button
+              (click)="removeImage(i)"
+              class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <ion-icon name="close" class="text-xs"></ion-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Review & Submit -->
+    <div *ngIf="currentStep === 4" class="space-y-6">
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <h3
+          class="text-lg font-bold text-handy-navy-800 mb-6 flex items-center"
+        >
+          <ion-icon
+            name="checkmark-circle-outline"
+            class="mr-2 text-handy-blue-500"
+          ></ion-icon>
+          Review Your Booking
+        </h3>
+
+        <!-- Service Details -->
+        <div class="space-y-4">
+          <div>
+            <h4 class="font-semibold text-handy-navy-800 mb-2">
+              Service Details
+            </h4>
+            <div class="bg-handy-blue-50 rounded-xl p-4">
+              <p class="font-semibold text-handy-navy-800">
+                {{ serviceForm.value.title }}
+              </p>
+              <p class="text-sm text-handy-navy-600 mt-1">
+                {{ serviceForm.value.description }}
+              </p>
+              <div class="flex items-center mt-2">
+                <ion-icon
+                  [name]="getCategoryIcon(serviceForm.value.category)"
+                  class="text-handy-blue-500 mr-2"
+                ></ion-icon>
+                <span class="text-sm font-medium"
+                  >{{ getCategoryName(serviceForm.value.category) }}</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-800 mb-2">Schedule</h4>
+            <div class="bg-handy-blue-50 rounded-xl p-4">
+              <div class="flex items-center">
+                <ion-icon
+                  name="calendar-outline"
+                  class="text-handy-blue-500 mr-2"
+                ></ion-icon>
+                <span class="font-medium"
+                  >{{ serviceForm.value.scheduleDate | date:'fullDate' }}</span
+                >
+              </div>
+              <div class="flex items-center mt-1">
+                <ion-icon
+                  name="time-outline"
+                  class="text-handy-blue-500 mr-2"
+                ></ion-icon>
+                <span class="font-medium"
+                  >{{ serviceForm.value.scheduleTime }}</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-800 mb-2">
+              Service Locations
+            </h4>
+            <div class="space-y-2">
+              <div
+                *ngFor="let location of locations"
+                class="bg-handy-blue-50 rounded-xl p-4"
+              >
+                <div class="flex items-center mb-1">
+                  <ion-icon
+                    name="person-outline"
+                    class="text-handy-blue-500 mr-2"
+                  ></ion-icon>
+                  <span class="font-medium">{{ location.contactPerson }}</span>
+                  <span
+                    *ngIf="location.isDefault"
+                    class="ml-2 px-2 py-1 bg-handy-blue-200 text-handy-blue-800 text-xs rounded-full"
+                    >Default</span
+                  >
+                </div>
+                <div class="flex items-center mb-1">
+                  <ion-icon
+                    name="call-outline"
+                    class="text-handy-blue-500 mr-2"
+                  ></ion-icon>
+                  <span class="text-sm">{{ location.phoneNumber }}</span>
+                </div>
+                <div class="flex items-start">
+                  <ion-icon
+                    name="location-outline"
+                    class="text-handy-blue-500 mr-2 mt-0.5"
+                  ></ion-icon>
+                  <span class="text-sm">{{ location.fullAddress }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="selectedImages.length > 0">
+            <h4 class="font-semibold text-handy-navy-800 mb-2">
+              Attached Photos ({{ selectedImages.length }})
+            </h4>
+            <div class="grid grid-cols-3 gap-2">
+              <img
+                *ngFor="let image of selectedImages"
+                [src]="image"
+                alt="Attached photo"
+                class="w-full h-16 object-cover rounded-lg border-2 border-gray-200"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky Cost Breakdown Footer -->
+  <div
+    class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl"
+    style="z-index: 9999"
+  >
+    <div class="max-w-md mx-auto p-4">
+      <!-- Collapsible Cost Breakdown -->
+      <div class="mb-3">
+        <!-- Quick Total Display -->
+        <div class="flex justify-between items-center mb-2">
+          <span class="font-bold text-handy-navy-800">Total Cost</span>
+          <div class="flex items-center">
+            <span class="font-bold text-lg text-handy-blue-600 mr-2"
+              >₱{{ totalCost | number:'1.2-2' }}</span
+            >
+            <button
+              (click)="showCostBreakdown = !showCostBreakdown"
+              class="p-1 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <ion-icon
+                [name]="showCostBreakdown ? 'chevron-up-outline' : 'chevron-down-outline'"
+                class="text-handy-navy-600"
+              ></ion-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Detailed Breakdown (Collapsible) -->
+        <div *ngIf="showCostBreakdown" class="space-y-1 text-sm">
+          <div class="flex justify-between items-center">
+            <span class="text-handy-navy-600"
+              >Base Price ({{ serviceForm.value.priceType | titlecase }})</span
+            >
+            <span class="font-medium">₱{{ basePrice | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-handy-navy-600">Service Charge (10%)</span>
+            <span class="font-medium"
+              >₱{{ serviceCharge | number:'1.2-2' }}</span
+            >
+          </div>
+          <div
+            class="flex justify-between items-center pb-2 border-b border-gray-200"
+          >
+            <span class="text-handy-navy-600">Transport Fee</span>
+            <span class="font-medium"
+              >₱{{ transportFee | number:'1.2-2' }}</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="flex gap-2">
+        <button
+          *ngIf="currentStep > 1"
+          (click)="previousStep()"
+          class="flex-1 bg-gray-200 hover:bg-gray-300 text-handy-navy-800 font-semibold py-2.5 px-4 rounded-lg transition-all duration-300 text-sm"
+        >
+          Previous
+        </button>
+        <button
+          *ngIf="currentStep < totalSteps"
+          (click)="nextStep()"
+          class="flex-1 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-300 text-sm"
+        >
+          {{ currentStep === 3 ? 'Skip & Continue' : 'Next' }}
+        </button>
+        <button
+          *ngIf="currentStep === totalSteps"
+          (click)="submitBooking()"
+          [disabled]="isSubmitting"
+          class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-300 disabled:cursor-not-allowed text-sm"
+        >
+          <span *ngIf="!isSubmitting">Confirm & Submit</span>
+          <span *ngIf="isSubmitting" class="flex items-center justify-center">
+            <div
+              class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
+            ></div>
+            Submitting...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</ion-content>

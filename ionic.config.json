@@ -1,0 +1,7 @@
+{
+  "name": "HandyHome",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

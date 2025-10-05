@@ -1,0 +1,25 @@
+<div
+  #mapContainer
+  class="map-container"
+  [style.height]="height"
+  [style.width]="'100%'"
+  [style.border-radius]="'12px'"
+  [style.overflow]="'hidden'"
+  [style.box-shadow]="
+    '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+  "
+></div>
+
+<!-- Map controls overlay -->
+<div class="map-controls" *ngIf="allowPinPlacement">
+  <div class="control-hint">
+    <ion-icon name="information-circle-outline" class="hint-icon"></ion-icon>
+    <span class="hint-text">Tap on the map to place a pin</span>
+  </div>
+</div>
+
+<!-- Loading indicator -->
+<div class="map-loading" *ngIf="!map">
+  <ion-spinner name="crescent"></ion-spinner>
+  <p>Loading map...</p>
+</div>

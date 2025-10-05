@@ -1,0 +1,131 @@
+// Profile page styles
+ion-content {
+  --background: transparent;
+}
+
+// Custom styling for handy colors
+.bg-handy-blue-50 {
+  background-color: #eff6ff;
+}
+
+.bg-handy-blue-500 {
+  background-color: #3b82f6;
+}
+
+.bg-handy-blue-600 {
+  background-color: #2563eb;
+}
+
+.bg-handy-yellow-50 {
+  background-color: #fefce8;
+}
+
+.bg-handy-yellow-500 {
+  background-color: #eab308;
+}
+
+.text-handy-navy-800 {
+  color: #1e3a8a;
+}
+
+.text-handy-navy-700 {
+  color: #1d4ed8;
+}
+
+.text-handy-navy-600 {
+  color: #2563eb;
+}
+
+.text-handy-blue-500 {
+  color: #3b82f6;
+}
+
+// Custom toggle styling
+ion-toggle {
+  --track-background: #e5e7eb;
+  --track-background-checked: #3b82f6;
+  --handle-background: #ffffff;
+  --handle-background-checked: #ffffff;
+}
+
+// Modal styling
+ion-modal {
+  --background: #ffffff;
+  --border-radius: 16px;
+}
+
+// Input focus states
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+// Button hover effects
+.hover-scale {
+  transition: transform 0.2s ease-in-out;
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+// Loading animation
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Gradient backgrounds
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+// Backdrop blur effect
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+}
+
+// Custom card shadows
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+// Responsive design
+@media (max-width: 640px) {
+  .grid-cols-2 {
+    grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+// Custom scrollbar for webkit browsers
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}

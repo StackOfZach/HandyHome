@@ -1,0 +1,37 @@
+/* Custom styles for worker dashboard */
+
+.worker-dashboard-content {
+  --background: var(--ion-color-light);
+}
+
+// Smooth gradient animations
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+// Custom backdrop blur for iOS compatibility
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+// Enhanced button hover effects
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+// Profile picture border animation
+.border-green-200 {
+  border-color: rgb(187 247 208);
+  transition: border-color 0.3s ease;
+}
+
+.border-green-200:hover {
+  border-color: rgb(134 239 172);
+}

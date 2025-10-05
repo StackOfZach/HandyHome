@@ -1,0 +1,493 @@
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+>
+  <!-- Header -->
+  <div
+    class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 pt-3 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-lg"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <button
+        (click)="goBack()"
+        class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200"
+      >
+        <ion-icon
+          name="arrow-back-outline"
+          class="text-white text-xl"
+        ></ion-icon>
+      </button>
+      <h1 class="text-white text-xl font-bold">Profile</h1>
+      <div class="w-10"></div>
+      <!-- Spacer -->
+    </div>
+
+    <!-- Profile Header -->
+    <div class="flex items-center space-x-4">
+      <div class="relative">
+        <div
+          class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center border-4 border-white/30"
+        >
+          <ion-icon name="person" class="text-3xl text-white"></ion-icon>
+        </div>
+        <!-- Profile picture upload button (can be enabled later) -->
+        <!-- <button class="absolute -bottom-1 -right-1 w-6 h-6 bg-handy-yellow-500 rounded-full flex items-center justify-center">
+          <ion-icon name="camera" class="text-xs text-white"></ion-icon>
+        </button> -->
+      </div>
+      <div class="flex-1">
+        <h2 class="text-white text-xl font-bold">
+          {{ userProfile?.fullName || 'Guest User' }}
+        </h2>
+        <p class="text-white/80 text-sm">ID: {{ getHandyHomeId() }}</p>
+        <p class="text-white/80 text-sm">{{ userProfile?.email }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <div
+      class="animate-spin rounded-full h-16 w-16 border-b-2 border-handy-blue-500"
+    ></div>
+  </div>
+
+  <!-- Profile Content -->
+  <div *ngIf="!isLoading" class="px-4 pb-20">
+    <!-- Personal Information -->
+    <div
+      class="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-white/20 mt-6"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-handy-navy-800 flex items-center">
+          <ion-icon
+            name="person-outline"
+            class="mr-2 text-handy-blue-500"
+          ></ion-icon>
+          Personal Information
+        </h3>
+        <button
+          (click)="isEditingProfile = !isEditingProfile"
+          class="text-handy-blue-500 hover:text-handy-blue-600 font-medium text-sm"
+        >
+          {{ isEditingProfile ? 'Cancel' : 'Edit' }}
+        </button>
+      </div>
+
+      <div *ngIf="!isEditingProfile" class="space-y-3">
+        <div
+          class="flex justify-between items-center py-2 border-b border-gray-100"
+        >
+          <span class="text-handy-navy-600 font-medium">Full Name</span>
+          <span class="text-handy-navy-800"
+            >{{ userProfile?.fullName || 'Not set' }}</span
+          >
+        </div>
+        <div
+          class="flex justify-between items-center py-2 border-b border-gray-100"
+        >
+          <span class="text-handy-navy-600 font-medium">Email</span>
+          <span class="text-handy-navy-800"
+            >{{ userProfile?.email || 'Not set' }}</span
+          >
+        </div>
+        <div
+          class="flex justify-between items-center py-2 border-b border-gray-100"
+        >
+          <span class="text-handy-navy-600 font-medium">Phone</span>
+          <span class="text-handy-navy-800"
+            >{{ userProfile?.phone || 'Not set' }}</span
+          >
+        </div>
+      </div>
+
+      <div *ngIf="isEditingProfile" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-handy-navy-700 mb-1"
+            >Full Name</label
+          >
+          <input
+            [(ngModel)]="profileForm.fullName"
+            type="text"
+            class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-handy-blue-500 focus:border-transparent"
+            placeholder="Enter your full name"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-handy-navy-700 mb-1"
+            >Email</label
+          >
+          <input
+            [(ngModel)]="profileForm.email"
+            type="email"
+            class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50"
+            disabled
+            placeholder="Email cannot be changed here"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-handy-navy-700 mb-1"
+            >Phone Number</label
+          >
+          <input
+            [(ngModel)]="profileForm.phoneNumber"
+            type="tel"
+            class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-handy-blue-500 focus:border-transparent"
+            placeholder="Enter your phone number"
+          />
+        </div>
+        <button
+          (click)="saveProfile()"
+          class="w-full bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white py-3 px-4 rounded-xl font-medium transition-all duration-300"
+        >
+          Save Changes
+        </button>
+      </div>
+    </div>
+
+    <!-- Address Book -->
+    <div
+      class="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-white/20"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-handy-navy-800 flex items-center">
+          <ion-icon
+            name="location-outline"
+            class="mr-2 text-handy-blue-500"
+          ></ion-icon>
+          Address Book
+        </h3>
+        <button
+          (click)="openAddressModal()"
+          class="bg-handy-blue-500 hover:bg-handy-blue-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition-colors duration-200"
+        >
+          Add Address
+        </button>
+      </div>
+
+      <div *ngIf="addresses.length === 0" class="text-center py-8">
+        <ion-icon
+          name="location-outline"
+          class="text-4xl text-gray-400 mb-2"
+        ></ion-icon>
+        <p class="text-gray-600">No addresses saved yet</p>
+        <p class="text-gray-500 text-sm">
+          Add your first address to get started
+        </p>
+      </div>
+
+      <div *ngIf="addresses.length > 0" class="space-y-3">
+        <div
+          *ngFor="let address of addresses"
+          class="border border-gray-200 rounded-xl p-4 relative"
+          [ngClass]="{ 'border-handy-blue-500 bg-handy-blue-50': address.isDefault }"
+        >
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center mb-2">
+                <span
+                  class="bg-handy-blue-100 text-handy-blue-800 px-2 py-1 rounded-lg text-xs font-medium"
+                >
+                  {{ address.label }}
+                </span>
+                <span
+                  *ngIf="address.isDefault"
+                  class="ml-2 bg-handy-yellow-100 text-handy-yellow-800 px-2 py-1 rounded-lg text-xs font-medium"
+                >
+                  Default
+                </span>
+              </div>
+              <p class="font-medium text-handy-navy-800">
+                {{ address.contactPerson }}
+              </p>
+              <p class="text-sm text-handy-navy-600">
+                {{ address.phoneNumber }}
+              </p>
+              <p class="text-sm text-handy-navy-600 mt-1">
+                {{ address.fullAddress }}
+              </p>
+            </div>
+            <div class="flex space-x-2">
+              <button
+                *ngIf="!address.isDefault"
+                (click)="setDefaultAddress(address)"
+                class="text-handy-blue-500 hover:text-handy-blue-600 text-sm"
+              >
+                Set Default
+              </button>
+              <button
+                (click)="deleteAddress(address)"
+                class="text-red-500 hover:text-red-600"
+              >
+                <ion-icon name="trash-outline"></ion-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Preferences -->
+    <div
+      class="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-white/20"
+    >
+      <h3 class="text-lg font-bold text-handy-navy-800 flex items-center mb-4">
+        <ion-icon
+          name="settings-outline"
+          class="mr-2 text-handy-blue-500"
+        ></ion-icon>
+        Booking Preferences
+      </h3>
+
+      <div class="space-y-4">
+        <div>
+          <p class="font-medium text-handy-navy-700 mb-3">
+            Preferred Service Categories
+          </p>
+          <div class="grid grid-cols-2 gap-2">
+            <div
+              *ngFor="let category of serviceCategories"
+              (click)="togglePreferredCategory(category.id)"
+              class="flex items-center p-3 rounded-xl border cursor-pointer transition-all duration-200"
+              [ngClass]="bookingPreferences.preferredCategories.includes(category.id) ? 
+                'border-handy-blue-500 bg-handy-blue-50' : 
+                'border-gray-200 hover:border-handy-blue-300'"
+            >
+              <ion-icon
+                [name]="category.icon"
+                class="mr-2 text-handy-blue-500"
+              ></ion-icon>
+              <span class="text-sm font-medium">{{ category.name }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p class="font-medium text-handy-navy-700 mb-3">Notifications</p>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-handy-navy-600">Push Notifications</span>
+              <ion-toggle
+                [(ngModel)]="bookingPreferences.pushNotifications"
+                (ionChange)="savePreferences()"
+                color="primary"
+              ></ion-toggle>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-handy-navy-600">Email Notifications</span>
+              <ion-toggle
+                [(ngModel)]="bookingPreferences.emailNotifications"
+                (ionChange)="savePreferences()"
+                color="primary"
+              ></ion-toggle>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-handy-navy-600">SMS Notifications</span>
+              <ion-toggle
+                [(ngModel)]="bookingPreferences.smsNotifications"
+                (ionChange)="savePreferences()"
+                color="primary"
+              ></ion-toggle>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Security -->
+    <div
+      class="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-white/20"
+    >
+      <h3 class="text-lg font-bold text-handy-navy-800 flex items-center mb-4">
+        <ion-icon
+          name="shield-outline"
+          class="mr-2 text-handy-blue-500"
+        ></ion-icon>
+        Account Security
+      </h3>
+
+      <div class="space-y-3">
+        <button
+          (click)="changePassword()"
+          class="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-handy-blue-300 hover:bg-handy-blue-50 transition-all duration-200"
+        >
+          <div class="flex items-center">
+            <ion-icon
+              name="key-outline"
+              class="mr-3 text-handy-blue-500"
+            ></ion-icon>
+            <span class="font-medium text-handy-navy-800">Change Password</span>
+          </div>
+          <ion-icon
+            name="chevron-forward-outline"
+            class="text-gray-400"
+          ></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Support & Help -->
+    <div
+      class="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-white/20"
+    >
+      <h3 class="text-lg font-bold text-handy-navy-800 flex items-center mb-4">
+        <ion-icon
+          name="help-circle-outline"
+          class="mr-2 text-handy-blue-500"
+        ></ion-icon>
+        Support & Help
+      </h3>
+
+      <div class="space-y-3">
+        <button
+          class="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-handy-blue-300 hover:bg-handy-blue-50 transition-all duration-200"
+        >
+          <div class="flex items-center">
+            <ion-icon
+              name="chatbubbles-outline"
+              class="mr-3 text-handy-blue-500"
+            ></ion-icon>
+            <span class="font-medium text-handy-navy-800">Contact Support</span>
+          </div>
+          <ion-icon
+            name="chevron-forward-outline"
+            class="text-gray-400"
+          ></ion-icon>
+        </button>
+
+        <button
+          class="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-handy-blue-300 hover:bg-handy-blue-50 transition-all duration-200"
+        >
+          <div class="flex items-center">
+            <ion-icon
+              name="document-text-outline"
+              class="mr-3 text-handy-blue-500"
+            ></ion-icon>
+            <span class="font-medium text-handy-navy-800">Privacy Policy</span>
+          </div>
+          <ion-icon
+            name="chevron-forward-outline"
+            class="text-gray-400"
+          ></ion-icon>
+        </button>
+
+        <button
+          class="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-handy-blue-300 hover:bg-handy-blue-50 transition-all duration-200"
+        >
+          <div class="flex items-center">
+            <ion-icon
+              name="document-outline"
+              class="mr-3 text-handy-blue-500"
+            ></ion-icon>
+            <span class="font-medium text-handy-navy-800"
+              >Terms of Service</span
+            >
+          </div>
+          <ion-icon
+            name="chevron-forward-outline"
+            class="text-gray-400"
+          ></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Logout Button -->
+    <div class="mb-6">
+      <button
+        (click)="logout()"
+        class="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-4 px-6 rounded-2xl font-bold text-lg shadow-lg transform transition-all duration-300"
+      >
+        <ion-icon name="log-out-outline" class="mr-2"></ion-icon>
+        Logout
+      </button>
+    </div>
+  </div>
+</ion-content>
+
+<!-- Add Address Modal -->
+<ion-modal #addressModal [isOpen]="isAddingAddress">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Add New Address</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="addressModal.dismiss(); isAddingAddress = false">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-handy-navy-700 mb-1"
+            >Address Label</label
+          >
+          <select
+            [(ngModel)]="newAddress.label"
+            class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-handy-blue-500 focus:border-transparent"
+          >
+            <option value="Home">Home</option>
+            <option value="Office">Office</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-handy-navy-700 mb-1"
+            >Contact Person</label
+          >
+          <input
+            [(ngModel)]="newAddress.contactPerson"
+            type="text"
+            class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-handy-blue-500 focus:border-transparent"
+            placeholder="Enter contact person name"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-handy-navy-700 mb-1"
+            >Phone Number</label
+          >
+          <input
+            [(ngModel)]="newAddress.phoneNumber"
+            type="tel"
+            class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-handy-blue-500 focus:border-transparent"
+            placeholder="Enter phone number"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-handy-navy-700 mb-1"
+            >Full Address</label
+          >
+          <textarea
+            [(ngModel)]="newAddress.fullAddress"
+            rows="3"
+            class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-handy-blue-500 focus:border-transparent"
+            placeholder="Enter complete address"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center">
+          <input
+            [(ngModel)]="newAddress.isDefault"
+            type="checkbox"
+            id="isDefault"
+            class="mr-2"
+          />
+          <label for="isDefault" class="text-sm font-medium text-handy-navy-700"
+            >Set as default address</label
+          >
+        </div>
+
+        <button
+          (click)="saveAddress()"
+          class="w-full bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white py-3 px-4 rounded-xl font-medium transition-all duration-300"
+        >
+          Save Address
+        </button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

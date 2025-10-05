@@ -1,0 +1,919 @@
+<ion-content [fullscreen]="true" class="bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative z-0">
+  <!-- Custom Header -->
+  <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6 relative overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"></div>
+      <div class="absolute top-8 right-8 w-20 h-20 bg-white rounded-full opacity-20"></div>
+      <div class="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full translate-x-20 translate-y-20"></div>
+    </div>
+    
+    <div class="relative z-10">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center space-x-4">
+          <button 
+            (click)="goBack()"  
+            class="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm">
+            <ion-icon name="chevron-back" class="text-white text-xl"></ion-icon>
+          </button>
+          <div>
+            <h1 class="text-white text-2xl font-bold">Worker Interview</h1>
+            <p class="text-blue-100 text-sm">Join the HandyHome Team</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <div class="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+            <span class="text-white text-sm font-medium">HandyHome</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Progress Section -->
+      <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-white text-sm font-medium">
+            Step {{ currentStep }} of {{ totalSteps }}
+          </span>
+          <span class="text-blue-100 text-sm font-medium">
+            {{ getProgressPercentage() }}% Complete
+          </span>
+        </div>
+        
+        <!-- Step Indicators -->
+        <div class="flex items-center space-x-2 mb-4">
+          <div 
+            *ngFor="let step of [1,2,3,4]; let i = index" 
+            class="flex-1 relative">
+            <div 
+              class="h-2 rounded-full transition-all duration-500 ease-out"
+              [class]="step <= currentStep ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-sm' : 'bg-white/20'">
+            </div>
+            <div 
+              class="absolute -top-2 left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
+              [class]="step <= currentStep ? 'bg-white text-indigo-600 shadow-lg scale-110' : 'bg-white/30 text-white/70'">
+              <ion-icon 
+                *ngIf="step < currentStep" 
+                name="checkmark" 
+                class="text-indigo-600 text-sm">
+              </ion-icon>
+              <span *ngIf="step >= currentStep">{{ step }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step Labels -->
+        <div class="flex justify-between text-xs text-blue-100 px-3">
+          <span [class]="currentStep >= 1 ? 'text-white font-medium' : ''">Personal</span>
+          <span [class]="currentStep >= 2 ? 'text-white font-medium' : ''">Skills</span>
+          <span [class]="currentStep >= 3 ? 'text-white font-medium' : ''">Verification</span>
+          <span [class]="currentStep >= 4 ? 'text-white font-medium' : ''">Review</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Step 1: Personal Information -->
+  <div *ngIf="currentStep === 1" class="p-6 space-y-6 relative z-10">
+    <!-- Welcome Card -->
+    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl shadow-xl p-6 text-white mb-6">
+      <div class="flex items-center space-x-4">
+        <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
+          <ion-icon name="person-circle" class="text-3xl text-white"></ion-icon>
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold mb-2">Personal Information</h2>
+          <p class="text-indigo-100 text-sm">
+            Tell us about yourself to get started with HandyHome
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition-all duration-300">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-2 rounded-xl">
+          <ion-icon name="document-text" class="text-white text-lg"></ion-icon>
+        </div>
+        <div>
+          <h3 class="text-xl font-semibold text-gray-800">Contact Details</h3>  
+          <p class="text-gray-500 text-sm">We'll use this to connect you with clients</p>
+        </div>
+      </div>
+
+      <form [formGroup]="personalInfoForm" class="space-y-6">
+        <!-- Full Address -->
+        <div class="space-y-3">
+          <label class="flex items-center text-sm font-semibold text-gray-800 space-x-2">
+            <ion-icon name="location" class="text-indigo-600"></ion-icon>
+            <span>Full Address *</span>
+          </label>
+          <div class="relative group">
+            <ion-input
+              formControlName="fullAddress"
+              placeholder="Enter your complete home address"
+              fill="outline"
+              class="w-full transition-all duration-200 rounded-xl"
+              [class.ion-invalid]="personalInfoForm.get('fullAddress')?.invalid && personalInfoForm.get('fullAddress')?.touched"
+              [class.border-green-300]="personalInfoForm.get('fullAddress')?.valid && personalInfoForm.get('fullAddress')?.touched"
+            >
+            </ion-input>
+            <div *ngIf="personalInfoForm.get('fullAddress')?.valid && personalInfoForm.get('fullAddress')?.touched" 
+                 class="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <ion-icon name="checkmark-circle" class="text-green-500 text-lg"></ion-icon>
+            </div>
+          </div>
+          <div
+            *ngIf="personalInfoForm.get('fullAddress')?.invalid && personalInfoForm.get('fullAddress')?.touched"
+            class="bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2 rounded-lg flex items-center animate-fade-in"
+          >
+            <ion-icon name="alert-circle" class="mr-2 text-red-500"></ion-icon>
+            <span>Please provide a complete address (minimum 10 characters)</span>
+          </div>
+        </div>
+
+        <!-- Phone Number -->
+        <div class="space-y-3">
+          <label class="flex items-center text-sm font-semibold text-gray-800 space-x-2">
+            <ion-icon name="call" class="text-indigo-600"></ion-icon>
+            <span>Phone Number *</span>
+          </label>
+          <div class="relative group">
+            <ion-input
+              formControlName="phone"
+              type="tel"
+              placeholder="09123456789"
+              fill="outline"
+              class="w-full transition-all duration-200 rounded-xl"
+              [class.ion-invalid]="personalInfoForm.get('phone')?.invalid && personalInfoForm.get('phone')?.touched"
+              [class.border-green-300]="personalInfoForm.get('phone')?.valid && personalInfoForm.get('phone')?.touched"
+            >
+            </ion-input>
+            <div *ngIf="personalInfoForm.get('phone')?.valid && personalInfoForm.get('phone')?.touched" 
+                 class="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <ion-icon name="checkmark-circle" class="text-green-500 text-lg"></ion-icon>
+            </div>
+          </div>
+          <div
+            *ngIf="personalInfoForm.get('phone')?.invalid && personalInfoForm.get('phone')?.touched"
+            class="bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2 rounded-lg flex items-center animate-fade-in"
+          >
+            <ion-icon name="alert-circle" class="mr-2 text-red-500"></ion-icon>
+            <span>Please enter a valid Philippine mobile number (10-11 digits)</span>
+          </div>
+        </div>
+
+        <!-- Emergency Contact Section -->
+        <div class="bg-gray-50 rounded-2xl p-6 space-y-6 border border-gray-200">
+          <div class="flex items-center space-x-2 mb-4">
+            <ion-icon name="shield-checkmark" class="text-orange-600 text-xl"></ion-icon>
+            <h4 class="text-lg font-semibold text-gray-800">Emergency Contact</h4>
+          </div>
+          
+          <!-- Emergency Contact Name -->
+          <div class="space-y-3">
+            <label class="flex items-center text-sm font-semibold text-gray-800 space-x-2">
+              <ion-icon name="person" class="text-orange-600"></ion-icon>
+              <span>Emergency Contact Name *</span>
+            </label>
+            <div class="relative group">
+              <ion-input
+                formControlName="emergencyContact"
+                placeholder="Full name of emergency contact"
+                fill="outline"
+                class="w-full transition-all duration-200 rounded-xl bg-white"
+                [class.ion-invalid]="personalInfoForm.get('emergencyContact')?.invalid && personalInfoForm.get('emergencyContact')?.touched"
+                [class.border-green-300]="personalInfoForm.get('emergencyContact')?.valid && personalInfoForm.get('emergencyContact')?.touched"
+              >
+              </ion-input>
+              <div *ngIf="personalInfoForm.get('emergencyContact')?.valid && personalInfoForm.get('emergencyContact')?.touched" 
+                   class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <ion-icon name="checkmark-circle" class="text-green-500 text-lg"></ion-icon>
+              </div>
+            </div>
+            <div
+              *ngIf="personalInfoForm.get('emergencyContact')?.invalid && personalInfoForm.get('emergencyContact')?.touched"
+              class="bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2 rounded-lg flex items-center animate-fade-in"
+            >
+              <ion-icon name="alert-circle" class="mr-2 text-red-500"></ion-icon>
+              <span>Please provide your emergency contact's full name</span>
+            </div>
+          </div>
+
+          <!-- Emergency Phone -->
+          <div class="space-y-3">
+            <label class="flex items-center text-sm font-semibold text-gray-800 space-x-2">
+              <ion-icon name="call" class="text-orange-600"></ion-icon>
+              <span>Emergency Contact Phone *</span>
+            </label>
+            <div class="relative group">
+              <ion-input
+                formControlName="emergencyPhone"
+                type="tel"
+                placeholder="09123456789"
+                fill="outline"
+                class="w-full transition-all duration-200 rounded-xl bg-white"
+                [class.ion-invalid]="personalInfoForm.get('emergencyPhone')?.invalid && personalInfoForm.get('emergencyPhone')?.touched"
+                [class.border-green-300]="personalInfoForm.get('emergencyPhone')?.valid && personalInfoForm.get('emergencyPhone')?.touched"
+              >
+              </ion-input>
+              <div *ngIf="personalInfoForm.get('emergencyPhone')?.valid && personalInfoForm.get('emergencyPhone')?.touched" 
+                   class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <ion-icon name="checkmark-circle" class="text-green-500 text-lg"></ion-icon>
+              </div>
+            </div>
+            <div
+              *ngIf="personalInfoForm.get('emergencyPhone')?.invalid && personalInfoForm.get('emergencyPhone')?.touched"
+              class="bg-red-50 border border-red-200 text-red-600 text-xs px-3 py-2 rounded-lg flex items-center animate-fade-in"
+            >
+              <ion-icon name="alert-circle" class="mr-2 text-red-500"></ion-icon>
+              <span>Please enter a valid phone number for your emergency contact</span>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Map Section -->
+    <div class="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition-all duration-300">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-2 rounded-xl">
+          <ion-icon name="location" class="text-white text-lg"></ion-icon>
+        </div>
+        <div>
+          <h3 class="text-xl font-semibold text-gray-800">Your Service Location</h3>
+          <p class="text-gray-500 text-sm">Pin your exact location for accurate job matching</p>
+        </div>
+      </div>
+
+      <!-- Map Container -->
+      <div class="relative">
+        <div
+          class="h-80 rounded-2xl overflow-hidden border-2 transition-all duration-300 shadow-lg"
+          [class]="selectedLocation ? 'border-green-300 shadow-green-100' : 'border-gray-200 hover:border-indigo-300'"
+        >
+          <app-map-picker
+            [initialLocation]="selectedLocation"
+            (locationSelected)="onLocationSelected($event)"
+            class="w-full h-full"
+          >
+          </app-map-picker>
+        </div>
+        
+        <!-- Map Instructions -->
+        <div *ngIf="!selectedLocation" class="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+          <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-gray-200 max-w-sm text-center">
+            <ion-icon name="hand-left" class="text-indigo-600 text-3xl mb-2"></ion-icon>
+            <p class="text-gray-700 text-sm">
+              <strong>Tap anywhere on the map</strong><br>
+              to pin your location
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location Status -->
+      <div class="mt-6">
+        <div
+          *ngIf="selectedLocation"
+          class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4 animate-fade-in"
+        >
+          <div class="flex items-center space-x-3">
+            <div class="bg-green-500 p-2 rounded-full">
+              <ion-icon name="checkmark" class="text-white text-lg"></ion-icon>
+            </div>
+            <div>
+              <p class="text-green-800 font-semibold">Location Successfully Pinned!</p>
+              <p class="text-green-600 text-sm">
+                Coordinates: {{ selectedLocation.lat.toFixed(6) }}, {{ selectedLocation.lng.toFixed(6) }}
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div
+          *ngIf="!selectedLocation"
+          class="bg-orange-50 border border-orange-200 rounded-2xl p-4"
+        >
+          <div class="flex items-center space-x-3">
+            <ion-icon name="information-circle" class="text-orange-500 text-xl"></ion-icon>
+            <div>
+              <p class="text-orange-800 font-medium">Location Required</p>
+              <p class="text-orange-600 text-sm">Please tap on the map to set your service location</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Skills & Services -->
+  <div *ngIf="currentStep === 2" class="p-6 space-y-6 relative z-10">
+    <!-- Welcome Card -->
+    <div class="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-3xl shadow-xl p-6 text-white mb-6">
+      <div class="flex items-center space-x-4">
+        <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
+          <ion-icon name="construct" class="text-3xl text-white"></ion-icon>
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold mb-2">Skills & Services</h2>
+          <p class="text-blue-100 text-sm">
+            Showcase your expertise and set your service area
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition-all duration-300">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="bg-gradient-to-r from-purple-500 to-pink-600 p-2 rounded-xl">
+          <ion-icon name="hammer" class="text-white text-lg"></ion-icon>
+        </div>
+        <div>
+          <h3 class="text-xl font-semibold text-gray-800">Your Expertise</h3>  
+          <p class="text-gray-500 text-sm">Select all services you can professionally provide</p>
+        </div>
+      </div>
+
+      <form [formGroup]="skillsForm" class="space-y-8">
+        <!-- Available Services -->
+        <div class="space-y-4">
+          <label class="flex items-center text-sm font-semibold text-gray-800 space-x-2">
+            <ion-icon name="list" class="text-purple-600"></ion-icon>
+            <span>Services You Provide *</span>
+          </label>
+          <p class="text-gray-500 text-sm mb-4">Select all the services you can professionally provide</p>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div
+              *ngFor="let service of availableServices"
+              (click)="toggleSkill(service)"
+              class="group cursor-pointer transition-all duration-300 ease-in-out rounded-2xl p-4 border-2 hover:shadow-lg"
+              [class]="isSkillSelected(service) ? 
+                'bg-gradient-to-r from-purple-500 to-pink-600 text-white border-purple-500 shadow-lg transform scale-[1.02]' : 
+                'bg-gray-50 text-gray-700 border-gray-200 hover:border-purple-300 hover:bg-purple-50'"
+            >
+              <div class="flex items-center justify-between">
+                <span class="font-medium text-sm">{{ service }}</span>
+                <div 
+                  class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200"
+                  [class]="isSkillSelected(service) ? 'bg-white border-white' : 'border-gray-300 group-hover:border-purple-400'"
+                >
+                  <ion-icon
+                    *ngIf="isSkillSelected(service)"
+                    name="checkmark"
+                    class="text-purple-600 text-sm font-bold"
+                  ></ion-icon>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Skills Counter -->
+          <div *ngIf="getSelectedSkills().length > 0" class="text-center">
+            <div class="inline-flex items-center space-x-2 bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-medium">
+              <ion-icon name="checkmark-circle" class="text-purple-600"></ion-icon>
+              <span>{{ getSelectedSkills().length }} service{{ getSelectedSkills().length > 1 ? 's' : '' }} selected</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Skill -->
+        <div class="bg-gray-50 rounded-2xl p-6 space-y-4 border border-gray-200">
+          <div class="flex items-center space-x-2">
+            <ion-icon name="add-circle" class="text-indigo-600 text-xl"></ion-icon>
+            <h4 class="text-lg font-semibold text-gray-800">Custom Skill</h4>
+          </div>
+          
+          <div class="space-y-3">
+            <label class="flex items-center text-sm font-semibold text-gray-800 space-x-2">
+              <ion-icon name="bulb" class="text-indigo-600"></ion-icon>
+              <span>Add Your Specialty (Optional)</span>
+            </label>
+            <ion-input
+              formControlName="customSkill"
+              placeholder="e.g., Smart Home Installation, Pool Maintenance, etc."
+              fill="outline"
+              class="w-full bg-white rounded-xl"
+            >
+            </ion-input>
+            <p class="text-xs text-gray-500 flex items-center space-x-1">
+              <ion-icon name="information-circle" class="text-gray-400"></ion-icon>
+              <span>Have a specialized skill not listed? Add it here!</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Work Radius -->
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
+          <div class="flex items-center space-x-2 mb-4">
+            <ion-icon name="location" class="text-blue-600 text-xl"></ion-icon>
+            <h4 class="text-lg font-semibold text-gray-800">Service Area</h4>
+          </div>
+          
+          <div class="space-y-6">
+            <div class="text-center">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">
+                Preferred Working Radius
+              </label>
+              <div class="text-4xl font-bold text-blue-600 mb-1">
+                {{ skillsForm.get('workRadius')?.value }}<span class="text-2xl text-gray-500">km</span>
+              </div>
+              <p class="text-sm text-gray-500">Maximum travel distance for jobs</p>
+            </div>
+            
+            <div class="px-4">
+              <ion-range
+                formControlName="workRadius"
+                min="1"
+                max="50"
+                step="1"
+                snaps="true"
+                color="primary"
+                class="w-full"
+              >
+                <ion-label slot="start" class="text-xs text-gray-500 font-medium">1km</ion-label>
+                <ion-label slot="end" class="text-xs text-gray-500 font-medium">50km</ion-label>
+              </ion-range>
+            </div>
+            
+            <div class="bg-white rounded-xl p-4 border border-blue-200">
+              <div class="flex items-center space-x-2">
+                <ion-icon name="information-circle" class="text-blue-500"></ion-icon>
+                <p class="text-sm text-gray-600">
+                  <strong>Tip:</strong> A larger radius means more job opportunities, but longer travel times.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Availability Days -->
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
+          <div class="flex items-center space-x-2 mb-4">
+            <ion-icon name="calendar-clear" class="text-green-600 text-xl"></ion-icon>
+            <h4 class="text-lg font-semibold text-gray-800">Availability</h4>
+          </div>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="flex items-center text-sm font-semibold text-gray-800 space-x-2 mb-3">
+                <ion-icon name="time" class="text-green-600"></ion-icon>
+                <span>Days Available for Work *</span>
+              </label>
+              <p class="text-sm text-gray-600 mb-4">Select all days when you're available to take jobs</p>
+              
+              <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                <div
+                  *ngFor="let day of availableDays"
+                  (click)="toggleDay(day.value)"
+                  class="group cursor-pointer transition-all duration-300 ease-in-out rounded-2xl p-4 border-2 text-center hover:shadow-lg"
+                  [class]="isDaySelected(day.value) ? 
+                    'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-green-500 shadow-lg transform scale-[1.02]' : 
+                    'bg-white text-gray-700 border-gray-200 hover:border-green-300 hover:bg-green-50'"
+                >
+                  <div class="flex flex-col items-center space-y-2">
+                    <div 
+                      class="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-200"
+                      [class]="isDaySelected(day.value) ? 'bg-white border-white' : 'border-gray-300 group-hover:border-green-400'"
+                    >
+                      <ion-icon
+                        *ngIf="isDaySelected(day.value)"
+                        name="checkmark"
+                        class="text-green-600 text-sm font-bold"
+                      ></ion-icon>
+                    </div>
+                    <span class="font-medium text-xs">{{ day.label }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Days Counter -->
+              <div *ngIf="getSelectedDays().length > 0" class="text-center mt-4">
+                <div class="inline-flex items-center space-x-2 bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium">
+                  <ion-icon name="checkmark-circle" class="text-green-600"></ion-icon>
+                  <span>{{ getSelectedDays().length }} day{{ getSelectedDays().length > 1 ? 's' : '' }} selected</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-4 border border-green-200">
+              <div class="flex items-center space-x-2">
+                <ion-icon name="bulb" class="text-yellow-500"></ion-icon>
+                <p class="text-sm text-gray-600">
+                  <strong>Tip:</strong> Being available on weekends typically offers more job opportunities.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Skills Display -->
+        <div
+          *ngIf="getSelectedSkills().length > 0"
+          class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200"
+        >
+          <label class="block text-sm font-semibold text-gray-800 mb-3"
+            >Selected Skills:</label
+          >
+          <div class="flex flex-wrap gap-2">
+            <ion-chip
+              *ngFor="let skill of getSelectedSkills()"
+              class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-medium"
+            >
+              <ion-label>{{ skill }}</ion-label>
+              <ion-icon name="checkmark-circle" class="ml-1"></ion-icon>
+            </ion-chip>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Step 3: Identity Verification -->
+  <div *ngIf="currentStep === 3" class="p-6 space-y-6 relative z-10">
+    <!-- Welcome Card -->
+    <div class="bg-gradient-to-r from-purple-500 to-pink-600 rounded-3xl shadow-xl p-6 text-white mb-6">
+      <div class="flex items-center space-x-4">
+        <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
+          <ion-icon name="shield-checkmark" class="text-3xl text-white"></ion-icon>
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold mb-2">Identity Verification</h2>
+          <p class="text-purple-100 text-sm">
+            Secure verification to protect clients and workers
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition-all duration-300">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-xl">
+          <ion-icon name="camera" class="text-white text-lg"></ion-icon>
+        </div>
+        <div>
+          <h3 class="text-xl font-semibold text-gray-800">Photo Verification</h3>  
+          <p class="text-gray-500 text-sm">Take photos using your device camera</p>
+        </div>
+      </div>
+
+      <form [formGroup]="verificationForm" class="space-y-6">
+        <!-- ID Photo -->
+        <div class="space-y-4">
+          <label class="flex items-center text-sm font-semibold text-gray-800 space-x-2">
+            <ion-icon name="card" class="text-blue-600"></ion-icon>
+            <span>Valid Government ID *</span>
+          </label>
+          
+          <div
+            class="border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 cursor-pointer group"
+            [class]="idPhotoPreview ? 
+              'border-green-400 bg-green-50 hover:bg-green-100' : 
+              'border-gray-300 hover:border-blue-400 hover:bg-blue-50'"
+            (click)="captureIdPhoto()"
+          >
+            <div class="flex flex-col items-center space-y-4">
+              <div 
+                class="p-4 rounded-full transition-all duration-300"
+                [class]="idPhotoPreview ? 
+                  'bg-green-500 text-white' : 
+                  'bg-blue-100 text-blue-600 group-hover:bg-blue-500 group-hover:text-white'"
+              >
+                <ion-icon
+                  name="camera"
+                  class="text-4xl"
+                ></ion-icon>
+              </div>
+              
+              <div class="space-y-2">
+                <h4 class="font-semibold text-gray-800">
+                  {{ idPhotoPreview ? 'ID Photo Captured!' : 'Capture Your ID' }}
+                </h4>
+                <p class="text-sm text-gray-600 max-w-sm">
+                  {{ idPhotoPreview ? 
+                    'Tap to retake your ID photo if needed' : 
+                    'Tap to open camera and take a photo of your government ID' 
+                  }}
+                </p>
+              </div>
+              
+              <button
+                type="button"
+                class="px-6 py-3 rounded-full font-semibold transition-all duration-300 flex items-center space-x-2"
+                [class]="idPhotoPreview ? 
+                  'bg-green-500 text-white hover:bg-green-600 shadow-lg' : 
+                  'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'"
+              >
+                <ion-icon 
+                  [name]="idPhotoPreview ? 'refresh' : 'camera'" 
+                  class="text-lg"
+                ></ion-icon>
+                <span>{{ idPhotoPreview ? 'Retake Photo' : 'Take Photo' }}</span>
+              </button>
+            </div>
+          </div>
+          
+          <div *ngIf="idPhotoPreview" class="flex justify-center animate-fade-in">
+            <div class="bg-white rounded-2xl p-4 shadow-lg border border-green-200">
+              <img
+                [src]="idPhotoPreview"
+                alt="ID Preview"
+                class="max-w-xs max-h-48 rounded-xl object-cover"
+              />
+              <p class="text-center text-sm text-green-600 mt-2 font-medium">
+                ✓ ID Photo Captured Successfully
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Photo -->
+        <div class="space-y-4">
+          <label class="flex items-center text-sm font-semibold text-gray-800 space-x-2">
+            <ion-icon name="person-circle" class="text-purple-600"></ion-icon>
+            <span>Profile Picture *</span>
+          </label>
+          
+          <div
+            class="border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 cursor-pointer group"
+            [class]="profilePhotoPreview ? 
+              'border-green-400 bg-green-50 hover:bg-green-100' : 
+              'border-gray-300 hover:border-purple-400 hover:bg-purple-50'"
+            (click)="captureProfilePhoto()"
+          >
+            <div class="flex flex-col items-center space-y-4">
+              <div 
+                class="p-4 rounded-full transition-all duration-300"
+                [class]="profilePhotoPreview ? 
+                  'bg-green-500 text-white' : 
+                  'bg-purple-100 text-purple-600 group-hover:bg-purple-500 group-hover:text-white'"
+              >
+                <ion-icon
+                  name="camera"
+                  class="text-4xl"
+                ></ion-icon>
+              </div>
+              
+              <div class="space-y-2">
+                <h4 class="font-semibold text-gray-800">
+                  {{ profilePhotoPreview ? 'Profile Photo Captured!' : 'Take Your Selfie' }}
+                </h4>
+                <p class="text-sm text-gray-600 max-w-sm">
+                  {{ profilePhotoPreview ? 
+                    'Tap to retake your selfie if needed' : 
+                    'Tap to open front camera and take your selfie' 
+                  }}
+                </p>
+              </div>
+              
+              <button
+                type="button"
+                class="px-6 py-3 rounded-full font-semibold transition-all duration-300 flex items-center space-x-2"
+                [class]="profilePhotoPreview ? 
+                  'bg-green-500 text-white hover:bg-green-600 shadow-lg' : 
+                  'bg-purple-600 text-white hover:bg-purple-700 shadow-lg hover:shadow-xl'"
+              >
+                <ion-icon 
+                  [name]="profilePhotoPreview ? 'refresh' : 'camera'" 
+                  class="text-lg"
+                ></ion-icon>
+                <span>{{ profilePhotoPreview ? 'Retake Selfie' : 'Take Selfie' }}</span>
+              </button>
+            </div>
+          </div>
+          
+          <div *ngIf="profilePhotoPreview" class="flex justify-center animate-fade-in">
+            <div class="bg-white rounded-2xl p-4 shadow-lg border border-green-200">
+              <img
+                [src]="profilePhotoPreview"
+                alt="Profile Preview"
+                class="w-32 h-32 rounded-full object-cover border-4 border-green-200 mx-auto"
+              />
+              <p class="text-center text-sm text-green-600 mt-2 font-medium">
+                ✓ Profile Photo Captured Successfully
+              </p>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <!-- Photo Tips -->
+      <div class="bg-blue-50 rounded-2xl p-6 border border-blue-200 mt-8">
+        <div class="flex items-center space-x-2 mb-4">
+          <ion-icon name="information-circle" class="text-blue-600 text-xl"></ion-icon>
+          <h4 class="text-lg font-semibold text-gray-800">Photo Guidelines</h4>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-4 text-sm">
+          <div class="space-y-2">
+            <h5 class="font-semibold text-gray-700 flex items-center space-x-1">
+              <ion-icon name="card" class="text-blue-600"></ion-icon>
+              <span>For ID Photo:</span>
+            </h5>
+            <ul class="space-y-1 text-gray-600 ml-6">
+              <li>• Ensure the entire ID is visible</li>
+              <li>• Take photo in good lighting</li>
+              <li>• Avoid glare or shadows</li>
+              <li>• Keep ID flat and straight</li>
+            </ul>
+          </div>
+          
+          <div class="space-y-2">
+            <h5 class="font-semibold text-gray-700 flex items-center space-x-1">
+              <ion-icon name="person-circle" class="text-purple-600"></ion-icon>
+              <span>For Selfie:</span>
+            </h5>
+            <ul class="space-y-1 text-gray-600 ml-6">
+              <li>• Face the camera directly</li>
+              <li>• Ensure good lighting on face</li>
+              <li>• Remove sunglasses/hat</li>
+              <li>• Use a neutral background</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-4 mt-4 border border-blue-200">
+          <div class="flex items-center space-x-2">
+            <ion-icon name="shield-checkmark" class="text-green-600"></ion-icon>
+            <p class="text-sm text-gray-700">
+              <strong>Privacy:</strong> Your photos are encrypted and only used for verification purposes.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Review & Submit -->
+  <div *ngIf="currentStep === 4" class="p-4 space-y-4 relative z-10">
+    <div class="rounded-2xl shadow-lg p-6 bg-white">
+      <h2 class="text-xl font-bold text-gray-800 mb-4">Review & Submit</h2>
+      <p class="text-gray-600 mb-6">
+        Please review your information before submitting your application.
+      </p>
+
+      <!-- Personal Information Summary -->
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">
+          Personal Information
+        </h3>
+        <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+          <p>
+            <span class="font-medium">Address:</span> {{
+            workerProfile.fullAddress }}
+          </p>
+          <p>
+            <span class="font-medium">Phone:</span> {{ workerProfile.phone }}
+          </p>
+          <p>
+            <span class="font-medium">Emergency Contact:</span> {{
+            workerProfile.emergencyContact }}
+          </p>
+          <p>
+            <span class="font-medium">Emergency Phone:</span> {{
+            workerProfile.emergencyPhone }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Skills Summary -->
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">
+          Skills & Services
+        </h3>
+        <div class="bg-gray-50 rounded-lg p-4 space-y-4">
+          <p>
+            <span class="font-medium">Working Radius:</span> {{
+            workerProfile.workRadius }}km
+          </p>
+          
+          <div>
+            <p class="font-medium mb-2">Skills & Services:</p>
+            <div class="flex flex-wrap gap-2">
+              <ion-chip
+                *ngFor="let skill of workerProfile.skills"
+                color="primary"
+                class="text-sm"
+              >
+                <ion-label>{{ skill }}</ion-label>
+              </ion-chip>
+            </div>
+          </div>
+          
+          <div *ngIf="workerProfile.availableDays && workerProfile.availableDays.length > 0">
+            <p class="font-medium mb-2">Available Days:</p>
+            <div class="flex flex-wrap gap-2">
+              <ion-chip
+                *ngFor="let day of workerProfile.availableDays"
+                color="success"
+                class="text-sm"
+              >
+                <ion-icon name="calendar" class="mr-1"></ion-icon>
+                <ion-label>{{ day | titlecase }}</ion-label>
+              </ion-chip>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Photos Summary -->
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">
+          Verification Photos
+        </h3>
+        <div class="bg-gray-50 rounded-lg p-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div *ngIf="idPhotoPreview" class="text-center">
+              <p class="text-sm font-medium text-gray-700 mb-2">ID Photo</p>
+              <img
+                [src]="idPhotoPreview"
+                alt="ID"
+                class="w-full max-w-32 mx-auto rounded-lg shadow"
+              />
+            </div>
+            <div *ngIf="profilePhotoPreview" class="text-center">
+              <p class="text-sm font-medium text-gray-700 mb-2">
+                Profile Picture
+              </p>
+              <img
+                [src]="profilePhotoPreview"
+                alt="Profile"
+                class="w-24 h-24 mx-auto rounded-full shadow object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="mt-8">
+        <ion-button
+          expand="block"
+          size="large"
+          class="submit-btn"
+          [disabled]="isSaving"
+          (click)="submitInterview()"
+        >
+          <ion-spinner
+            *ngIf="isSaving"
+            name="crescent"
+            slot="start"
+          ></ion-spinner>
+          <ion-icon
+            *ngIf="!isSaving"
+            name="checkmark-circle"
+            slot="start"
+          ></ion-icon>
+          {{ isSaving ? 'Submitting Application...' : 'Submit Application' }}
+        </ion-button>
+        <p class="text-center text-xs text-gray-500 mt-3">
+          Your application will be reviewed by our team within 24-48 hours
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Navigation Buttons -->
+  <div
+    class="fixed-navigation border-t border-gray-200 p-6 flex gap-4"
+    *ngIf="currentStep < 4"
+  >
+    <button
+      [disabled]="currentStep === 1"
+      (click)="previousStep()"
+      class="flex-1 h-14 rounded-2xl border-2 font-semibold text-gray-700 transition-all duration-300 flex items-center justify-center space-x-2"
+      [class]="currentStep === 1 ? 
+        'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed' : 
+        'border-gray-300 hover:border-gray-400 hover:bg-gray-50 hover:shadow-md active:scale-95'"
+    >
+      <ion-icon name="chevron-back" class="text-lg"></ion-icon>
+      <span>Previous</span>
+    </button>
+
+    <button
+      [disabled]="isSaving"
+      (click)="nextStep()"
+      class="flex-1 h-14 rounded-2xl font-semibold text-white transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg"
+      [class]="isSaving ? 
+        'bg-gray-400 cursor-not-allowed' : 
+        'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl active:scale-95 transform hover:scale-[1.02]'"
+    >
+      <ion-spinner *ngIf="isSaving" name="crescent" class="w-5 h-5"></ion-spinner>
+      <span *ngIf="!isSaving">{{ currentStep === totalSteps ? 'Submit Application' : 'Continue' }}</span>
+      <span *ngIf="isSaving">Processing...</span>
+      <ion-icon
+        *ngIf="currentStep < totalSteps && !isSaving"
+        name="chevron-forward"
+        class="text-lg"
+      ></ion-icon>
+    </button>
+  </div>
+
+  <!-- Bottom padding to account for fixed navigation -->
+  <div class="h-32" *ngIf="currentStep < 4"></div>
+</ion-content>

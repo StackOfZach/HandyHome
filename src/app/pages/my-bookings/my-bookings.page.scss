@@ -1,0 +1,99 @@
+ion-content {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+
+// Custom scrollbar styling
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+// Card hover effects
+.bg-white\/80 {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// Button hover effects
+button {
+  transition: all 0.3s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// Status badge animations
+.px-3.py-1 {
+  transition: all 0.3s ease;
+}
+
+// Loading spinner
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .flex-1 {
+    min-width: 0;
+  }
+
+  .gap-3 {
+    gap: 0.5rem;
+  }
+}
+
+// Custom gradient backgrounds
+.bg-gradient-handy {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+// Icon styling
+ion-icon {
+  flex-shrink: 0;
+}
+
+// Text truncation for long content
+.text-sm {
+  word-wrap: break-word;
+}
+
+// Border styling
+.border-t {
+  border-top: 1px solid rgba(229, 231, 235, 0.8);
+}
+
+// Backdrop blur enhancement
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
