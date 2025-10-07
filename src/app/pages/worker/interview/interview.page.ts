@@ -464,7 +464,10 @@ export class InterviewPage implements OnInit, OnDestroy {
   private validateAllData(): boolean {
     // Check personal information
     if (!this.personalInfoForm.valid) {
-      console.error('Personal info form is invalid:', this.personalInfoForm.errors);
+      console.error(
+        'Personal info form is invalid:',
+        this.personalInfoForm.errors
+      );
       return false;
     }
 
@@ -493,7 +496,10 @@ export class InterviewPage implements OnInit, OnDestroy {
 
     // Check verification photos
     if (!this.verificationForm.valid) {
-      console.error('Verification form is invalid:', this.verificationForm.errors);
+      console.error(
+        'Verification form is invalid:',
+        this.verificationForm.errors
+      );
       return false;
     }
 
@@ -561,13 +567,13 @@ export class InterviewPage implements OnInit, OnDestroy {
   toggleDay(day: string) {
     const currentDays = this.skillsForm.get('availableDays')?.value || [];
     const dayIndex = currentDays.indexOf(day);
-    
+
     if (dayIndex > -1) {
       currentDays.splice(dayIndex, 1);
     } else {
       currentDays.push(day);
     }
-    
+
     this.skillsForm.patchValue({ availableDays: currentDays });
   }
 
@@ -596,7 +602,7 @@ export class InterviewPage implements OnInit, OnDestroy {
       input.type = 'file';
       input.accept = 'image/*';
       input.capture = 'environment'; // Use back camera for ID photos
-      
+
       input.onchange = (event: any) => {
         const file = event.target.files[0];
         if (file) {
@@ -609,9 +615,8 @@ export class InterviewPage implements OnInit, OnDestroy {
           reader.readAsDataURL(file);
         }
       };
-      
+
       input.click();
-      
     } catch (error: any) {
       console.error('Error capturing ID photo:', error);
       this.showErrorToast('Failed to access camera. Please try again.');
@@ -628,7 +633,7 @@ export class InterviewPage implements OnInit, OnDestroy {
       input.type = 'file';
       input.accept = 'image/*';
       input.capture = 'user'; // Use front camera for selfies
-      
+
       input.onchange = (event: any) => {
         const file = event.target.files[0];
         if (file) {
@@ -641,9 +646,8 @@ export class InterviewPage implements OnInit, OnDestroy {
           reader.readAsDataURL(file);
         }
       };
-      
+
       input.click();
-      
     } catch (error: any) {
       console.error('Error capturing profile photo:', error);
       this.showErrorToast('Failed to access camera. Please try again.');
@@ -673,18 +677,18 @@ export class InterviewPage implements OnInit, OnDestroy {
         status: 'pending_verification',
         interviewCompletedAt: new Date(),
         updatedAt: new Date(),
-        
+
         // Include all completed data
         fullAddress: this.personalInfoForm.get('fullAddress')?.value,
         phone: this.personalInfoForm.get('phone')?.value,
         emergencyContact: this.personalInfoForm.get('emergencyContact')?.value,
         emergencyPhone: this.personalInfoForm.get('emergencyPhone')?.value,
         location: this.selectedLocation!,
-        
+
         skills: this.skillsForm.get('skills')?.value || [],
         workRadius: this.skillsForm.get('workRadius')?.value || 5,
         availableDays: this.skillsForm.get('availableDays')?.value || [],
-        
+
         idPhotoData: this.verificationForm.get('idPhoto')?.value,
         profilePhotoData: this.verificationForm.get('profilePhoto')?.value,
       };

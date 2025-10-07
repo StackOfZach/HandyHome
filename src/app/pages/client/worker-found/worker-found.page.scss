@@ -1,0 +1,675 @@
+// Loading State
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+}
+
+.large-spinner {
+  --size: 48px;
+  --color: var(--ion-color-primary);
+}
+
+.loading-text {
+  margin-top: 1rem;
+  color: var(--ion-color-medium);
+  font-size: 1rem;
+}
+
+// Success Banner
+.success-banner {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(
+    135deg,
+    var(--ion-color-success) 0%,
+    var(--ion-color-success-shade) 100%
+  );
+  color: white;
+  padding: 1.5rem;
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(var(--ion-color-success-rgb), 0.3);
+}
+
+.success-icon {
+  font-size: 3rem;
+  margin-right: 1rem;
+}
+
+.success-content h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.success-content p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.95rem;
+}
+
+// Worker Profile Card
+.worker-profile-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.worker-header {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.worker-avatar {
+  margin-right: 1rem;
+
+  img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--ion-color-primary);
+  }
+}
+
+.avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--ion-color-primary) 0%,
+    var(--ion-color-primary-shade) 100%
+  );
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border: 3px solid var(--ion-color-primary);
+}
+
+.worker-info {
+  flex: 1;
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--ion-color-dark);
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+}
+
+.worker-rating {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+
+  .star-icon {
+    color: #ffd700;
+    font-size: 1rem;
+    margin-right: 0.25rem;
+  }
+
+  span {
+    font-size: 0.9rem;
+    color: var(--ion-color-medium);
+
+    &:first-of-type {
+      color: var(--ion-color-dark);
+      font-weight: 500;
+      margin-right: 0.5rem;
+    }
+  }
+}
+
+.verification-badge {
+  display: flex;
+  align-items: center;
+  color: var(--ion-color-success);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+
+  ion-icon {
+    font-size: 1rem;
+    margin-right: 0.25rem;
+  }
+}
+
+// Worker Contact Information
+.worker-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+
+  .contact-icon {
+    font-size: 0.9rem;
+    margin-right: 0.4rem;
+    color: var(--ion-color-primary);
+    width: 14px;
+  }
+
+  span {
+    font-weight: 400;
+  }
+}
+
+// Worker Skills
+.worker-skills {
+  margin-bottom: 1.5rem;
+
+  h4 {
+    margin: 0 0 0.75rem 0;
+    color: var(--ion-color-dark);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  ion-chip {
+    --background: transparent;
+    --color: var(--ion-color-primary);
+    font-size: 0.8rem;
+  }
+}
+
+// Location Info
+.location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+
+  .info-icon {
+    font-size: 1.25rem;
+    color: var(--ion-color-primary);
+    margin-right: 0.75rem;
+    width: 20px;
+  }
+}
+
+.info-content {
+  display: flex;
+  flex-direction: column;
+
+  .info-label {
+    font-size: 0.8rem;
+    color: var(--ion-color-medium);
+    margin-bottom: 0.1rem;
+  }
+
+  .info-value {
+    font-size: 0.95rem;
+    color: var(--ion-color-dark);
+    font-weight: 500;
+  }
+}
+
+// Status Card
+.status-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+
+  h3 {
+    margin: 0;
+    color: var(--ion-color-dark);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+}
+
+// Booking Timeline
+.booking-timeline {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    top: 24px;
+    bottom: 24px;
+    width: 2px;
+    background: var(--ion-color-light);
+  }
+}
+
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  position: relative;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &.completed {
+    .timeline-dot {
+      background: var(--ion-color-success);
+      border-color: var(--ion-color-success);
+    }
+
+    .timeline-title {
+      color: var(--ion-color-dark);
+      font-weight: 500;
+    }
+  }
+}
+
+.timeline-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ion-color-light);
+  border: 3px solid var(--ion-color-light);
+  margin-right: 1rem;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.timeline-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding-top: 0.1rem;
+}
+
+.timeline-title {
+  font-size: 0.95rem;
+  color: var(--ion-color-medium);
+  margin-bottom: 0.2rem;
+}
+
+.timeline-time {
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+}
+
+// Service Details Card
+.service-details-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+
+  h3 {
+    margin: 0 0 1rem 0;
+    color: var(--ion-color-dark);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+}
+
+.service-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--ion-color-light);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.total-row {
+    border-top: 2px solid var(--ion-color-primary);
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    font-weight: 600;
+
+    .value {
+      color: var(--ion-color-primary);
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.info-row .label {
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}
+
+.info-row .value {
+  font-size: 0.95rem;
+  color: var(--ion-color-dark);
+  font-weight: 500;
+  text-align: right;
+  flex: 1;
+  margin-left: 1rem;
+}
+
+// Action Buttons
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+
+  ion-button {
+    --border-radius: 12px;
+    font-weight: 500;
+  }
+}
+
+// Emergency Info
+.emergency-info {
+  background: var(--ion-color-light);
+  padding: 1rem;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 1rem;
+
+  .shield-icon {
+    font-size: 1.5rem;
+    color: var(--ion-color-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--ion-color-medium);
+    line-height: 1.5;
+
+    strong {
+      color: var(--ion-color-primary);
+    }
+  }
+}
+
+// Real-time Tracking Features
+.status-message {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+
+  .status-chip {
+    --background: rgba(var(--ion-color-success-rgb), 0.1);
+    --color: var(--ion-color-success);
+    font-weight: 500;
+
+    .pulse-icon {
+      animation: pulse 2s infinite;
+      margin-right: 0.25rem;
+    }
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.map-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  gap: 0.5rem;
+}
+
+// Map Card
+.map-card {
+  margin: 1rem 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+
+  .map-title {
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--ion-color-dark);
+
+    .map-title-icon {
+      margin-right: 0.5rem;
+      color: var(--ion-color-primary);
+    }
+  }
+
+  .map-subtitle {
+    color: var(--ion-color-medium);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+  }
+
+  .map-content {
+    padding: 0;
+
+    app-map {
+      display: block;
+      width: 100%;
+      height: 300px;
+    }
+  }
+}
+
+.map-legend {
+  display: flex;
+  justify-content: space-around;
+  padding: 1rem;
+  background: var(--ion-color-light);
+  border-top: 1px solid var(--ion-color-light-shade);
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--ion-color-dark);
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+
+      &.primary {
+        background: var(--ion-color-primary);
+        box-shadow: 0 0 8px rgba(var(--ion-color-primary-rgb), 0.5);
+      }
+
+      &.danger {
+        background: var(--ion-color-danger);
+        box-shadow: 0 0 8px rgba(var(--ion-color-danger-rgb), 0.5);
+      }
+    }
+
+    .legend-line {
+      width: 20px;
+      height: 3px;
+      background: #3388ff;
+      border-radius: 2px;
+      margin-right: 0.5rem;
+      opacity: 0.7;
+    }
+  }
+}
+
+.map-controls-bottom {
+  display: flex;
+  justify-content: space-around;
+  padding: 0.5rem 1rem;
+  background: var(--ion-color-light);
+  gap: 0.5rem;
+
+  ion-button {
+    --color: var(--ion-color-medium);
+    font-size: 0.8rem;
+
+    &:hover {
+      --color: var(--ion-color-primary);
+    }
+  }
+}
+
+// Enhanced Location Info
+.location-info {
+  .info-item {
+    .info-content {
+      .info-value {
+        transition: color 0.3s ease;
+
+        &.eta-success {
+          color: var(--ion-color-success);
+          font-weight: 600;
+        }
+
+        &.eta-warning {
+          color: var(--ion-color-warning);
+          font-weight: 600;
+        }
+
+        &.eta-primary {
+          color: var(--ion-color-primary);
+          font-weight: 600;
+        }
+      }
+    }
+
+    .info-icon {
+      &[color="success"] {
+        color: var(--ion-color-success);
+      }
+
+      &[color="warning"] {
+        color: var(--ion-color-warning);
+      }
+
+      &[color="primary"] {
+        color: var(--ion-color-primary);
+      }
+    }
+  }
+}
+
+// Map Placeholder
+.map-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--ion-color-primary-rgb), 0.1) 0%,
+    rgba(var(--ion-color-secondary-rgb), 0.1) 100%
+  );
+  border-radius: 12px;
+  margin-bottom: 1rem;
+
+  .placeholder-icon {
+    font-size: 3rem;
+    color: var(--ion-color-primary);
+    margin-bottom: 1rem;
+    animation: pulse 2s infinite;
+  }
+
+  h3 {
+    color: var(--ion-color-dark);
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  p {
+    color: var(--ion-color-medium);
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+
+    &:last-child {
+      font-weight: 500;
+      color: var(--ion-color-primary);
+      margin-top: 1rem;
+    }
+  }
+}
+
+// Error State
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  text-align: center;
+
+  .error-icon {
+    font-size: 4rem;
+    color: var(--ion-color-danger);
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    color: var(--ion-color-dark);
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: var(--ion-color-medium);
+    margin-bottom: 1.5rem;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .map-legend {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .map-controls {
+    flex-direction: column;
+    gap: 0.75rem;
+
+    ion-button {
+      width: 100%;
+    }
+  }
+}

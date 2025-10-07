@@ -1,0 +1,237 @@
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-blue-50 via-white to-indigo-50"
+>
+  <!-- Header -->
+  <div
+    class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-8 relative overflow-hidden"
+  >
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-10">
+      <div
+        class="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"
+      ></div>
+      <div
+        class="absolute top-8 right-8 w-20 h-20 bg-white rounded-full opacity-20"
+      ></div>
+      <div
+        class="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full translate-x-20 translate-y-20"
+      ></div>
+    </div>
+
+    <div class="relative z-10">
+      <div class="text-center">
+        <h1 class="text-white text-2xl font-bold mb-2">Finding Your Worker</h1>
+        <p class="text-blue-100 text-sm">
+          {{ bookingData?.categoryName }} - {{ bookingData?.subService }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="px-6">
+    <!-- Main Search Animation -->
+    <div
+      class="bg-white rounded-3xl shadow-xl p-8 mb-6 text-center relative overflow-hidden"
+    >
+      <!-- Animated Background -->
+      <div
+        class="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-50"
+      ></div>
+
+      <div class="relative z-10">
+        <!-- Pulse Animation -->
+        <div class="relative flex items-center justify-center mb-6">
+          <div
+            class="absolute w-32 h-32 bg-blue-200 rounded-full animate-ping opacity-25"
+          ></div>
+          <div
+            class="absolute w-24 h-24 bg-blue-300 rounded-full animate-ping opacity-50 animation-delay-1000"
+          ></div>
+          <div
+            class="absolute w-16 h-16 bg-blue-400 rounded-full animate-pulse"
+          ></div>
+          <div
+            class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg"
+          >
+            <ion-icon name="search" class="text-white text-xl"></ion-icon>
+          </div>
+        </div>
+
+        <!-- Dynamic Search Text -->
+        <h2 class="text-xl font-bold text-gray-800 mb-2">
+          {{ animationText[currentAnimationIndex] }}
+        </h2>
+        <p class="text-gray-600 mb-4">{{ searchProgress }}</p>
+
+        <!-- Search Stats -->
+        <div class="flex justify-center space-x-6 mb-4">
+          <div class="text-center">
+            <div class="text-lg font-bold text-blue-600">
+              {{ getTimeElapsedText() }}
+            </div>
+            <div class="text-xs text-gray-500">Elapsed</div>
+          </div>
+          <div class="text-center">
+            <div class="text-lg font-bold text-indigo-600">
+              {{ getSearchRadiusText() }}
+            </div>
+            <div class="text-xs text-gray-500">Search Area</div>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+          <div
+            class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-1000"
+            [style.width.%]="Math.min((timeElapsed / 60) * 100, 100)"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service Details Card -->
+    <div class="bg-white rounded-2xl shadow-lg p-5 mb-6" *ngIf="bookingData">
+      <div class="flex items-center mb-4">
+        <div
+          class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center mr-3"
+        >
+          <ion-icon name="clipboard" class="text-white"></ion-icon>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800">Your Request</h3>
+      </div>
+
+      <div class="space-y-3">
+        <div
+          class="flex justify-between items-center py-2 border-b border-gray-100"
+        >
+          <span class="text-gray-600">Service:</span>
+          <span class="font-medium text-gray-800"
+            >{{ bookingData.categoryName }}</span
+          >
+        </div>
+        <div
+          class="flex justify-between items-center py-2 border-b border-gray-100"
+        >
+          <span class="text-gray-600">Type:</span>
+          <span class="font-medium text-gray-800"
+            >{{ bookingData.subService }}</span
+          >
+        </div>
+        <div
+          class="flex justify-between items-center py-2 border-b border-gray-100"
+        >
+          <span class="text-gray-600">Duration:</span>
+          <span class="font-medium text-gray-800"
+            >{{ bookingData.estimatedDuration }}</span
+          >
+        </div>
+        <div class="flex justify-between items-center py-2">
+          <span class="text-gray-600">Total Cost:</span>
+          <span class="font-bold text-green-600"
+            >₱{{ bookingData.pricing?.total | number:'1.2-2' }}</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Card -->
+    <div
+      class="bg-white rounded-2xl shadow-lg p-5 mb-6"
+      *ngIf="bookingData?.location"
+    >
+      <div class="flex items-center mb-4">
+        <div
+          class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3"
+        >
+          <ion-icon name="location" class="text-white"></ion-icon>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800">Service Location</h3>
+      </div>
+
+      <div class="bg-green-50 rounded-xl p-4">
+        <p class="text-gray-700 font-medium">
+          {{ bookingData?.location?.address }}
+        </p>
+        <div class="flex items-center mt-2 text-sm text-gray-600">
+          <ion-icon name="navigate-outline" class="mr-1"></ion-icon>
+          <span>Workers will be notified within {{ searchRadius }}km</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- What's Happening Card -->
+    <div class="bg-white rounded-2xl shadow-lg p-5 mb-6">
+      <div class="flex items-center mb-4">
+        <div
+          class="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-600 rounded-lg flex items-center justify-center mr-3"
+        >
+          <ion-icon name="information-circle" class="text-white"></ion-icon>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800">What's Happening</h3>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex items-center">
+          <div
+            class="w-2 h-2 bg-green-500 rounded-full mr-3 animate-pulse"
+          ></div>
+          <span class="text-sm text-gray-700"
+            >Scanning for qualified workers</span
+          >
+        </div>
+        <div class="flex items-center">
+          <div
+            class="w-2 h-2 bg-blue-500 rounded-full mr-3 animate-pulse animation-delay-500"
+          ></div>
+          <span class="text-sm text-gray-700"
+            >Sending notifications to available professionals</span
+          >
+        </div>
+        <div class="flex items-center">
+          <div
+            class="w-2 h-2 bg-indigo-500 rounded-full mr-3 animate-pulse animation-delay-1000"
+          ></div>
+          <span class="text-sm text-gray-700"
+            >Waiting for worker confirmation</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="space-y-3 pb-8">
+      <button
+        (click)="cancelBooking()"
+        class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200"
+      >
+        <div class="flex items-center justify-center">
+          <ion-icon name="close-circle" class="text-xl mr-2"></ion-icon>
+          <span>Cancel Booking</span>
+        </div>
+      </button>
+    </div>
+  </div>
+</ion-content>
+
+<style>
+  .animation-delay-500 {
+    animation-delay: 0.5s;
+  }
+
+  .animation-delay-1000 {
+    animation-delay: 1s;
+  }
+
+  @keyframes ping {
+    75%,
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+
+  .animate-ping {
+    animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+</style>

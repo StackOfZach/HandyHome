@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { AdminDashboardPageRoutingModule } from './dashboard-routing.module';
 import { AdminDashboardPage } from './dashboard.page';
@@ -9,6 +9,7 @@ import { AdminDashboardPage } from './dashboard.page';
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     IonicModule,
     AdminDashboardPageRoutingModule,
   ],

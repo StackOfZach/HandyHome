@@ -1,0 +1,869 @@
+<ion-content [fullscreen]="true">
+  <!-- Custom Header matching theme -->
+  <div
+    class="pt-3 pb-4 px-4 rounded-bl-3xl rounded-br-3xl mb-4 shadow-lg"
+    style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)"
+  >
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center">
+        <button
+          (click)="goBack()"
+          class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 mr-3"
+        >
+          <ion-icon
+            name="arrow-back-outline"
+            class="text-white text-xl"
+          ></ion-icon>
+        </button>
+        <h1 class="text-white text-xl font-bold">Confirm Booking</h1>
+      </div>
+      <div class="text-right bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1">
+        <p class="text-white/80 text-xs">Quick Booking</p>
+        <p class="text-white text-sm font-semibold">Step 3 of 3</p>
+      </div>
+    </div>
+    <p class="text-white/90 text-sm ml-14">Review and confirm your booking</p>
+  </div>
+
+  <div
+    class="px-4 pb-4"
+    *ngIf="category && selectedService && selectedLocation"
+  >
+    <!-- Main Booking Summary Card -->
+    <div style="margin-bottom: 24px">
+      <div
+        style="
+          background: linear-gradient(135deg, #ffffff, #f9fafb);
+          border-radius: 24px;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+            0 4px 6px -2px rgba(0, 0, 0, 0.05);
+          padding: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.5);
+          position: relative;
+          overflow: hidden;
+        "
+      >
+        <!-- Decorative background elements -->
+        <div
+          style="
+            position: absolute;
+            top: -24px;
+            right: -24px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            opacity: 0.1;
+          "
+          [style.background]="category.color"
+        ></div>
+        <div
+          style="
+            position: absolute;
+            bottom: -16px;
+            left: -16px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            opacity: 0.05;
+          "
+          [style.background]="category.color"
+        ></div>
+
+        <div style="position: relative; z-index: 10">
+          <!-- Service Header -->
+          <div
+            style="
+              display: flex;
+              align-items: flex-start;
+              justify-content: space-between;
+              margin-bottom: 16px;
+            "
+          >
+            <div style="display: flex; align-items: center; flex: 1">
+              <div
+                style="
+                  width: 64px;
+                  height: 64px;
+                  border-radius: 16px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  margin-right: 16px;
+                  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                "
+                [style.background]="getCardGradient(category.color)"
+              >
+                <ion-icon
+                  [name]="category.icon"
+                  style="font-size: 32px; color: white"
+                ></ion-icon>
+              </div>
+              <div style="flex: 1">
+                <h1
+                  style="
+                    font-size: 20px;
+                    font-weight: bold;
+                    color: #1e293b;
+                    margin-bottom: 4px;
+                  "
+                >
+                  {{ category.name }}
+                </h1>
+                <p style="color: #64748b; font-size: 16px; font-weight: 500">
+                  {{ selectedService }}
+                </p>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    margin-top: 8px;
+                    font-size: 14px;
+                    color: #94a3b8;
+                  "
+                >
+                  <ion-icon
+                    name="time-outline"
+                    style="margin-right: 4px; color: #3b82f6"
+                  ></ion-icon>
+                  <span>{{ formatDuration(category.estimatedDuration) }}</span>
+                </div>
+              </div>
+            </div>
+            <div
+              style="
+                text-align: right;
+                background: linear-gradient(135deg, #eff6ff, #dbeafe);
+                border-radius: 16px;
+                padding: 12px 16px;
+              "
+            >
+              <p style="font-size: 12px; color: #94a3b8; font-weight: 500">
+                Total Amount
+              </p>
+              <p style="font-size: 24px; font-weight: bold; color: #2563eb">
+                {{ formatPrice(totalPrice) }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Location Summary -->
+          <div
+            style="
+              background: rgba(255, 255, 255, 0.7);
+              backdrop-filter: blur(4px);
+              border-radius: 16px;
+              padding: 12px;
+              border: 1px solid rgba(255, 255, 255, 0.3);
+            "
+          >
+            <div style="display: flex; align-items: center">
+              <ion-icon
+                name="location"
+                style="color: #10b981; margin-right: 8px"
+              ></ion-icon>
+              <span
+                style="
+                  font-size: 14px;
+                  color: #374151;
+                  font-weight: 500;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                "
+                >{{ selectedLocation.address }}</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Top accent border -->
+        <div
+          style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            border-radius: 24px 24px 0 0;
+          "
+          [style.background]="getCardGradient(category.color)"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Detailed Location Info -->
+    <div style="margin-bottom: 20px">
+      <div
+        style="
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(4px);
+          border-radius: 16px;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          padding: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.4);
+        "
+      >
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <div style="display: flex; align-items: center; flex: 1">
+            <div
+              style="
+                width: 48px;
+                height: 48px;
+                background: linear-gradient(135deg, #10b981, #059669);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 12px;
+                box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+              "
+            >
+              <ion-icon
+                name="map"
+                style="font-size: 18px; color: white"
+              ></ion-icon>
+            </div>
+            <div style="flex: 1; min-width: 0">
+              <h3
+                style="
+                  font-size: 16px;
+                  font-weight: 600;
+                  color: #1e293b;
+                  margin-bottom: 4px;
+                "
+              >
+                Service Location
+              </h3>
+              <p
+                style="
+                  font-size: 14px;
+                  color: #475569;
+                  line-height: 1.5;
+                  margin-bottom: 4px;
+                "
+              >
+                {{ selectedLocation.address }}
+              </p>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  font-size: 12px;
+                  color: #94a3b8;
+                "
+              >
+                <span *ngIf="selectedLocation.city"
+                  >{{ selectedLocation.city }}<span
+                    *ngIf="selectedLocation.province"
+                    >, {{ selectedLocation.province }}</span
+                  ></span
+                >
+                <span style="margin: 0 8px" *ngIf="selectedLocation.city"
+                  >•</span
+                >
+                <span
+                  >{{ selectedLocation.latitude.toFixed(4) }}, {{
+                  selectedLocation.longitude.toFixed(4) }}</span
+                >
+              </div>
+            </div>
+          </div>
+          <button
+            style="
+              color: #3b82f6;
+              font-weight: 500;
+              font-size: 14px;
+              padding: 8px 12px;
+              border-radius: 12px;
+              border: none;
+              background: transparent;
+              cursor: pointer;
+              transition: all 0.2s;
+            "
+            (click)="editLocation()"
+            onmouseover="this.style.color='#2563eb'; this.style.background='#eff6ff'"
+            onmouseout="this.style.color='#3b82f6'; this.style.background='transparent'"
+          >
+            <ion-icon
+              name="pencil-outline"
+              style="margin-right: 4px"
+            ></ion-icon>
+            Edit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price Breakdown -->
+    <div style="margin-bottom: 20px">
+      <div
+        style="
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(4px);
+          border-radius: 16px;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.4);
+          overflow: hidden;
+        "
+      >
+        <div
+          style="
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            padding: 16px;
+          "
+        >
+          <div style="display: flex; align-items: center">
+            <ion-icon
+              name="receipt-outline"
+              style="color: white; font-size: 20px; margin-right: 12px"
+            ></ion-icon>
+            <h3 style="color: white; font-weight: 600; font-size: 16px">
+              Price Breakdown
+            </h3>
+          </div>
+        </div>
+
+        <div style="padding: 16px">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 8px 0;
+            "
+          >
+            <span style="color: #475569; font-weight: 500">Base Service</span>
+            <span style="font-weight: 600; color: #1e293b"
+              >{{ formatPrice(basePrice) }}</span
+            >
+          </div>
+
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 8px 0;
+            "
+          >
+            <div style="display: flex; align-items: center">
+              <span style="color: #475569; font-weight: 500; margin-right: 8px"
+                >Service Charge</span
+              >
+              <ion-icon
+                name="information-circle-outline"
+                style="color: #94a3b8; font-size: 14px"
+              ></ion-icon>
+            </div>
+            <span style="font-weight: 600; color: #1e293b"
+              >{{ formatPrice(serviceCharge) }}</span
+            >
+          </div>
+
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 8px 0;
+            "
+          >
+            <span style="color: #475569; font-weight: 500">Platform Fee</span>
+            <span style="font-weight: 600; color: #1e293b"
+              >{{ formatPrice(50) }}</span
+            >
+          </div>
+
+          <div
+            style="
+              border-top: 2px solid #dbeafe;
+              padding-top: 12px;
+              margin-top: 12px;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: linear-gradient(90deg, #eff6ff, #dbeafe);
+                border-radius: 12px;
+                padding: 12px;
+              "
+            >
+              <span style="font-weight: bold; color: #1e293b; font-size: 18px"
+                >Total Amount</span
+              >
+              <span style="font-weight: bold; color: #2563eb; font-size: 20px"
+                >{{ formatPrice(totalPrice) }}</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service Guarantees -->
+    <div style="margin-bottom: 20px">
+      <div
+        style="
+          background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+          border-radius: 16px;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          border: 1px solid #d1d5db;
+          padding: 20px;
+        "
+      >
+        <div style="display: flex; align-items: center; margin-bottom: 16px">
+          <div
+            style="
+              width: 48px;
+              height: 48px;
+              background: linear-gradient(135deg, #8b5cf6, #6366f1);
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-right: 12px;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            "
+          >
+            <ion-icon
+              name="shield-checkmark"
+              style="color: white; font-size: 18px"
+            ></ion-icon>
+          </div>
+          <h3 style="font-size: 16px; font-weight: bold; color: #1e293b">
+            Service Guarantees
+          </h3>
+        </div>
+
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+          "
+        >
+          <div
+            style="
+              text-align: center;
+              background: rgba(255, 255, 255, 0.6);
+              backdrop-filter: blur(4px);
+              border-radius: 12px;
+              padding: 12px;
+            "
+          >
+            <div
+              style="
+                width: 40px;
+                height: 40px;
+                background: linear-gradient(135deg, #3b82f6, #2563eb);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 8px;
+                box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+              "
+            >
+              <ion-icon name="checkmark-done" style="color: white"></ion-icon>
+            </div>
+            <p style="font-weight: 600; color: #1e293b; font-size: 14px">
+              Verified
+            </p>
+            <p style="color: #94a3b8; font-size: 12px">Professional</p>
+          </div>
+
+          <div
+            style="
+              text-align: center;
+              background: rgba(255, 255, 255, 0.6);
+              backdrop-filter: blur(4px);
+              border-radius: 12px;
+              padding: 12px;
+            "
+          >
+            <div
+              style="
+                width: 40px;
+                height: 40px;
+                background: linear-gradient(135deg, #10b981, #059669);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 8px;
+                box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+              "
+            >
+              <ion-icon name="shield" style="color: white"></ion-icon>
+            </div>
+            <p style="font-weight: 600; color: #1e293b; font-size: 14px">
+              Insured
+            </p>
+            <p style="color: #94a3b8; font-size: 12px">Protected</p>
+          </div>
+
+          <div
+            style="
+              text-align: center;
+              background: rgba(255, 255, 255, 0.6);
+              backdrop-filter: blur(4px);
+              border-radius: 12px;
+              padding: 12px;
+            "
+          >
+            <div
+              style="
+                width: 40px;
+                height: 40px;
+                background: linear-gradient(135deg, #f59e0b, #ea580c);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 8px;
+                box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+              "
+            >
+              <ion-icon name="star" style="color: white"></ion-icon>
+            </div>
+            <p style="font-weight: 600; color: #1e293b; font-size: 14px">
+              Quality
+            </p>
+            <p style="color: #94a3b8; font-size: 12px">Guaranteed</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What Happens Next -->
+    <div style="margin-bottom: 20px">
+      <div
+        style="
+          background: linear-gradient(135deg, #fef3c7, #fde68a);
+          border-radius: 16px;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          border: 1px solid #f59e0b;
+          padding: 20px;
+        "
+      >
+        <div style="display: flex; align-items: center; margin-bottom: 16px">
+          <div
+            style="
+              width: 48px;
+              height: 48px;
+              background: linear-gradient(135deg, #f97316, #dc2626);
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-right: 12px;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            "
+          >
+            <ion-icon
+              name="time"
+              style="color: white; font-size: 18px"
+            ></ion-icon>
+          </div>
+          <h3 style="font-size: 16px; font-weight: bold; color: #1e293b">
+            What Happens Next?
+          </h3>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              background: rgba(255, 255, 255, 0.6);
+              backdrop-filter: blur(4px);
+              border-radius: 12px;
+              padding: 12px;
+            "
+          >
+            <div
+              style="
+                width: 32px;
+                height: 32px;
+                background: linear-gradient(135deg, #3b82f6, #2563eb);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                margin-right: 12px;
+                box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                font-size: 14px;
+              "
+            >
+              1
+            </div>
+            <p style="color: #374151; font-weight: 500">
+              We'll find available workers in your area
+            </p>
+          </div>
+
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              background: rgba(255, 255, 255, 0.6);
+              backdrop-filter: blur(4px);
+              border-radius: 12px;
+              padding: 12px;
+            "
+          >
+            <div
+              style="
+                width: 32px;
+                height: 32px;
+                background: linear-gradient(135deg, #10b981, #059669);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                margin-right: 12px;
+                box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                font-size: 14px;
+              "
+            >
+              2
+            </div>
+            <p style="color: #374151; font-weight: 500">
+              A qualified worker will accept your booking
+            </p>
+          </div>
+
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              background: rgba(255, 255, 255, 0.6);
+              backdrop-filter: blur(4px);
+              border-radius: 12px;
+              padding: 12px;
+            "
+          >
+            <div
+              style="
+                width: 32px;
+                height: 32px;
+                background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                margin-right: 12px;
+                box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                font-size: 14px;
+              "
+            >
+              3
+            </div>
+            <p style="color: #374151; font-weight: 500">
+              You'll receive worker details & live tracking
+            </p>
+          </div>
+
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              background: rgba(255, 255, 255, 0.6);
+              backdrop-filter: blur(4px);
+              border-radius: 12px;
+              padding: 12px;
+            "
+          >
+            <div
+              style="
+                width: 32px;
+                height: 32px;
+                background: linear-gradient(135deg, #f59e0b, #ea580c);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                margin-right: 12px;
+                box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                font-size: 14px;
+              "
+            >
+              4
+            </div>
+            <p style="color: #374151; font-weight: 500">
+              Service begins at your location
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Important Notice -->
+    <div style="margin-bottom: 24px">
+      <div
+        style="
+          background: linear-gradient(90deg, #fef3c7, #fed7aa);
+          border: 2px solid #fbbf24;
+          border-radius: 16px;
+          padding: 16px;
+          box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        "
+      >
+        <div style="display: flex; align-items: flex-start">
+          <div
+            style="
+              width: 40px;
+              height: 40px;
+              background: linear-gradient(135deg, #f59e0b, #ea580c);
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-right: 12px;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            "
+          >
+            <ion-icon name="information-circle" style="color: white"></ion-icon>
+          </div>
+          <div style="flex: 1">
+            <h4 style="font-weight: bold; color: #92400e; margin-bottom: 8px">
+              Important Notice
+            </h4>
+            <p style="font-size: 14px; color: #a16207; line-height: 1.5">
+              By confirming this booking, you agree to our
+              <span style="font-weight: 600">Terms of Service</span> and
+              <span style="font-weight: 600">Privacy Policy</span>. Payment will
+              be processed securely after service completion.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom spacing for fixed button -->
+    <div class="h-24"></div>
+  </div>
+
+  <!-- Fixed Bottom Action Area -->
+  <div
+    style="
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(
+        to top,
+        white,
+        white,
+        rgba(255, 255, 255, 0.95)
+      );
+      backdrop-filter: blur(4px);
+      border-top: 2px solid #f1f5f9;
+      box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 -4px 6px -2px rgba(0, 0, 0, 0.05);
+    "
+  >
+    <div style="padding: 16px">
+      <div style="display: flex; gap: 16px">
+        <button
+          (click)="goBack()"
+          style="
+            flex: 1;
+            background: linear-gradient(90deg, #f1f5f9, #e2e8f0);
+            color: #1e293b;
+            font-weight: bold;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+              0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s;
+          "
+          onmouseover="this.style.transform='scale(1.02)'; this.style.background='linear-gradient(90deg, #e2e8f0, #cbd5e1)'"
+          onmouseout="this.style.transform='scale(1)'; this.style.background='linear-gradient(90deg, #f1f5f9, #e2e8f0)'"
+        >
+          <ion-icon
+            name="arrow-back-outline"
+            style="margin-right: 8px"
+          ></ion-icon>
+          Back
+        </button>
+        <button
+          (click)="confirmBooking()"
+          [disabled]="isBooking"
+          style="
+            flex: 2;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            color: white;
+            font-weight: bold;
+            padding: 16px 24px;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+              0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+            font-size: 18px;
+          "
+          [style.opacity]="isBooking ? '0.5' : '1'"
+          [style.cursor]="isBooking ? 'not-allowed' : 'pointer'"
+          onmouseover="if(!this.disabled) { this.style.transform='scale(1.02)'; this.style.background='linear-gradient(90deg, #2563eb, #1d4ed8)' }"
+          onmouseout="if(!this.disabled) { this.style.transform='scale(1)'; this.style.background='linear-gradient(90deg, #3b82f6, #2563eb)' }"
+        >
+          <div
+            *ngIf="isBooking"
+            style="
+              animation: spin 1s linear infinite;
+              border-radius: 50%;
+              width: 20px;
+              height: 20px;
+              border: 2px solid white;
+              border-top-color: transparent;
+              margin-right: 8px;
+            "
+          ></div>
+          <span
+            >{{ isBooking ? 'Creating Booking...' : 'Confirm Booking' }}</span
+          >
+          <ion-icon
+            *ngIf="!isBooking"
+            name="checkmark-circle"
+            style="margin-left: 8px; font-size: 20px"
+          ></ion-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</ion-content>

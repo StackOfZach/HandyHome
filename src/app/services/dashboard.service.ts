@@ -9,10 +9,14 @@ import {
   doc,
   getDoc,
   getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
   DocumentData,
   QuerySnapshot,
 } from '@angular/fire/firestore';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { UserProfile } from './auth.service';
 
 export interface BookingDetails {
   id: string;
@@ -195,6 +199,71 @@ export class DashboardService {
   }
 
   /**
+   * Load user's active quick bookings
+   */
+  loadActiveQuickBookings(userId: string): Observable<BookingDetails[]> {
+    const quickBookingsRef = collection(this.firestore, 'quickbookings');
+    const q = query(
+      quickBookingsRef,
+      where('clientId', '==', userId),
+      where('status', 'in', [
+        'searching',
+        'accepted',
+        'on-the-way',
+        'in-progress',
+      ]),
+      orderBy('createdAt', 'desc')
+    );
+
+    return new Observable((observer) => {
+      const unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          const quickBookings: BookingDetails[] = [];
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            // Convert quick booking format to regular booking format for display
+            quickBookings.push({
+              id: doc.id,
+              clientId: data['clientId'],
+              workerId: data['assignedWorker'] || '',
+              workerName: data['workerName'] || 'Searching...',
+              workerAvatar: data['workerAvatar'],
+              serviceType: data['subService'] || data['categoryName'],
+              serviceCategory: data['categoryName'],
+              status:
+                data['status'] === 'searching' ? 'pending' : data['status'],
+              scheduledDate:
+                data['scheduledDate']?.toDate() || data['createdAt']?.toDate(),
+              scheduledTime: data['scheduledTime'] || 'ASAP',
+              address: data['location']?.address || '',
+              coordinates: data['location']
+                ? {
+                    latitude: data['location'].lat,
+                    longitude: data['location'].lng,
+                  }
+                : undefined,
+              description: data['subService'] || '',
+              price: data['pricing']?.total || 0,
+              estimatedDuration: data['estimatedDuration'] || 60,
+              createdAt: data['createdAt']?.toDate(),
+              updatedAt:
+                data['updatedAt']?.toDate() || data['createdAt']?.toDate(),
+            } as BookingDetails);
+          });
+          observer.next(quickBookings);
+        },
+        (error) => {
+          console.error('Error loading quick bookings:', error);
+          observer.error(error);
+        }
+      );
+
+      return { unsubscribe };
+    });
+  }
+
+  /**
    * Load user's recent workers (from booking history)
    */
   async loadRecentWorkers(userId: string): Promise<WorkerProfile[]> {
@@ -302,8 +371,8 @@ export class DashboardService {
    */
   async getServiceCategories(): Promise<ServiceCategory[]> {
     try {
-      const categoriesRef = collection(this.firestore, 'service_categories');
-      const q = query(categoriesRef, where('isActive', '==', true));
+      const categoriesRef = collection(this.firestore, 'serviceCategories');
+      const q = query(categoriesRef, orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
 
       const categories: ServiceCategory[] = [];
@@ -324,9 +393,7 @@ export class DashboardService {
   /**
    * Get worker's current location for tracking
    */
-  async getWorkerLocation(
-    workerId: string
-  ): Promise<{
+  async getWorkerLocation(workerId: string): Promise<{
     latitude: number;
     longitude: number;
     lastUpdated: Date;
@@ -443,7 +510,7 @@ export class DashboardService {
       // Get all users and separate clients and workers
       const usersRef = collection(this.firestore, 'users');
       const usersSnapshot = await getDocs(usersRef);
-      
+
       let totalClients = 0;
       let totalWorkers = 0;
       let pendingVerifications = 0;
@@ -463,7 +530,7 @@ export class DashboardService {
       // Get booking statistics
       const bookingsRef = collection(this.firestore, 'bookings');
       const bookingsSnapshot = await getDocs(bookingsRef);
-      
+
       let activeBookings = 0;
       let completedBookings = 0;
       let totalRevenue = 0;
@@ -471,8 +538,10 @@ export class DashboardService {
       bookingsSnapshot.forEach((doc) => {
         const booking = doc.data();
         const status = booking['status'];
-        
-        if (['pending', 'accepted', 'on-the-way', 'in-progress'].includes(status)) {
+
+        if (
+          ['pending', 'accepted', 'on-the-way', 'in-progress'].includes(status)
+        ) {
           activeBookings++;
         } else if (status === 'completed') {
           completedBookings++;
@@ -499,8 +568,137 @@ export class DashboardService {
         pendingVerifications: 12,
         activeBookings: 34,
         completedBookings: 567,
-        totalRevenue: 125430.50
+        totalRevenue: 125430.5,
       };
+    }
+  }
+
+  /**
+   * Add a new service category
+   */
+  async addServiceCategory(service: ServiceCategory): Promise<void> {
+    try {
+      const serviceRef = doc(this.firestore, 'serviceCategories', service.id);
+      await setDoc(serviceRef, {
+        ...service,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    } catch (error) {
+      console.error('Error adding service category:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an existing service category
+   */
+  async updateServiceCategory(service: ServiceCategory): Promise<void> {
+    try {
+      const serviceRef = doc(this.firestore, 'serviceCategories', service.id);
+      await updateDoc(serviceRef, {
+        ...service,
+        updatedAt: new Date(),
+      });
+    } catch (error) {
+      console.error('Error updating service category:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a service category
+   */
+  async deleteServiceCategory(serviceId: string): Promise<void> {
+    try {
+      const serviceRef = doc(this.firestore, 'serviceCategories', serviceId);
+      await deleteDoc(serviceRef);
+    } catch (error) {
+      console.error('Error deleting service category:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get users by role
+   */
+  async getUsersByRole(
+    role: 'client' | 'worker' | 'admin'
+  ): Promise<UserProfile[]> {
+    try {
+      console.log(`Getting users with role: ${role}`);
+      const usersRef = collection(this.firestore, 'users');
+
+      // First try with role filter only (no orderBy to avoid index issues)
+      const q = query(usersRef, where('role', '==', role));
+      const querySnapshot = await getDocs(q);
+
+      console.log(`Found ${querySnapshot.size} documents with role filter`);
+
+      // If no results, try getting all users and filter manually
+      if (querySnapshot.size === 0) {
+        console.log('No results with role filter, trying to get all users...');
+        const allUsersSnapshot = await getDocs(usersRef);
+        console.log(`Found ${allUsersSnapshot.size} total documents`);
+
+        const users: UserProfile[] = [];
+        allUsersSnapshot.forEach((doc) => {
+          const userData = doc.data();
+          console.log('All users doc:', doc.id, userData);
+          if (userData['role'] === role) {
+            // Convert Firestore timestamps to Date objects
+            const convertedUserData = {
+              ...userData,
+              uid: doc.id,
+              createdAt: userData['createdAt']?.toDate
+                ? userData['createdAt'].toDate()
+                : new Date(),
+              savedLocations:
+                userData['savedLocations']?.map((location: any) => ({
+                  ...location,
+                  createdAt: location.createdAt?.toDate
+                    ? location.createdAt.toDate()
+                    : new Date(),
+                })) || [],
+            };
+
+            users.push(convertedUserData as UserProfile);
+          }
+        });
+
+        console.log(`Filtered ${users.length} users with role ${role}`);
+        return users;
+      }
+
+      const users: UserProfile[] = [];
+      querySnapshot.forEach((doc) => {
+        console.log('User doc:', doc.id, doc.data());
+        const userData = doc.data();
+
+        // Convert Firestore timestamps to Date objects
+        const convertedUserData = {
+          uid: doc.id,
+          ...userData,
+          createdAt: userData['createdAt']?.toDate
+            ? userData['createdAt'].toDate()
+            : new Date(),
+          savedLocations:
+            userData['savedLocations']?.map((location: any) => ({
+              ...location,
+              createdAt: location.createdAt?.toDate
+                ? location.createdAt.toDate()
+                : new Date(),
+            })) || [],
+        };
+
+        users.push(convertedUserData as UserProfile);
+      });
+
+      console.log(`Returning ${users.length} users:`, users);
+      return users;
+    } catch (error) {
+      console.error(`Error loading ${role} users:`, error);
+      return [];
     }
   }
 }

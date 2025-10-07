@@ -1,0 +1,155 @@
+ion-content {
+  --background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #fefce8 100%);
+}
+
+.handy-navy-800 {
+  color: #1e293b;
+}
+
+.handy-navy-700 {
+  color: #334155;
+}
+
+.handy-navy-600 {
+  color: #475569;
+}
+
+.handy-navy-500 {
+  color: #64748b;
+}
+
+.handy-navy-100 {
+  background-color: #f1f5f9;
+}
+
+.handy-navy-200 {
+  background-color: #e2e8f0;
+}
+
+// Custom animations
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Custom card hover effects
+.booking-card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+}
+
+// Status badge styles
+.status-badge {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: left 0.5s;
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
+}
+
+// Button styles
+.action-button {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// Custom scrollbar for webkit browsers
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+}
+
+// Loading animation
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Stats cards animation
+.stats-card {
+  animation: slideInUp 0.6s ease-out;
+  animation-fill-mode: both;
+
+  &:nth-child(1) {
+    animation-delay: 0.1s;
+  }
+  &:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  &:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  &:nth-child(4) {
+    animation-delay: 0.4s;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

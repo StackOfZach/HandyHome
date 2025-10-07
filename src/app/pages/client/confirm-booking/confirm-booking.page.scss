@@ -1,0 +1,136 @@
+ion-content {
+  --background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #fefce8 100%);
+}
+
+ion-toolbar {
+  --background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+  --color: white;
+}
+
+// Pricing breakdown card styling
+.pricing-card {
+  border-left: 4px solid #3b82f6;
+}
+
+// Service details icons
+.service-icon {
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+// Step indicator styling
+.step-indicator {
+  position: relative;
+
+  &:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: 32px;
+    width: 2px;
+    height: 20px;
+    background-color: #e2e8f0;
+  }
+}
+
+// Fixed bottom area
+.bottom-actions {
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 -2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+// Loading spinner for booking button
+.booking-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Card hover effects
+.info-card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+}
+
+// Price highlight animation
+.price-highlight {
+  animation: pulse-price 2s ease-in-out infinite;
+}
+
+@keyframes pulse-price {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+// Notice card styling
+.notice-card {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b;
+}
+
+// Button animations
+.btn-confirm {
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3),
+      0 4px 6px -2px rgba(59, 130, 246, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-back {
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #f1f5f9;
+    transform: translateY(-1px);
+  }
+}
+
+// Service overview card background pattern
+.service-overview {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.1) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+}

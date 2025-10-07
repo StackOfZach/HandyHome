@@ -431,12 +431,21 @@ export class BookServicePage implements OnInit {
   }
 
   async onMapPinPlaced(pin: MapPin) {
-    this.selectedMapCoordinates = pin.coordinates;
+    const coords = pin.coordinates || pin.position;
+    if (!coords) return;
+
+    // Convert to LocationCoordinates format
+    const locationCoords: LocationCoordinates = {
+      latitude: coords.latitude ?? coords.lat ?? 0,
+      longitude: coords.longitude ?? coords.lng ?? 0,
+    };
+
+    this.selectedMapCoordinates = locationCoords;
 
     try {
       // Try to get address from coordinates
       const geocodeResult = await this.locationService.reverseGeocode(
-        pin.coordinates
+        locationCoords
       );
 
       if (geocodeResult) {

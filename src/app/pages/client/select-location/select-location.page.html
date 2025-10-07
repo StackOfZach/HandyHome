@@ -1,0 +1,264 @@
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+>
+  <!-- Custom Header matching theme -->
+  <div
+    class="pt-3 pb-4 px-4 rounded-bl-3xl rounded-br-3xl mb-4 shadow-lg"
+    style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)"
+  >
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center">
+        <button
+          (click)="goBack()"
+          class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 mr-3"
+        >
+          <ion-icon
+            name="arrow-back-outline"
+            class="text-white text-xl"
+          ></ion-icon>
+        </button>
+        <h1 class="text-white text-xl font-bold">Service & Location</h1>
+      </div>
+      <div class="text-right bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1">
+        <p class="text-white/80 text-xs">Quick Booking</p>
+        <p class="text-white text-sm font-semibold">Step 2 of 3</p>
+      </div>
+    </div>
+    <p class="text-white/90 text-sm ml-14">
+      Choose service details and location
+    </p>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <div
+      class="animate-spin rounded-full h-16 w-16 border-b-2 border-handy-blue-500"
+    ></div>
+  </div>
+
+  <div *ngIf="!isLoading && category" class="px-4 pb-4">
+    <!-- Category Header - Compact -->
+    <div class="mb-4">
+      <div
+        class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-md p-4 border border-white/30 relative overflow-hidden"
+      >
+        <!-- Subtle gradient overlay -->
+        <div
+          class="absolute inset-0 opacity-5 rounded-2xl"
+          [style.background]="getCardGradient(category.color)"
+        ></div>
+        <div class="relative z-10 flex items-center">
+          <div
+            class="w-12 h-12 rounded-xl flex items-center justify-center mr-3 shadow-sm"
+            [style.background]="getCardGradient(category.color)"
+          >
+            <ion-icon
+              [name]="category.icon"
+              class="text-xl text-white"
+            ></ion-icon>
+          </div>
+          <div class="flex-1">
+            <h2 class="text-lg font-bold text-handy-navy-800">
+              {{ category.name }}
+            </h2>
+            <div class="flex items-center text-xs text-handy-navy-500 mt-1">
+              <span>{{ formatPrice(category.averagePrice) }}</span>
+              <span class="mx-2">•</span>
+              <span>{{ category.estimatedDuration }}min</span>
+            </div>
+          </div>
+          <!-- Top accent border -->
+          <div
+            class="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
+            [style.background]="category.color"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Select Sub-Service - Compact -->
+    <div class="mb-4">
+      <h3 class="text-lg font-bold text-handy-navy-800 mb-3">Choose Service</h3>
+      <div
+        class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-md p-3 border border-white/30"
+      >
+        <ion-list class="bg-transparent">
+          <ion-radio-group
+            [value]="selectedService"
+            (ionChange)="onServiceChange($event)"
+            name="serviceSelection"
+          >
+            <ion-item
+              *ngFor="let service of category.services"
+              class="border-b border-gray-100 last:border-b-0 min-h-[50px]"
+              button="false"
+            >
+              <ion-radio
+                slot="start"
+                [value]="service"
+                name="service-radio"
+              ></ion-radio>
+              <ion-label class="ml-2">
+                <h4 class="font-medium text-handy-navy-800 text-sm">
+                  {{ service }}
+                </h4>
+                <p class="text-xs text-handy-navy-500">Professional service</p>
+              </ion-label>
+            </ion-item>
+          </ion-radio-group>
+        </ion-list>
+      </div>
+    </div>
+
+    <!-- Interactive Map Location Selection -->
+    <div class="mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-bold text-handy-navy-800">
+          Select Location on Map
+        </h3>
+        <button
+          (click)="getCurrentLocation()"
+          [disabled]="isLoadingLocation"
+          class="bg-handy-blue-500 hover:bg-handy-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center"
+        >
+          <ion-icon name="navigate" class="mr-1 text-sm"></ion-icon>
+          <span *ngIf="!isLoadingLocation">My Location</span>
+          <div
+            *ngIf="isLoadingLocation"
+            class="animate-spin rounded-full h-3 w-3 border-b-2 border-white"
+          ></div>
+        </button>
+      </div>
+
+      <!-- Map Container -->
+      <div
+        class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-md border border-white/30 overflow-hidden"
+      >
+        <div class="h-64 relative">
+          <app-map-picker
+            [initialLocation]="initialMapLocation"
+            (locationSelected)="onLocationSelected($event)"
+            class="w-full h-full"
+          ></app-map-picker>
+        </div>
+
+        <!-- Selected Address Display -->
+        <div class="p-3 border-t border-gray-100" *ngIf="selectedLocation">
+          <div class="flex items-start">
+            <div
+              class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 mt-0.5"
+            >
+              <ion-icon
+                name="location"
+                class="text-green-600 text-sm"
+              ></ion-icon>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h4 class="font-medium text-handy-navy-800 text-sm mb-1">
+                Selected Location
+              </h4>
+              <p
+                class="text-xs text-handy-navy-600 leading-relaxed"
+                *ngIf="selectedLocation.address"
+              >
+                {{ selectedLocation.address }}
+              </p>
+              <p class="text-xs text-handy-navy-500 mt-1">
+                {{ selectedLocation.latitude.toFixed(6) }}, {{
+                selectedLocation.longitude.toFixed(6) }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="px-3 pb-3" *ngIf="!selectedLocation">
+          <p class="text-xs text-handy-navy-500 text-center">
+            📍 Tap anywhere on the map or drag the pin to select your location
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service Summary - Compact -->
+    <div class="mb-4" *ngIf="selectedService && selectedLocation">
+      <div
+        class="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/40"
+      >
+        <div class="flex items-center mb-2">
+          <ion-icon
+            name="checkmark-circle"
+            class="text-green-500 mr-2"
+          ></ion-icon>
+          <h4 class="text-sm font-semibold text-handy-navy-800">
+            Ready to Book
+          </h4>
+        </div>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-handy-navy-600">Service:</span>
+            <span class="font-medium text-handy-navy-800"
+              >{{ selectedService }}</span
+            >
+          </div>
+          <div class="flex justify-between">
+            <span class="text-handy-navy-600">Duration:</span>
+            <span class="font-medium text-handy-navy-800"
+              >{{ category.estimatedDuration }}min</span
+            >
+          </div>
+          <div class="flex justify-between">
+            <span class="text-handy-navy-600">Price:</span>
+            <span class="font-medium text-handy-navy-800"
+              >{{ formatPrice(category.averagePrice) }}</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Continue Button -->
+    <div
+      class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4"
+    >
+      <button
+        (click)="proceedToConfirm()"
+        [disabled]="!canProceed()"
+        [class]="canProceed() 
+          ? 'w-full bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg'
+          : 'w-full bg-gray-300 text-gray-600 font-semibold py-3 px-4 rounded-xl flex items-center justify-center cursor-not-allowed'"
+      >
+        <span>Continue to Booking</span>
+        <ion-icon name="arrow-forward-outline" class="ml-2"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Bottom Spacing -->
+    <div class="h-20"></div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!isLoading && !category" class="text-center py-12">
+    <div
+      class="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl"
+    >
+      <ion-icon
+        name="alert-circle-outline"
+        class="text-4xl text-white"
+      ></ion-icon>
+    </div>
+    <h3 class="text-xl font-bold text-handy-navy-800 mb-2">
+      Category Not Found
+    </h3>
+    <p class="text-handy-navy-600 mb-6 px-4">
+      The selected service category could not be found.
+    </p>
+    <button
+      (click)="goBack()"
+      class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white px-8 py-3 rounded-2xl font-semibold shadow-lg transform hover:scale-105 transition-all duration-300"
+    >
+      Back to Categories
+    </button>
+  </div>
+</ion-content>

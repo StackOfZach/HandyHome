@@ -358,11 +358,13 @@ export class BookingService {
           data['createdAt'] instanceof Timestamp
             ? data['createdAt'].toDate()
             : new Date(data['createdAt']);
-        
+
         const completedAt =
           data['completedAt'] instanceof Timestamp
             ? data['completedAt'].toDate()
-            : data['completedAt'] ? new Date(data['completedAt']) : undefined;
+            : data['completedAt']
+            ? new Date(data['completedAt'])
+            : undefined;
 
         bookings.push({
           id: doc.id,
@@ -395,6 +397,4 @@ export class BookingService {
       throw error;
     }
   }
-
-
 }

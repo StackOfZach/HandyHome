@@ -1,0 +1,164 @@
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+>
+  <!-- Custom Header matching dashboard theme -->
+  <div
+    class="pt-3 pb-4 px-4 rounded-bl-3xl rounded-br-3xl mb-4 shadow-lg"
+    style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)"
+  >
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center">
+        <button
+          (click)="goBack()"
+          class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 mr-3"
+        >
+          <ion-icon
+            name="arrow-back-outline"
+            class="text-white text-xl"
+          ></ion-icon>
+        </button>
+        <h1 class="text-white text-xl font-bold">Choose Service</h1>
+      </div>
+      <div class="text-right bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1">
+        <p class="text-white/80 text-xs">Quick Booking</p>
+        <p class="text-white text-sm font-semibold">Step 1 of 3</p>
+      </div>
+    </div>
+    <p class="text-white/90 text-sm ml-14">What type of service do you need?</p>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <div
+      class="animate-spin rounded-full h-16 w-16 border-b-2 border-handy-blue-500"
+    ></div>
+  </div>
+
+  <div *ngIf="!isLoading" class="px-4 pb-4">
+    <!-- Service Categories Grid - Compact Design -->
+    <div
+      class="grid grid-cols-2 gap-3 mb-4 category-grid"
+      *ngIf="serviceCategories.length > 0"
+    >
+      <div
+        *ngFor="let category of serviceCategories"
+        (click)="selectCategory(category)"
+        class="category-card-compact bg-white/90 rounded-2xl shadow-md cursor-pointer overflow-hidden relative"
+      >
+        <!-- Gradient overlay -->
+        <div
+          class="absolute inset-0 opacity-10 rounded-2xl"
+          [style.background]="getCardGradient(category.color)"
+        ></div>
+
+        <!-- Category Card Content -->
+        <div class="relative z-10 p-4">
+          <!-- Icon and Price Row -->
+          <div class="flex items-center justify-between mb-3">
+            <div
+              class="category-icon w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
+              [style.background]="getCardGradient(category.color)"
+            >
+              <ion-icon
+                [name]="category.icon"
+                class="text-xl text-white"
+              ></ion-icon>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-handy-navy-500">from</p>
+              <p class="text-lg font-bold text-handy-navy-800">
+                {{ formatPrice(category.averagePrice) }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Category Name -->
+          <h3
+            class="text-base font-bold text-handy-navy-800 mb-2 leading-tight"
+          >
+            {{ category.name }}
+          </h3>
+
+          <!-- Stats Row -->
+          <div
+            class="flex items-center justify-between text-xs text-handy-navy-500 mb-3"
+          >
+            <div class="flex items-center">
+              <ion-icon
+                name="time-outline"
+                class="text-handy-blue-500 mr-1"
+              ></ion-icon>
+              <span>{{ category.estimatedDuration }}min</span>
+            </div>
+            <div class="flex items-center">
+              <ion-icon
+                name="checkmark-circle"
+                class="text-green-500 mr-1"
+              ></ion-icon>
+              <span>{{ category.services.length || 0 }} services</span>
+            </div>
+          </div>
+
+          <!-- Select Button - Compact -->
+          <button
+            class="btn-select w-full bg-gradient-to-r from-handy-blue-500/90 to-handy-blue-600/90 hover:from-handy-blue-500 hover:to-handy-blue-600 text-white font-medium py-2 px-3 rounded-xl text-sm transition-all duration-300 flex items-center justify-center shadow-sm"
+          >
+            <span>Select</span>
+            <ion-icon name="chevron-forward" class="ml-1 text-sm"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Subtle border accent -->
+        <div
+          class="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
+          [style.background]="category.color"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Services Preview Section -->
+    <div *ngIf="serviceCategories.length > 0" class="mb-4">
+      <div class="tips-section rounded-2xl p-4">
+        <div class="flex items-center mb-2">
+          <ion-icon
+            name="information-circle-outline"
+            class="text-handy-blue-500 mr-2"
+          ></ion-icon>
+          <h3 class="text-sm font-semibold text-handy-navy-800">Quick Tips</h3>
+        </div>
+        <p class="text-xs text-handy-navy-600 leading-relaxed">
+          Choose a category to see available services and book instantly. All
+          our professionals are verified and insured.
+        </p>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div
+      *ngIf="serviceCategories.length === 0 && !isLoading"
+      class="empty-state text-center"
+    >
+      <div
+        class="w-20 h-20 bg-gradient-to-br from-handy-blue-500 to-handy-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg"
+      >
+        <ion-icon
+          name="construct-outline"
+          class="text-2xl text-white"
+        ></ion-icon>
+      </div>
+      <h3 class="text-lg font-bold text-handy-navy-800 mb-2">
+        No Categories Available
+      </h3>
+      <p class="text-handy-navy-600 mb-4 px-4 text-sm">
+        We're working on adding service categories. Please check back later.
+      </p>
+      <button
+        (click)="goBack()"
+        class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white px-6 py-2 rounded-xl font-medium shadow-lg transform hover:scale-105 transition-all duration-300 text-sm"
+      >
+        Go Back to Dashboard
+      </button>
+    </div>
+  </div>
+</ion-content>

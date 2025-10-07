@@ -1,0 +1,118 @@
+ion-content {
+  --background: linear-gradient(135deg, #f0f9ff, #e0e7ff);
+}
+
+.bg-gradient-to-br {
+  background: linear-gradient(135deg, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-r {
+  background: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.from-blue-50 {
+  --tw-gradient-from: #eff6ff;
+}
+.via-white {
+  --tw-gradient-via: #ffffff;
+}
+.to-indigo-50 {
+  --tw-gradient-to: #eef2ff;
+}
+
+.from-blue-600 {
+  --tw-gradient-from: #2563eb;
+}
+.via-indigo-600 {
+  --tw-gradient-via: #4f46e5;
+}
+.to-purple-600 {
+  --tw-gradient-to: #9333ea;
+}
+
+.from-blue-500 {
+  --tw-gradient-from: #3b82f6;
+}
+.to-indigo-500 {
+  --tw-gradient-to: #6366f1;
+}
+
+.from-orange-500 {
+  --tw-gradient-from: #f97316;
+}
+.to-red-500 {
+  --tw-gradient-to: #ef4444;
+}
+
+.from-green-500 {
+  --tw-gradient-from: #10b981;
+}
+.to-emerald-600 {
+  --tw-gradient-to: #059669;
+}
+
+.from-purple-500 {
+  --tw-gradient-from: #8b5cf6;
+}
+.to-violet-600 {
+  --tw-gradient-to: #7c3aed;
+}
+
+/* Custom animations */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping {
+  animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animation-delay-500 {
+  animation-delay: 0.5s;
+}
+
+.animation-delay-1000 {
+  animation-delay: 1s;
+}
+
+/* Glassmorphism effects */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+/* Shadow utilities */
+.shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .px-6 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

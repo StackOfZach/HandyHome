@@ -32,7 +32,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -55,22 +56,22 @@
   &__navigation {
     z-index: 50;
   }
-  
+
   // Modal overlays
   &__modal {
     z-index: 40;
   }
-  
+
   // Map instructions overlay
   &__overlay {
     z-index: 20;
   }
-  
+
   // Header
   &__header {
     z-index: 10;
   }
-  
+
   // Content
   &__content {
     z-index: 0;
@@ -80,10 +81,11 @@
 // Card hover effects
 .card-hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 }
 
@@ -94,7 +96,11 @@
   left: 0;
   right: 0;
   z-index: 50 !important;
-  background: linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.95));
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 1),
+    rgba(255, 255, 255, 0.95)
+  );
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }

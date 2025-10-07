@@ -56,6 +56,26 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { role: 'worker' },
   },
+  // Worker Job Listings - Protected Route
+  {
+    path: 'pages/worker/job-listings',
+    loadChildren: () =>
+      import('./pages/worker/job-listings/job-listings.module').then(
+        (m) => m.JobListingsPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'worker' },
+  },
+  // Worker Job History - Protected Route
+  {
+    path: 'pages/worker/job-history',
+    loadChildren: () =>
+      import('./pages/worker/job-history/job-history.module').then(
+        (m) => m.JobHistoryPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'worker' },
+  },
   // Admin Dashboard - Protected Route
   {
     path: 'pages/admin/dashboard',
@@ -86,12 +106,78 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { role: 'client' },
   },
+  // Quick Booking Flow - Protected Routes
+  {
+    path: 'client/select-category',
+    loadChildren: () =>
+      import('./pages/client/select-category/select-category.module').then(
+        (m) => m.SelectCategoryPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  {
+    path: 'client/select-location/:categoryId',
+    loadChildren: () =>
+      import('./pages/client/select-location/select-location.module').then(
+        (m) => m.SelectLocationPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  {
+    path: 'client/confirm-booking',
+    loadChildren: () =>
+      import('./pages/client/confirm-booking/confirm-booking.module').then(
+        (m) => m.ConfirmBookingPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  {
+    path: 'client/searching/:bookingId',
+    loadChildren: () =>
+      import('./pages/client/searching/searching.module').then(
+        (m) => m.SearchingPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  {
+    path: 'client/worker-found/:bookingId',
+    loadChildren: () =>
+      import('./pages/client/worker-found/worker-found.module').then(
+        (m) => m.WorkerFoundPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
   // Profile - Protected Route
   {
     path: 'pages/profile',
     loadChildren: () =>
       import('./pages/profile/profile.module').then((m) => m.ProfilePageModule),
     canActivate: [AuthGuard],
+  },
+  // Quick Bookings History - Protected Route
+  {
+    path: 'pages/quick-bookings-history',
+    loadChildren: () =>
+      import(
+        './pages/quick-bookings-history/quick-bookings-history.module'
+      ).then((m) => m.QuickBookingsHistoryPageModule),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  // Quick Booking Details - Protected Route
+  {
+    path: 'pages/quick-booking-details/:id',
+    loadChildren: () =>
+      import('./pages/quick-booking-details/quick-booking-details.module').then(
+        (m) => m.QuickBookingDetailsPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
   },
   // Wildcard route - redirect to login
   {

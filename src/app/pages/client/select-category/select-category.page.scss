@@ -1,0 +1,182 @@
+ion-content {
+  --background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #fefce8 100%);
+}
+
+// Custom Tailwind colors for HandyHome theme
+:root {
+  --handy-blue-50: #f0f9ff;
+  --handy-blue-500: #3b82f6;
+  --handy-blue-600: #1d4ed8;
+  --handy-blue-700: #1e40af;
+  --handy-yellow-50: #fefce8;
+  --handy-yellow-500: #eab308;
+  --handy-yellow-600: #ca8a04;
+  --handy-navy-500: #64748b;
+  --handy-navy-600: #475569;
+  --handy-navy-700: #334155;
+  --handy-navy-800: #1e293b;
+}
+
+// Header styling - using inline styles in HTML for better compatibility
+
+// Compact category card styling
+.category-card-compact {
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 20px rgba(59, 130, 246, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
+  &:active {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+
+// Category icon container
+.category-icon {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.3) 0%,
+      transparent 70%
+    );
+    animation: shimmer 3s ease-in-out infinite;
+  }
+}
+
+@keyframes shimmer {
+  0%,
+  100% {
+    transform: translateX(-100%) translateY(-100%);
+  }
+  50% {
+    transform: translateX(100%) translateY(100%);
+  }
+}
+
+// Tips section styling
+.tips-section {
+  backdrop-filter: blur(15px);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+// Loading animation enhancement
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.3));
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Step indicator styling - now using inline classes in HTML
+
+// Button enhancements
+.btn-select {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transition: width 0.6s, height 0.6s, top 0.6s, left 0.6s;
+    transform: translate(-50%, -50%);
+  }
+
+  &:hover::before {
+    width: 300px;
+    height: 300px;
+    top: 50%;
+    left: 50%;
+  }
+}
+
+// Enhanced empty state
+.empty-state {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 32px 24px;
+  margin: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+// Grid animation on load
+.category-grid {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Individual card stagger animation
+.category-card-compact:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.category-card-compact:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.category-card-compact:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.category-card-compact:nth-child(4) {
+  animation-delay: 0.4s;
+}
+.category-card-compact:nth-child(5) {
+  animation-delay: 0.5s;
+}
+.category-card-compact:nth-child(6) {
+  animation-delay: 0.6s;
+}
+
+.category-card-compact {
+  animation: slideInUp 0.6s ease-out both;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

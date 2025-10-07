@@ -105,7 +105,10 @@
         <!-- Booking Details -->
         <div class="space-y-3 mb-4">
           <!-- Date & Time -->
-          <div class="flex items-center text-sm text-handy-navy-600">
+          <div
+            *ngIf="booking.schedule"
+            class="flex items-center text-sm text-handy-navy-600"
+          >
             <ion-icon
               name="calendar-outline"
               class="mr-2 text-handy-blue-500"
@@ -117,7 +120,10 @@
           </div>
 
           <!-- Location -->
-          <div class="flex items-start text-sm text-handy-navy-600">
+          <div
+            *ngIf="booking.locations && booking.locations.length > 0"
+            class="flex items-start text-sm text-handy-navy-600"
+          >
             <ion-icon
               name="location-outline"
               class="mr-2 text-handy-blue-500 mt-0.5"

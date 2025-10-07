@@ -1,0 +1,246 @@
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+>
+  <!-- Custom Header -->
+  <div
+    class="bg-gradient-to-r from-purple-500 to-indigo-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-lg mb-4"
+  >
+    <div class="flex items-center">
+      <button
+        (click)="goBack()"
+        class="mr-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200"
+      >
+        <ion-icon
+          name="arrow-back-outline"
+          class="text-white text-xl"
+        ></ion-icon>
+      </button>
+      <h1 class="text-white text-2xl font-bold">Quick Bookings History</h1>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <div
+      class="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-500"
+    ></div>
+  </div>
+
+  <div *ngIf="!isLoading" class="px-4 pb-20">
+    <!-- Error State -->
+    <div *ngIf="error && quickBookings.length === 0" class="text-center py-16">
+      <div
+        class="w-24 h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl"
+      >
+        <ion-icon name="time-outline" class="text-4xl text-white"></ion-icon>
+      </div>
+      <h3 class="text-xl font-bold text-handy-navy-800 mb-2">{{ error }}</h3>
+      <button
+        (click)="loadQuickBookings()"
+        class="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-8 py-3 rounded-2xl font-semibold shadow-lg transform hover:scale-105 transition-all duration-300"
+      >
+        Retry
+      </button>
+    </div>
+
+    <!-- Quick Bookings List -->
+    <div *ngIf="quickBookings.length > 0" class="space-y-4">
+      <div
+        *ngFor="let booking of quickBookings"
+        class="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-white/20"
+      >
+        <!-- Booking Header -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center">
+            <div
+              class="w-12 h-12 rounded-xl flex items-center justify-center mr-4"
+              [ngClass]="getCategoryColor(booking.categoryId)"
+            >
+              <ion-icon
+                [name]="getCategoryIcon(booking.categoryId)"
+                class="text-xl"
+              ></ion-icon>
+            </div>
+            <div>
+              <h3 class="font-bold text-handy-navy-800 text-lg">
+                {{ booking.categoryName }}
+              </h3>
+              <p class="text-handy-navy-600 text-sm">
+                {{ booking.subService }}
+              </p>
+            </div>
+          </div>
+          <span
+            class="px-3 py-1 rounded-full text-xs font-medium"
+            [ngClass]="getStatusColor(booking.status)"
+          >
+            {{ booking.status | titlecase }}
+          </span>
+        </div>
+
+        <!-- Booking Details -->
+        <div class="space-y-3 mb-4">
+          <!-- Location -->
+          <div class="flex items-start">
+            <ion-icon
+              name="location-outline"
+              class="text-handy-navy-500 mr-3 mt-1 flex-shrink-0"
+            ></ion-icon>
+            <div class="flex-1">
+              <p class="text-sm text-handy-navy-700 font-medium">Location</p>
+              <p class="text-sm text-handy-navy-600">
+                {{ booking.location.address }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Pricing -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <ion-icon
+                name="cash-outline"
+                class="text-handy-navy-500 mr-3"
+              ></ion-icon>
+              <div>
+                <p class="text-sm text-handy-navy-700 font-medium">
+                  Total Cost
+                </p>
+                <p class="text-sm text-handy-navy-600">
+                  {{ formatCurrency(booking.pricing.total) }}
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <ion-icon
+                name="time-outline"
+                class="text-handy-navy-500 mr-2"
+              ></ion-icon>
+              <div>
+                <p class="text-sm text-handy-navy-700 font-medium">Duration</p>
+                <p class="text-sm text-handy-navy-600">
+                  {{ formatDuration(booking.estimatedDuration) }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Worker Info (if assigned) -->
+          <div *ngIf="booking.workerName" class="flex items-center">
+            <ion-icon
+              name="person-outline"
+              class="text-handy-navy-500 mr-3"
+            ></ion-icon>
+            <div>
+              <p class="text-sm text-handy-navy-700 font-medium">Worker</p>
+              <p class="text-sm text-handy-navy-600">
+                {{ booking.workerName }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Created Date -->
+          <div class="flex items-center">
+            <ion-icon
+              name="calendar-outline"
+              class="text-handy-navy-500 mr-3"
+            ></ion-icon>
+            <div>
+              <p class="text-sm text-handy-navy-700 font-medium">Created</p>
+              <p class="text-sm text-handy-navy-600">
+                {{ booking.createdAt | date:'MMM d, y \'at\' h:mm a' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Completion Date (if completed) -->
+          <div *ngIf="booking.completedAt" class="flex items-center">
+            <ion-icon
+              name="checkmark-done-outline"
+              class="text-green-600 mr-3"
+            ></ion-icon>
+            <div>
+              <p class="text-sm text-handy-navy-700 font-medium">Completed</p>
+              <p class="text-sm text-handy-navy-600">
+                {{ booking.completedAt | date:'MMM d, y \'at\' h:mm a' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Cancellation Info (if cancelled) -->
+          <div *ngIf="booking.status === 'cancelled'" class="flex items-start">
+            <ion-icon
+              name="close-circle-outline"
+              class="text-red-600 mr-3 mt-1"
+            ></ion-icon>
+            <div>
+              <p class="text-sm text-red-700 font-medium">Cancelled</p>
+              <p
+                class="text-sm text-red-600"
+                *ngIf="booking.cancellationReason"
+              >
+                {{ booking.cancellationReason }}
+              </p>
+              <p class="text-sm text-red-600" *ngIf="booking.cancelledAt">
+                {{ booking.cancelledAt | date:'MMM d, y \'at\' h:mm a' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex space-x-3">
+          <button
+            (click)="viewBookingDetails(booking)"
+            class="flex-1 bg-handy-navy-100 hover:bg-handy-navy-200 text-handy-navy-700 py-2 px-4 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center"
+          >
+            <ion-icon name="eye-outline" class="mr-2"></ion-icon>
+            View Details
+          </button>
+          <button
+            *ngIf="booking.status === 'completed'"
+            (click)="rebookService(booking)"
+            class="flex-1 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white py-2 px-4 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center"
+          >
+            <ion-icon name="refresh-outline" class="mr-2"></ion-icon>
+            Book Again
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Stats (if there are bookings) -->
+    <div
+      *ngIf="quickBookings.length > 0"
+      class="mt-8 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-white/20"
+    >
+      <h3 class="text-lg font-bold text-handy-navy-800 mb-4">Quick Stats</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-purple-600">
+            {{ quickBookings.length }}
+          </div>
+          <div class="text-sm text-handy-navy-600">Total Bookings</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-green-600">
+            {{ getCompletedCount() }}
+          </div>
+          <div class="text-sm text-handy-navy-600">Completed</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-blue-600">
+            {{ getActiveCount() }}
+          </div>
+          <div class="text-sm text-handy-navy-600">Active</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-red-600">
+            {{ getCancelledCount() }}
+          </div>
+          <div class="text-sm text-handy-navy-600">Cancelled</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>

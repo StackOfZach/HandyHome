@@ -1,8 +1,55 @@
 /* Custom styles for admin dashboard */
 
+// Force large modal size - global override
+ion-modal.custom-modal.large-modal {
+  --width: 98vw;
+  --max-width: 2200px;
+  --height: 96vh;
+  --min-height: 900px;
+
+  .modal-wrapper,
+  .ion-overlay-wrapper {
+    width: 98vw !important;
+    max-width: 2200px !important;
+    height: 96vh !important;
+    min-height: 900px !important;
+  }
+
+  @media (min-width: 1400px) {
+    --width: 95vw;
+    --max-width: 2400px;
+    --height: 94vh;
+    --min-height: 1000px;
+
+    .modal-wrapper,
+    .ion-overlay-wrapper {
+      width: 95vw !important;
+      max-width: 2400px !important;
+      height: 94vh !important;
+      min-height: 1000px !important;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    --width: 96vw;
+    --max-width: 2300px;
+    --height: 95vh;
+    --min-height: 950px;
+
+    .modal-wrapper,
+    .ion-overlay-wrapper {
+      width: 96vw !important;
+      max-width: 2300px !important;
+      height: 95vh !important;
+      min-height: 950px !important;
+    }
+  }
+}
+
 // Admin Dashboard Styles
 .admin-dashboard {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 
   .sidebar {
     min-height: 100vh;
@@ -35,24 +82,503 @@
 
   .main-content {
     min-height: 100vh;
-    
+
     header {
       backdrop-filter: blur(10px);
       background-color: rgba(255, 255, 255, 0.95);
     }
-    
+
     main {
       background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+  }
+
+  // Custom Animations
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  .animate-slideInUp {
+    animation: slideInUp 0.8s ease-out;
+  }
+
+  .animate-pulse {
+    animation: pulse 2s infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animation-delay-150 {
+    animation-delay: 150ms;
+  }
+
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  // Service Cards Enhanced Styling
+  .service-card {
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+      );
+      transition: left 0.5s;
+    }
+
+    &:hover::before {
+      left: 100%;
+    }
+
+    .service-icon {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &:hover {
+        transform: scale(1.1) rotate(5deg);
+      }
+    }
+
+    .service-actions {
+      opacity: 0;
+      transform: translateX(20px);
+      transition: all 0.3s ease;
+    }
+
+    &:hover .service-actions {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  // Enhanced Modal Styling
+  .custom-modal {
+    --backdrop-opacity: 0.6;
+
+    ion-backdrop {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-wrapper {
+      animation: slideInUp 0.4s ease-out;
+    }
+
+    &.large-modal {
+      // Extra large web-friendly admin modal dimensions - maximized for desktop
+      --width: 98vw;
+      --max-width: 2200px;
+      --height: 96vh;
+      --max-height: none;
+      --min-height: 900px;
+
+      // Desktop first approach - maximum sizes for better admin experience
+      @media (min-width: 1400px) {
+        --width: 95vw;
+        --max-width: 2400px;
+        --height: 94vh;
+        --min-height: 1000px;
+      }
+
+      @media (min-width: 1200px) {
+        --width: 96vw;
+        --max-width: 2300px;
+        --height: 95vh;
+        --min-height: 950px;
+      }
+
+      // Tablet adjustments
+      @media (max-width: 1024px) {
+        --width: 96vw;
+        --max-width: 1400px;
+        --height: 94vh;
+        --min-height: 700px;
+      }
+
+      // Mobile fallback (though admin panel isn't mobile-optimized)
+      @media (max-width: 768px) {
+        --width: 100vw;
+        --height: 100vh;
+        --border-radius: 0;
+        --min-height: 100vh;
+      }
+
+      // Enhanced footer styling
+      .sticky {
+        position: sticky !important;
+        bottom: 0 !important;
+        z-index: 10 !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(10px) !important;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1) !important;
+        border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+      }
+
+      ion-content {
+        --padding-bottom: 120px; // Space for enhanced footer
+      }
+
+      .modal-wrapper {
+        width: var(--width) !important;
+        max-width: var(--max-width) !important;
+        height: var(--height) !important;
+        max-height: var(--max-height) !important;
+        min-height: var(--min-height) !important;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.25);
+
+        // Force larger dimensions with direct values as fallback
+        @media (min-width: 1400px) {
+          width: 95vw !important;
+          max-width: 2400px !important;
+          height: 94vh !important;
+          min-height: 1000px !important;
+        }
+
+        @media (min-width: 1200px) {
+          width: 96vw !important;
+          max-width: 2300px !important;
+          height: 95vh !important;
+          min-height: 950px !important;
+        }
+
+        @media (min-width: 1024px) {
+          width: 98vw !important;
+          max-width: 2200px !important;
+          height: 96vh !important;
+          min-height: 900px !important;
+        }
+
+        @media (max-width: 768px) {
+          border-radius: 0;
+          width: 100vw !important;
+          height: 100vh !important;
+          min-height: 100vh !important;
+        }
+      }
+    }
+
+    // Additional override for ion-modal wrapper
+    ion-modal.large-modal .modal-wrapper,
+    ion-modal.large-modal .ion-overlay-wrapper {
+      width: 98vw !important;
+      max-width: 2200px !important;
+      height: 96vh !important;
+      min-height: 900px !important;
+
+      @media (min-width: 1400px) {
+        width: 95vw !important;
+        max-width: 2400px !important;
+        height: 94vh !important;
+        min-height: 1000px !important;
+      }
+
+      @media (min-width: 1200px) {
+        width: 96vw !important;
+        max-width: 2300px !important;
+        height: 95vh !important;
+        min-height: 950px !important;
+      }
+    }
+  }
+
+  .custom-modal-content {
+    background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+    height: 100%;
+    overflow-y: auto;
+
+    // Enhanced spacing for larger modals
+    .large-modal & {
+      // More comfortable spacing for desktop admin interface
+      @media (min-width: 1200px) {
+        font-size: 1.05rem;
+        line-height: 1.6;
+      }
+
+      // Better form field sizing for larger screens
+      input,
+      textarea,
+      select {
+        @media (min-width: 1400px) {
+          font-size: 1.1rem;
+          padding: 0.875rem 1.25rem;
+        }
+      }
+
+      // Enhanced card spacing
+      .space-y-8 > * + * {
+        @media (min-width: 1400px) {
+          margin-top: 2.5rem;
+        }
+      }
+
+      .space-y-6 > * + * {
+        @media (min-width: 1400px) {
+          margin-top: 2rem;
+        }
+      }
+    }
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+
+      &:hover {
+        background: #a1a1a1;
+      }
+    }
+  }
+
+  .custom-toolbar {
+    --background: transparent;
+    --border-width: 0;
+  }
+
+  // Form Enhancements
+  .form-input {
+    transition: all 0.3s ease;
+
+    &:focus {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .icon-picker-grid {
+    .icon-button {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &:hover {
+        transform: scale(1.1);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      &.selected {
+        animation: pulse 0.3s ease-in-out;
+      }
+    }
+  }
+
+  // Loading Animation
+  .loading-container {
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+
+    .loading-text {
+      animation: fadeIn 1s ease-out 0.5s both;
+    }
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  // Gradient Text Effect
+  .gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  // Glass Effect
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  // Interactive Button Effects
+  .interactive-button {
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s, height 0.3s;
+    }
+
+    &:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+  }
+
+  // Responsive Design Enhancements
+  @media (max-width: 768px) {
+    .sidebar {
+      display: none; // In a real app, you'd implement a mobile drawer
+    }
+
+    .main-content {
+      margin-left: 0;
+    }
+
+    .services-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .service-card {
+      .service-actions {
+        opacity: 1;
+        transform: translateX(0);
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }
+
+    .modal-content {
+      padding: 1rem;
+
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+
+    .header-section {
+      flex-direction: column;
+      text-align: center;
+      padding: 2rem 1rem;
+
+      .quick-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+  }
+
+  @media (max-width: 640px) {
+    .icon-picker-grid {
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0.5rem;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+      gap: 0.75rem;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+
+  // Dark Mode Support (for future enhancement)
+  @media (prefers-color-scheme: dark) {
+    .admin-dashboard {
+      background-color: #1a1a1a;
+      color: #f0f0f0;
+    }
+  }
+
+  // Accessibility Enhancements
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  // High Contrast Mode
+  @media (prefers-contrast: high) {
+    .service-card {
+      border: 2px solid #000;
+    }
+
+    .interactive-button {
+      border: 2px solid currentColor;
     }
   }
 
   // Analytics Cards Animation
   .analytics-card {
     transition: all 0.3s ease;
-    
+
     &:hover {
       transform: translateY(-4px);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
   }
 
@@ -65,17 +591,17 @@
 
   @media (max-width: 768px) {
     flex-direction: column;
-    
+
     .sidebar {
       width: 100%;
       min-height: auto;
       border-bottom: 1px solid #e5e7eb;
-      
+
       nav {
         display: flex;
         overflow-x: auto;
         padding: 1rem;
-        
+
         .nav-item {
           white-space: nowrap;
           margin-right: 0.5rem;
@@ -84,7 +610,7 @@
         }
       }
     }
-    
+
     .main-content {
       min-height: calc(100vh - 120px);
     }
@@ -95,16 +621,16 @@
     &::-webkit-scrollbar {
       width: 6px;
     }
-    
+
     &::-webkit-scrollbar-track {
       background: #f1f5f9;
     }
-    
+
     &::-webkit-scrollbar-thumb {
       background: #cbd5e1;
       border-radius: 3px;
     }
-    
+
     &::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
@@ -116,7 +642,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
-  
+
   @media (min-width: 1280px) {
     grid-template-columns: repeat(3, 1fr);
   }

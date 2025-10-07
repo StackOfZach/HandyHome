@@ -1,4 +1,4 @@
-/* Custom styles for worker dashboard */
+/* Enhanced styles for worker dashboard */
 
 .worker-dashboard-content {
   --background: var(--ion-color-light);
@@ -14,16 +14,17 @@
 }
 
 // Custom backdrop blur for iOS compatibility
-.backdrop-blur-sm {
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+.backdrop-blur-sm,
+.backdrop-blur-md {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 // Enhanced button hover effects
 .transition-all {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 200ms;
+  transition-duration: 300ms;
 }
 
 // Profile picture border animation
@@ -34,4 +35,184 @@
 
 .border-green-200:hover {
   border-color: rgb(134 239 172);
+}
+
+// Quick notification slide animation
+.quick-notification-slide {
+  transform: translateY(-100%);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.quick-notification-slide.show {
+  transform: translateY(0);
+}
+
+// Slideshow container enhancements
+.slideshow-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.slide-transition {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Enhanced card hover effects
+.job-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+}
+
+// Progress bar animations
+.progress-bar {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    animation: shimmer 2s infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+// Button pulse animation for urgent actions
+.pulse-button {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+// Notification badge animation
+.notification-badge {
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+// Enhanced glassmorphism effect
+.glass-effect {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+// Stats card animations
+.stats-card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Slide indicators
+.slide-indicator {
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &.active {
+    transform: scale(1.2);
+  }
+
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+// Loading spinner
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Fade in animation for content
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Mobile responsive improvements
+@media (max-width: 768px) {
+  .job-card {
+    margin: 0.5rem 0;
+  }
+
+  .slideshow-container {
+    margin: 0 -1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .glass-effect {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }

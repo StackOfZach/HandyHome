@@ -1,0 +1,93 @@
+ion-content {
+  --background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #fefce8 100%);
+}
+
+ion-list {
+  background: transparent !important;
+}
+
+ion-item {
+  --background: transparent;
+  --inner-padding-start: 0;
+  --inner-padding-end: 0;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --border-color: #f1f5f9;
+  --min-height: 50px;
+}
+
+// Radio button styling with proper states
+ion-radio {
+  --color: #cbd5e1;
+  --color-checked: #1d4ed8;
+  --border-width: 2px;
+  --border-style: solid;
+  --border-color: #cbd5e1;
+}
+
+ion-radio.radio-checked {
+  --color: #1d4ed8;
+  --border-color: #1d4ed8;
+}
+
+// Location button hover effects
+.location-button {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+}
+
+// Service summary card
+.summary-card {
+  border-left: 4px solid #3b82f6;
+}
+
+// Fixed bottom button area
+.bottom-action {
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 -2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+// Loading spinner
+.location-loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Service item hover
+.service-item {
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #f8fafc;
+  }
+}
+
+// Location card animation
+.location-card {
+  animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

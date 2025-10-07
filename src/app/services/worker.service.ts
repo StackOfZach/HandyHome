@@ -78,7 +78,7 @@ export class WorkerService {
     try {
       console.log('Updating worker profile for UID:', uid);
       console.log('Profile data to save:', profileData);
-      
+
       const workerDocRef = doc(this.firestore, 'workers', uid);
       const existingDoc = await getDoc(workerDocRef);
 
@@ -172,7 +172,7 @@ export class WorkerService {
       const workersWithUserData = await Promise.all(
         querySnapshot.docs.map(async (workerDoc) => {
           const workerData = workerDoc.data() as DocumentData;
-          
+
           // Fetch user data from users collection
           const userDocRef = doc(this.firestore, 'users', workerDoc.id);
           const userDoc = await getDoc(userDocRef);
@@ -180,7 +180,8 @@ export class WorkerService {
 
           return {
             ...workerData,
-            fullName: userData['fullName'] || workerData['fullName'] || 'Unknown',
+            fullName:
+              userData['fullName'] || workerData['fullName'] || 'Unknown',
             email: userData['email'] || workerData['email'] || 'No email',
             createdAt: workerData['createdAt']?.toDate() || new Date(),
           } as WorkerProfile;
@@ -226,7 +227,7 @@ export class WorkerService {
       const workersWithUserData = await Promise.all(
         querySnapshot.docs.map(async (workerDoc) => {
           const workerData = workerDoc.data() as DocumentData;
-          
+
           // Fetch user data from users collection
           const userDocRef = doc(this.firestore, 'users', workerDoc.id);
           const userDoc = await getDoc(userDocRef);
@@ -234,7 +235,8 @@ export class WorkerService {
 
           return {
             ...workerData,
-            fullName: userData['fullName'] || workerData['fullName'] || 'Unknown',
+            fullName:
+              userData['fullName'] || workerData['fullName'] || 'Unknown',
             email: userData['email'] || workerData['email'] || 'No email',
             createdAt: workerData['createdAt']?.toDate() || new Date(),
             verifiedAt: workerData['verifiedAt']?.toDate(),
@@ -253,7 +255,10 @@ export class WorkerService {
   /**
    * Update worker status (admin function)
    */
-  async updateWorkerStatus(uid: string, status: 'suspended' | 'banned' | 'verified'): Promise<void> {
+  async updateWorkerStatus(
+    uid: string,
+    status: 'suspended' | 'banned' | 'verified'
+  ): Promise<void> {
     try {
       const workerDocRef = doc(this.firestore, 'workers', uid);
       await updateDoc(workerDocRef, {

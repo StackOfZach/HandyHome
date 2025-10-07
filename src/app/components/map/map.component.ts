@@ -3,6 +3,7 @@ import {
   OnInit,
   AfterViewInit,
   OnDestroy,
+  OnChanges,
   Input,
   Output,
   EventEmitter,
@@ -14,14 +15,26 @@ import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';
 
 export interface MapCoordinates {
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
+  lat?: number;
+  lng?: number;
 }
 
 export interface MapPin {
-  coordinates: MapCoordinates;
+  coordinates?: MapCoordinates;
+  position?: MapCoordinates;
   title?: string;
   address?: string;
+  label?: string;
+  color?: string;
+}
+
+export interface TracePath {
+  coordinates: MapCoordinates[];
+  color?: string;
+  weight?: number;
+  opacity?: number;
 }
 
 @Component({
@@ -31,7 +44,9 @@ export interface MapPin {
   standalone: true,
   imports: [CommonModule, IonicModule],
 })
-export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
+export class MapComponent
+  implements OnInit, AfterViewInit, OnDestroy, OnChanges
+{
   @ViewChild('mapContainer', { static: true }) mapContainer!: ElementRef;
 
   @Input() height: string = '300px';
@@ -43,15 +58,23 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() pins: MapPin[] = [];
   @Input() allowPinPlacement: boolean = true;
   @Input() showCurrentLocation: boolean = true;
+  @Input() tracePath: MapCoordinates[] = [];
+  @Input() coordinates: MapCoordinates = {
+    latitude: 14.5995,
+    longitude: 120.9842,
+  };
 
   @Output() pinPlaced = new EventEmitter<MapPin>();
   @Output() pinRemoved = new EventEmitter<MapPin>();
   @Output() mapReady = new EventEmitter<L.Map>();
+  @Output() coordinatesChange = new EventEmitter<MapCoordinates>();
 
   public map: L.Map | null = null;
   private markers: L.Marker[] = [];
   private currentLocationMarker: L.Marker | null = null;
   private selectedLocationMarker: L.Marker | null = null; // Track single selected location
+  private polylines: L.Polyline[] = [];
+  private trackingMarkers: L.Marker[] = [];
 
   // Custom icon configurations
   private defaultIcon = L.icon({
@@ -71,6 +94,26 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor() {}
 
   ngOnInit() {}
+
+  /**
+   * Convert coordinates to standard lat/lng format
+   */
+  private normalizeCoordinates(coords: MapCoordinates): {
+    lat: number;
+    lng: number;
+  } {
+    const lat = coords.latitude ?? coords.lat ?? 14.5995;
+    const lng = coords.longitude ?? coords.lng ?? 120.9842;
+    return { lat, lng };
+  }
+
+  /**
+   * Convert coordinates to Leaflet's expected format [lat, lng]
+   */
+  private toLeafletCoords(coords: MapCoordinates): [number, number] {
+    const normalized = this.normalizeCoordinates(coords);
+    return [normalized.lat, normalized.lng];
+  }
 
   ngAfterViewInit() {
     this.initializeMap();
@@ -98,8 +141,13 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Initialize the map
+    const centerCoords =
+      this.coordinates.lat && this.coordinates.lng
+        ? this.coordinates
+        : this.initialCoordinates;
+
     this.map = L.map(this.mapContainer.nativeElement).setView(
-      [this.initialCoordinates.latitude, this.initialCoordinates.longitude],
+      this.toLeafletCoords(centerCoords),
       this.zoom
     );
 
@@ -132,18 +180,23 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   private addPin(pin: MapPin, isCurrentLocation: boolean = false) {
     if (!this.map) return;
 
+    const coords = pin.coordinates || pin.position;
+    if (!coords) return;
+
     const icon = isCurrentLocation
       ? this.currentLocationIcon
       : this.defaultIcon;
-    const marker = L.marker(
-      [pin.coordinates.latitude, pin.coordinates.longitude],
-      { icon }
-    ).addTo(this.map);
+    const marker = L.marker(this.toLeafletCoords(coords), { icon }).addTo(
+      this.map
+    );
 
-    if (pin.title || pin.address) {
+    const title = pin.title || pin.label || '';
+    const address = pin.address || '';
+
+    if (title || address) {
       const popupContent = `
-        ${pin.title ? `<strong>${pin.title}</strong><br>` : ''}
-        ${pin.address ? pin.address : ''}
+        ${title ? `<strong>${title}</strong><br>` : ''}
+        ${address ? address : ''}
       `;
       marker.bindPopup(popupContent);
     }
@@ -175,7 +228,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     // Add new selected location marker
     if (this.map) {
       this.selectedLocationMarker = L.marker(
-        [coordinates.latitude, coordinates.longitude],
+        this.toLeafletCoords(coordinates),
         {
           icon: this.defaultIcon,
         }
@@ -210,10 +263,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
             // Center map on current location
             if (this.map) {
-              this.map.setView(
-                [coordinates.latitude, coordinates.longitude],
-                this.zoom
-              );
+              this.map.setView(this.toLeafletCoords(coordinates), this.zoom);
             }
           },
           (error) => {
@@ -255,10 +305,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public centerMap(coordinates: MapCoordinates, zoom?: number) {
     if (this.map) {
-      this.map.setView(
-        [coordinates.latitude, coordinates.longitude],
-        zoom || this.zoom
-      );
+      this.map.setView(this.toLeafletCoords(coordinates), zoom || this.zoom);
     }
   }
 
@@ -271,5 +318,210 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public getMapInstance(): L.Map | null {
     return this.map;
+  }
+
+  /**
+   * Add trace path (polyline) between coordinates
+   */
+  public addTracePath(
+    coordinates: MapCoordinates[],
+    options?: {
+      color?: string;
+      weight?: number;
+      opacity?: number;
+    }
+  ) {
+    if (!this.map || coordinates.length < 2) return;
+
+    // Convert coordinates to Leaflet format
+    const leafletCoords: [number, number][] = coordinates.map((coord) =>
+      this.toLeafletCoords(coord)
+    );
+
+    const polyline = L.polyline(leafletCoords, {
+      color: options?.color || '#3388ff',
+      weight: options?.weight || 5,
+      opacity: options?.opacity || 0.7,
+      smoothFactor: 1,
+    }).addTo(this.map);
+
+    this.polylines.push(polyline);
+
+    // Add arrow markers along the path
+    this.addPathArrows(leafletCoords);
+  }
+
+  /**
+   * Add directional arrows along the path
+   */
+  private addPathArrows(coordinates: [number, number][]) {
+    if (!this.map || coordinates.length < 2) return;
+
+    // Add arrow at the midpoint
+    const midIndex = Math.floor(coordinates.length / 2);
+    if (midIndex < coordinates.length - 1) {
+      const start = coordinates[midIndex];
+      const end = coordinates[midIndex + 1];
+
+      // Calculate angle for arrow rotation
+      const angle =
+        (Math.atan2(end[0] - start[0], end[1] - start[1]) * 180) / Math.PI;
+
+      const arrowIcon = L.divIcon({
+        html: `<div style="transform: rotate(${angle}deg); color: #3388ff; font-size: 16px;">▲</div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      });
+
+      const arrowMarker = L.marker(
+        [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2],
+        { icon: arrowIcon }
+      ).addTo(this.map);
+
+      this.trackingMarkers.push(arrowMarker);
+    }
+  }
+
+  /**
+   * Clear all trace paths
+   */
+  public clearTracePaths() {
+    this.polylines.forEach((polyline) => {
+      if (this.map) {
+        this.map.removeLayer(polyline);
+      }
+    });
+    this.polylines = [];
+
+    // Clear arrow markers
+    this.trackingMarkers.forEach((marker) => {
+      if (this.map) {
+        this.map.removeLayer(marker);
+      }
+    });
+    this.trackingMarkers = [];
+  }
+
+  /**
+   * Update pins with new data (for real-time tracking)
+   */
+  public updatePins(pins: MapPin[]) {
+    this.clearPins();
+    this.pins = pins;
+    this.addExistingPins();
+
+    // Update trace path if provided
+    if (this.tracePath && this.tracePath.length > 0) {
+      this.clearTracePaths();
+      this.addTracePath(this.tracePath);
+    }
+
+    // Auto-fit map to show all pins
+    this.fitMapToPins();
+  }
+
+  /**
+   * Fit map to show all current pins
+   */
+  public fitMapToPins() {
+    if (!this.map || this.pins.length === 0) return;
+
+    const coords: [number, number][] = [];
+
+    this.pins.forEach((pin) => {
+      const pinCoords = pin.coordinates || pin.position;
+      if (pinCoords) {
+        coords.push(this.toLeafletCoords(pinCoords));
+      }
+    });
+
+    if (coords.length > 0) {
+      const group = L.featureGroup(coords.map((coord) => L.marker(coord)));
+      this.map.fitBounds(group.getBounds().pad(0.1));
+    }
+  }
+
+  /**
+   * Add custom marker with color
+   */
+  public addColoredPin(
+    coordinates: MapCoordinates,
+    options: {
+      title?: string;
+      color?: string;
+      label?: string;
+    }
+  ) {
+    if (!this.map) return;
+
+    const color = options.color || 'blue';
+    const colorIcon = this.createColoredIcon(color);
+
+    const marker = L.marker(this.toLeafletCoords(coordinates), {
+      icon: colorIcon,
+    }).addTo(this.map);
+
+    if (options.title || options.label) {
+      const popupContent = `<strong>${options.title || options.label}</strong>`;
+      marker.bindPopup(popupContent);
+    }
+
+    this.trackingMarkers.push(marker);
+    return marker;
+  }
+
+  /**
+   * Create colored icon for different pin types
+   */
+  private createColoredIcon(color: string): L.DivIcon {
+    const colorMap: { [key: string]: string } = {
+      primary: '#3880ff',
+      success: '#2dd36f',
+      warning: '#ffc409',
+      danger: '#eb445a',
+      blue: '#3880ff',
+      green: '#2dd36f',
+      red: '#eb445a',
+      orange: '#ff6600',
+    };
+
+    const hexColor = colorMap[color] || color;
+
+    return L.divIcon({
+      html: `<div style="
+        background-color: ${hexColor};
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      "></div>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    });
+  }
+
+  /**
+   * Handle input changes for real-time updates
+   */
+  ngOnChanges() {
+    if (this.map) {
+      // Update center if coordinates changed
+      if (this.coordinates.lat && this.coordinates.lng) {
+        this.centerMap(this.coordinates);
+      }
+
+      // Update pins
+      if (this.pins.length > 0) {
+        this.updatePins(this.pins);
+      }
+
+      // Update trace path
+      if (this.tracePath.length > 0) {
+        this.clearTracePaths();
+        this.addTracePath(this.tracePath);
+      }
+    }
   }
 }

@@ -1,0 +1,385 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/client/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Worker Found</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent" class="large-spinner"></ion-spinner>
+    <p class="loading-text">Loading worker details...</p>
+  </div>
+
+  <!-- Worker Found Content -->
+  <div
+    *ngIf="!isLoading && workerData && bookingData"
+    class="worker-found-content"
+  >
+    <!-- Success Banner -->
+    <div class="success-banner">
+      <ion-icon name="checkmark-circle" class="success-icon"></ion-icon>
+      <div class="success-content">
+        <h2>Worker Found!</h2>
+        <p>A qualified worker has been assigned to your job</p>
+      </div>
+    </div>
+
+    <!-- Worker Profile Card -->
+    <ion-card class="worker-profile-card">
+      <ion-card-content>
+        <div class="worker-header">
+          <div class="worker-avatar">
+            <!-- Profile image with base64 support -->
+            <img
+              *ngIf="hasWorkerProfileImage()"
+              [src]="getWorkerProfileImageSrc()"
+              [alt]="workerData.fullName"
+              (error)="onImageError($event)"
+            />
+            <!-- Fallback: Initials -->
+            <div *ngIf="!hasWorkerProfileImage()" class="avatar-placeholder">
+              {{ getWorkerInitials() }}
+            </div>
+          </div>
+
+          <div class="worker-info">
+            <h3>{{ workerData.fullName }}</h3>
+            <div class="worker-rating">
+              <ion-icon name="star" class="star-icon"></ion-icon>
+              <span>{{ workerData.rating || 4.5 }}/5</span>
+              <span class="job-count"
+                >({{ workerData.totalJobs || 0 }} jobs)</span
+              >
+            </div>
+            <div
+              class="verification-badge"
+              *ngIf="workerData.verificationStatus === 'verified'"
+            >
+              <ion-icon name="shield-checkmark"></ion-icon>
+              <span>Verified Worker</span>
+            </div>
+
+            <!-- Contact Information -->
+            <div
+              class="worker-contact"
+              *ngIf="workerData.phone || workerData.email"
+            >
+              <div class="contact-item" *ngIf="workerData.phone">
+                <ion-icon name="call" class="contact-icon"></ion-icon>
+                <span>{{ workerData.phone }}</span>
+              </div>
+              <div class="contact-item" *ngIf="workerData.email">
+                <ion-icon name="mail" class="contact-icon"></ion-icon>
+                <span>{{ workerData.email }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Worker Skills -->
+        <div class="worker-skills">
+          <h4>Skills</h4>
+          <div class="skills-list">
+            <ion-chip
+              *ngFor="let skill of workerData.skills"
+              color="primary"
+              outline="true"
+            >
+              <ion-label>{{ skill }}</ion-label>
+            </ion-chip>
+          </div>
+        </div>
+
+        <!-- Real-time Location & ETA -->
+        <div class="location-info">
+          <div class="info-item">
+            <ion-icon name="location" class="info-icon"></ion-icon>
+            <div class="info-content">
+              <span class="info-label">Distance</span>
+              <span class="info-value" *ngIf="trackingData"
+                >{{ getFormattedDistance() }}</span
+              >
+              <span class="info-value" *ngIf="!trackingData"
+                >{{ distance.toFixed(1) }} km away</span
+              >
+            </div>
+          </div>
+
+          <div class="info-item">
+            <ion-icon
+              name="time"
+              class="info-icon"
+              [color]="getETAColor()"
+            ></ion-icon>
+            <div class="info-content">
+              <span class="info-label">Estimated Arrival</span>
+              <span class="info-value" [class]="'eta-' + getETAColor()"
+                >{{ estimatedArrival }}</span
+              >
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="trackingData">
+            <ion-icon name="refresh" class="info-icon"></ion-icon>
+            <div class="info-content">
+              <span class="info-label">Last Update</span>
+              <span class="info-value">{{ getLastUpdateTime() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Status Message -->
+        <div class="status-message" *ngIf="trackingData">
+          <ion-chip color="success" class="status-chip">
+            <ion-icon name="radio-button-on" class="pulse-icon"></ion-icon>
+            <ion-label>{{ getTrackingStatusMessage() }}</ion-label>
+          </ion-chip>
+        </div>
+
+        <!-- Map Toggle Button -->
+        <div class="map-controls">
+          <ion-button
+            fill="outline"
+            size="small"
+            (click)="toggleMap()"
+            [disabled]="!trackingData"
+          >
+            <ion-icon
+              [name]="showMap ? 'eye-off' : 'map'"
+              slot="start"
+            ></ion-icon>
+            {{ showMap ? 'Hide Map' : 'Show Map' }}
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            size="small"
+            (click)="refreshWorkerLocation()"
+            [disabled]="!trackingData"
+          >
+            <ion-icon name="refresh" slot="icon-only"></ion-icon>
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Real-time Map Display -->
+    <ion-card *ngIf="showMap && trackingData" class="map-card">
+      <ion-card-header>
+        <ion-card-title class="map-title">
+          <ion-icon name="map" class="map-title-icon"></ion-icon>
+          Live Tracking
+        </ion-card-title>
+        <ion-card-subtitle class="map-subtitle">
+          Worker and your location in real-time
+        </ion-card-subtitle>
+      </ion-card-header>
+
+      <ion-card-content class="map-content">
+        <app-map
+          [coordinates]="mapCoordinates"
+          [pins]="mapPins"
+          [tracePath]="tracePath"
+          [height]="'300px'"
+          [zoom]="14"
+          [allowPinPlacement]="false"
+          [showCurrentLocation]="false"
+        >
+        </app-map>
+
+        <!-- Map Legend -->
+        <div class="map-legend">
+          <div class="legend-item">
+            <div class="legend-dot primary"></div>
+            <span>{{ trackingData.worker.fullName }}</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot danger"></div>
+            <span>Your Location</span>
+          </div>
+          <div class="legend-item" *ngIf="tracePath.length > 0">
+            <div class="legend-line"></div>
+            <span>Route Path</span>
+          </div>
+        </div>
+
+        <!-- Map Controls -->
+        <div class="map-controls-bottom">
+          <ion-button
+            fill="clear"
+            size="small"
+            (click)="centerMapOnWorker()"
+            [disabled]="!trackingData"
+          >
+            <ion-icon name="person" slot="start"></ion-icon>
+            Center on Worker
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            size="small"
+            (click)="fitMapToAll()"
+            [disabled]="!trackingData"
+          >
+            <ion-icon name="scan" slot="start"></ion-icon>
+            Fit All
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Booking Status -->
+    <ion-card class="status-card">
+      <ion-card-content>
+        <div class="status-header">
+          <h3>Booking Status</h3>
+          <ion-chip [color]="getStatusColor()">
+            <ion-label>{{ getStatusText() }}</ion-label>
+          </ion-chip>
+        </div>
+
+        <div class="booking-timeline">
+          <div class="timeline-item completed">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-title">Booking Confirmed</span>
+              <span class="timeline-time"
+                >{{ bookingData.createdAt?.toDate() | date:'short' }}</span
+              >
+            </div>
+          </div>
+
+          <div
+            class="timeline-item"
+            [class.completed]="bookingData.status !== 'searching'"
+          >
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-title">Worker Assigned</span>
+              <span class="timeline-time" *ngIf="bookingData.acceptedAt"
+                >{{ bookingData.acceptedAt?.toDate() | date:'short' }}</span
+              >
+            </div>
+          </div>
+
+          <div
+            class="timeline-item"
+            [class.completed]="bookingData.status === 'in_progress' || bookingData.status === 'completed'"
+          >
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-title">Job Started</span>
+              <span
+                class="timeline-time"
+                *ngIf="bookingData.status === 'in_progress'"
+                >In progress</span
+              >
+            </div>
+          </div>
+
+          <div
+            class="timeline-item"
+            [class.completed]="bookingData.status === 'completed'"
+          >
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-title">Job Completed</span>
+              <span
+                class="timeline-time"
+                *ngIf="bookingData.status === 'completed'"
+                >Finished</span
+              >
+            </div>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Service Details -->
+    <ion-card class="service-details-card">
+      <ion-card-content>
+        <h3>Service Details</h3>
+
+        <div class="service-info">
+          <div class="info-row">
+            <span class="label">Category:</span>
+            <span class="value">{{ bookingData.categoryName }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="label">Service:</span>
+            <span class="value">{{ bookingData.subService }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="label">Duration:</span>
+            <span class="value">{{ bookingData.estimatedDuration }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="label">Location:</span>
+            <span class="value">{{ bookingData.location.address }}</span>
+          </div>
+
+          <div class="info-row total-row">
+            <span class="label">Total Amount:</span>
+            <span class="value"
+              >₱{{ bookingData.pricing.total.toFixed(2) }}</span
+            >
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <ion-button
+        expand="block"
+        color="primary"
+        size="large"
+        (click)="contactWorker()"
+      >
+        <ion-icon name="call" slot="start"></ion-icon>
+        Contact Worker
+      </ion-button>
+
+      <ion-button
+        expand="block"
+        fill="outline"
+        color="danger"
+        size="large"
+        (click)="cancelBooking()"
+      >
+        <ion-icon name="close-circle" slot="start"></ion-icon>
+        Cancel Booking
+      </ion-button>
+    </div>
+
+    <!-- Emergency Contact -->
+    <div class="emergency-info">
+      <ion-icon name="shield-checkmark" class="shield-icon"></ion-icon>
+      <p>
+        For emergencies or concerns, contact HandyHome support at
+        <strong>0917-123-4567</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div
+    *ngIf="!isLoading && (!workerData || !bookingData)"
+    class="error-container"
+  >
+    <ion-icon name="alert-circle" class="error-icon"></ion-icon>
+    <h2>Unable to Load Worker Details</h2>
+    <p>Please check your connection and try again.</p>
+    <ion-button fill="clear" (click)="loadBookingAndWorkerData()">
+      <ion-icon name="refresh" slot="start"></ion-icon>
+      Retry
+    </ion-button>
+  </div>
+</ion-content>

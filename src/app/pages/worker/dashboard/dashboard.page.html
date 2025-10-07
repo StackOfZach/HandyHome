@@ -1,13 +1,71 @@
-<ion-content [fullscreen]="true" class="bg-gradient-to-br from-green-50 via-white to-emerald-50 relative z-0">
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-green-50 via-white to-emerald-50 relative z-0"
+>
+  <!-- Quick Booking Notification Popup -->
+  <div
+    *ngIf="quickBookingNotification"
+    class="fixed top-0 left-0 right-0 z-50 transform transition-transform duration-500 ease-out"
+    [class.translate-y-0]="showQuickNotification"
+    [class.-translate-y-full]="!showQuickNotification"
+  >
+    <div
+      class="bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-xl border-b-2 border-orange-600"
+    >
+      <div class="px-4 py-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center flex-1">
+            <div
+              class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-3 pulse-button"
+            >
+              <ion-icon name="flash" class="text-white text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-sm">🚨 Quick Booking Alert!</p>
+              <p class="text-xs text-orange-100">
+                {{ quickBookingNotification.message }}
+              </p>
+            </div>
+          </div>
+          <div class="flex space-x-2">
+            <button
+              (click)="acceptQuickBooking()"
+              class="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-200"
+            >
+              Accept
+            </button>
+            <button
+              (click)="dismissQuickNotification()"
+              class="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg text-xs transition-all duration-200"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Notification separator line -->
+      <div class="h-0.5 bg-gradient-to-r from-orange-300 to-red-300"></div>
+    </div>
+  </div>
+
   <!-- Custom Header -->
-  <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6 relative overflow-hidden">
+  <div
+    class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6 relative overflow-hidden"
+    [class.mt-16]="showQuickNotification"
+  >
     <!-- Background Pattern -->
     <div class="absolute inset-0 opacity-10">
-      <div class="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"></div>
-      <div class="absolute top-8 right-8 w-20 h-20 bg-white rounded-full opacity-20"></div>
-      <div class="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full translate-x-20 translate-y-20"></div>
+      <div
+        class="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"
+      ></div>
+      <div
+        class="absolute top-8 right-8 w-20 h-20 bg-white rounded-full opacity-20"
+      ></div>
+      <div
+        class="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full translate-x-20 translate-y-20"
+      ></div>
     </div>
-    
+
     <div class="relative z-10">
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center space-x-4">
@@ -17,81 +75,261 @@
           </div>
         </div>
         <div class="flex items-center space-x-2">
-          <button 
+          <!-- Notification Bell -->
+          <button
+            (click)="toggleNotifications()"
+            class="relative p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm"
+          >
+            <ion-icon
+              name="notifications"
+              class="text-white text-xl"
+            ></ion-icon>
+            <div
+              *ngIf="unreadCount > 0"
+              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold"
+            >
+              {{ unreadCount > 9 ? '9+' : unreadCount }}
+            </div>
+          </button>
+
+          <button
             (click)="toggleAvailability()"
             [class]="isAvailable ? 'bg-green-400/30' : 'bg-red-400/30'"
-            class="p-2 rounded-xl hover:bg-white/30 transition-all duration-200 backdrop-blur-sm">
-            <ion-icon [name]="isAvailable ? 'power' : 'power-outline'" 
-                      [class]="isAvailable ? 'text-white' : 'text-white/70'"
-                      class="text-xl"></ion-icon>
+            class="p-2 rounded-xl hover:bg-white/30 transition-all duration-200 backdrop-blur-sm relative"
+          >
+            <ion-icon
+              [name]="isAvailable ? 'power' : 'power-outline'"
+              [class]="isAvailable ? 'text-white' : 'text-white/70'"
+              class="text-xl"
+            ></ion-icon>
+            <!-- Location tracking indicator -->
+            <div
+              *ngIf="isAvailable && locationTrackingStatus.isTracking"
+              class="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"
+              title="Location tracking active"
+            ></div>
           </button>
-          <button 
+          <button
             (click)="logout()"
-            class="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm">
-            <ion-icon name="log-out-outline" class="text-white text-xl"></ion-icon>
+            class="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm"
+          >
+            <ion-icon
+              name="log-out-outline"
+              class="text-white text-xl"
+            ></ion-icon>
           </button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Notifications Panel -->
+  <div
+    *ngIf="showNotifications"
+    class="bg-white shadow-lg border-b border-gray-200 p-4"
+  >
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-lg font-semibold text-gray-800">Notifications</h3>
+      <button
+        (click)="markAllNotificationsRead()"
+        class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+        *ngIf="unreadCount > 0"
+      >
+        Mark all read
+      </button>
+    </div>
+
+    <div class="space-y-2 max-h-64 overflow-y-auto">
+      <div
+        *ngFor="let notification of notifications.slice(0, 5)"
+        (click)="onNotificationClick(notification)"
+        class="flex items-start p-3 rounded-xl cursor-pointer transition-all duration-200"
+        [class]="!notification.read ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100' : 'bg-gray-50 hover:bg-gray-100'"
+      >
+        <div class="flex-shrink-0 mr-3">
+          <div
+            class="w-10 h-10 rounded-full flex items-center justify-center"
+            [class]="notification.type === 'job_request' ? 'bg-orange-100' : 'bg-blue-100'"
+          >
+            <ion-icon
+              [name]="notification.type === 'job_request' ? 'briefcase' : 'information-circle'"
+              [class]="notification.type === 'job_request' ? 'text-orange-600' : 'text-blue-600'"
+            ></ion-icon>
+          </div>
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-semibold text-gray-800 truncate">
+              {{ notification.title }}
+            </p>
+            <div class="flex items-center space-x-2">
+              <span
+                *ngIf="notification.priority === 'urgent'"
+                class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium"
+              >
+                Urgent
+              </span>
+              <div
+                *ngIf="!notification.read"
+                class="w-2 h-2 bg-blue-500 rounded-full"
+              ></div>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 mt-1">{{ notification.message }}</p>
+          <p class="text-xs text-gray-500 mt-1">
+            {{ notification.createdAt.toDate() | date:'short' }}
+          </p>
+        </div>
+      </div>
+
+      <div *ngIf="notifications.length === 0" class="text-center py-8">
+        <ion-icon
+          name="notifications-off-outline"
+          class="text-4xl text-gray-400 mb-2"
+        ></ion-icon>
+        <p class="text-gray-500">No notifications yet</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Location Tracking Error Alert -->
+  <div
+    *ngIf="locationTrackingStatus.error && isAvailable"
+    class="bg-orange-50 border-l-4 border-orange-400 p-4 mx-4 mb-4 rounded-r-lg"
+  >
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <ion-icon name="warning" class="text-orange-400 text-xl"></ion-icon>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm text-orange-700">
+          <span class="font-medium">Location tracking issue:</span>
+          {{ locationTrackingStatus.error }}
+        </p>
+        <p class="text-xs text-orange-600 mt-1">
+          Location tracking is needed to receive nearby job opportunities.
+        </p>
+      </div>
+    </div>
+  </div>
+
   <div class="p-4">
     <!-- Profile Summary Card -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-green-100">
+    <div
+      class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-green-100"
+    >
       <div class="flex items-center mb-4">
         <!-- Profile Picture -->
         <div class="relative mr-4">
-          <div class="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-green-200">
-            <img *ngIf="workerProfile?.profilePhotoData" 
-                 [src]="workerProfile?.profilePhotoData" 
-                 alt="Profile"
-                 class="w-full h-full object-cover">
-            <span *ngIf="!workerProfile?.profilePhotoData" 
-                  class="text-green-600 font-bold text-2xl">
+          <div
+            class="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-green-200"
+          >
+            <img
+              *ngIf="workerProfile?.profilePhotoData"
+              [src]="workerProfile?.profilePhotoData"
+              alt="Profile"
+              class="w-full h-full object-cover"
+            />
+            <span
+              *ngIf="!workerProfile?.profilePhotoData"
+              class="text-green-600 font-bold text-2xl"
+            >
               {{ getInitials(userProfile?.fullName || 'W') }}
             </span>
           </div>
           <!-- Verification Badge -->
-          <div *ngIf="workerProfile?.status === 'verified'" 
-               class="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-2 border-2 border-white">
+          <div
+            *ngIf="workerProfile?.status === 'verified'"
+            class="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-2 border-2 border-white"
+          >
             <ion-icon name="checkmark" class="text-white text-sm"></ion-icon>
           </div>
         </div>
-        
+
         <div class="flex-1">
-          <h2 class="text-2xl font-bold text-gray-800">{{ userProfile?.fullName || 'Worker' }}</h2>
+          <h2 class="text-2xl font-bold text-gray-800">
+            {{ userProfile?.fullName || 'Worker' }}
+          </h2>
           <div class="flex items-center mt-1">
-            <span [class]="workerProfile?.status === 'verified' ? 'text-green-600' : 'text-orange-600'" 
-                  class="text-sm font-medium mr-3">
-              {{ workerProfile?.status === 'verified' ? 'Verified Worker' : 'Pending Verification' }}
+            <span
+              [class]="workerProfile?.status === 'verified' ? 'text-green-600' : 'text-orange-600'"
+              class="text-sm font-medium mr-3"
+            >
+              {{ workerProfile?.status === 'verified' ? 'Verified Worker' :
+              'Pending Verification' }}
             </span>
             <div class="flex items-center" *ngIf="workerProfile?.rating">
-              <ion-icon name="star" class="text-yellow-500 text-sm mr-1"></ion-icon>
-              <span class="text-sm text-gray-600">{{ workerProfile?.rating | number:'1.1-1' }}</span>
+              <ion-icon
+                name="star"
+                class="text-yellow-500 text-sm mr-1"
+              ></ion-icon>
+              <span class="text-sm text-gray-600"
+                >{{ workerProfile?.rating | number:'1.1-1' }}</span
+              >
             </div>
           </div>
-          
+
           <!-- Availability Status -->
           <div class="flex items-center mt-2">
-            <div [class]="isAvailable ? 'bg-green-500' : 'bg-red-500'" 
-                 class="w-2 h-2 rounded-full mr-2"></div>
-            <span class="text-sm text-gray-600">{{ isAvailable ? 'Available for Jobs' : 'Offline' }}</span>
+            <div
+              [class]="isAvailable ? 'bg-green-500' : 'bg-red-500'"
+              class="w-2 h-2 rounded-full mr-2"
+            ></div>
+            <span class="text-sm text-gray-600"
+              >{{ isAvailable ? 'Available for Jobs' : 'Offline' }}</span
+            >
+          </div>
+
+          <!-- Location Tracking Status -->
+          <div class="flex items-center mt-1" *ngIf="isAvailable">
+            <div
+              [class]="locationTrackingStatus.isTracking ? 'bg-blue-500' : 'bg-orange-500'"
+              class="w-2 h-2 rounded-full mr-2"
+            ></div>
+            <span class="text-xs text-gray-500">
+              {{ locationTrackingStatus.isTracking ? 'Location Active' :
+              'Location Pending' }}
+            </span>
+            <ion-icon
+              *ngIf="locationTrackingStatus.lastUpdate"
+              name="time-outline"
+              class="text-xs text-gray-400 ml-2 mr-1"
+            ></ion-icon>
+            <span
+              *ngIf="locationTrackingStatus.lastUpdate"
+              class="text-xs text-gray-400"
+            >
+              {{ locationTrackingStatus.lastUpdate | date:'short' }}
+            </span>
           </div>
         </div>
       </div>
 
       <!-- Quick Stats Cards -->
       <div class="grid grid-cols-3 gap-4">
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center border border-blue-200">
-          <div class="text-2xl font-bold text-blue-700">{{ workerStats.jobsCompleted || 0 }}</div>
+        <div
+          class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center border border-blue-200"
+        >
+          <div class="text-2xl font-bold text-blue-700">
+            {{ workerStats.jobsCompleted || 0 }}
+          </div>
           <div class="text-xs text-blue-600 font-medium">Jobs Done</div>
         </div>
-        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 text-center border border-green-200">
-          <div class="text-2xl font-bold text-green-700">₱{{ workerStats.monthlyEarnings | number:'1.0-0' }}</div>
+        <div
+          class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 text-center border border-green-200"
+        >
+          <div class="text-2xl font-bold text-green-700">
+            ₱{{ workerStats.monthlyEarnings | number:'1.0-0' }}
+          </div>
           <div class="text-xs text-green-600 font-medium">This Month</div>
         </div>
-        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 text-center border border-yellow-200">
-          <div class="text-2xl font-bold flex items-center justify-center text-yellow-700">
+        <div
+          class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 text-center border border-yellow-200"
+        >
+          <div
+            class="text-2xl font-bold flex items-center justify-center text-yellow-700"
+          >
             <ion-icon name="star" class="text-yellow-500 mr-1"></ion-icon>
             {{ (workerProfile?.rating || 0) | number:'1.1-1' }}
           </div>
@@ -100,75 +338,272 @@
       </div>
     </div>
 
+    <!-- Quick Actions Section -->
+    <div
+      class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-green-100"
+    >
+      <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+        <ion-icon name="flash" class="text-green-600 mr-2"></ion-icon>
+        Quick Actions
+      </h3>
+
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Job Listings Button -->
+        <button
+          (click)="navigateToJobListings()"
+          class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center text-center"
+        >
+          <div
+            class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3"
+          >
+            <ion-icon name="list" class="text-2xl"></ion-icon>
+          </div>
+          <span class="font-semibold text-sm">Job Listings</span>
+          <span class="text-xs text-blue-100 mt-1">View all bookings</span>
+        </button>
+
+        <!-- Job History Button -->
+        <button
+          (click)="navigateToJobHistory()"
+          class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center text-center"
+        >
+          <div
+            class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3"
+          >
+            <ion-icon name="time" class="text-2xl"></ion-icon>
+          </div>
+          <span class="font-semibold text-sm">Job History</span>
+          <span class="text-xs text-purple-100 mt-1">View completed jobs</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bookings Data Slideshow -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-bold text-gray-800">
+          Recent Bookings Overview
+        </h3>
+        <div class="flex items-center space-x-2">
+          <button
+            (click)="previousSlide()"
+            class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
+            [disabled]="currentSlideIndex === 0"
+            [class.opacity-50]="currentSlideIndex === 0"
+          >
+            <ion-icon name="chevron-back" class="text-sm"></ion-icon>
+          </button>
+          <span class="text-sm text-gray-500"
+            >{{ currentSlideIndex + 1 }} / {{ bookingsSlides.length }}</span
+          >
+          <button
+            (click)="nextSlide()"
+            class="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
+            [disabled]="currentSlideIndex === bookingsSlides.length - 1"
+            [class.opacity-50]="currentSlideIndex === bookingsSlides.length - 1"
+          >
+            <ion-icon name="chevron-forward" class="text-sm"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Slideshow Container -->
+      <div
+        class="slideshow-container relative overflow-hidden rounded-2xl shadow-lg"
+      >
+        <div
+          class="slide-transition flex transition-transform duration-500 ease-in-out"
+          [style.transform]="'translateX(-' + (currentSlideIndex * 100) + '%)'"
+        >
+          <div
+            *ngFor="let slide of bookingsSlides; let i = index"
+            class="w-full flex-shrink-0 bg-white/90 backdrop-blur-md p-6 fade-in"
+          >
+            <div class="text-center mb-4">
+              <h4 class="text-lg font-semibold text-gray-800 mb-2">
+                {{ slide.title }}
+              </h4>
+              <p class="text-sm text-gray-600">{{ slide.description }}</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid grid grid-cols-2 gap-4 mb-4">
+              <div
+                *ngFor="let stat of slide.stats"
+                class="stats-card bg-gradient-to-br rounded-xl p-4 text-center border transform hover:scale-105 transition-all duration-300"
+                [ngClass]="stat.colorClass"
+              >
+                <div class="text-2xl font-bold mb-1" [ngClass]="stat.textColor">
+                  {{ stat.value }}
+                </div>
+                <div class="text-xs font-medium" [ngClass]="stat.labelColor">
+                  {{ stat.label }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Progress Bar for this period -->
+            <div class="bg-gray-100 rounded-full h-2 mb-2 progress-bar">
+              <div
+                class="h-2 rounded-full transition-all duration-700"
+                [ngClass]="slide.progressColor"
+                [style.width]="slide.progress + '%'"
+              ></div>
+            </div>
+            <p class="text-xs text-center text-gray-500">
+              {{ slide.progressText }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Slide Indicators -->
+        <div
+          class="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2"
+        >
+          <button
+            *ngFor="let slide of bookingsSlides; let i = index"
+            (click)="goToSlide(i)"
+            class="slide-indicator w-2 h-2 rounded-full transition-all duration-300"
+            [class.bg-green-500]="i === currentSlideIndex"
+            [class.bg-gray-300]="i !== currentSlideIndex"
+            [class.active]="i === currentSlideIndex"
+          ></button>
+        </div>
+      </div>
+    </div>
+
     <!-- Job Feed (Available Bookings) -->
     <div class="mb-6" *ngIf="availableJobs.length > 0">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xl font-semibold text-gray-800">Available Jobs</h3>
-        <ion-button fill="clear" size="small" (click)="refreshJobs()">
-          <ion-icon name="refresh" slot="icon-only"></ion-icon>
-        </ion-button>
+        <h3 class="text-xl font-bold text-gray-800">Available Jobs</h3>
+        <button
+          (click)="refreshJobs()"
+          class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-semibold text-sm shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center"
+        >
+          <ion-icon name="refresh" class="mr-2"></ion-icon>
+          Refresh
+        </button>
       </div>
-      
+
       <div class="space-y-4">
-        <div *ngFor="let job of availableJobs" class="bg-white rounded-xl shadow-lg p-4">
-          <div class="flex justify-between items-start mb-3">
+        <div
+          *ngFor="let job of availableJobs"
+          class="job-card bg-white/90 backdrop-blur-md rounded-2xl shadow-xl p-6 border border-white/20 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 fade-in"
+        >
+          <div class="flex justify-between items-start mb-4">
             <div class="flex-1">
-              <h4 class="font-semibold text-gray-800 mb-1">{{ job.title }}</h4>
-              <p class="text-gray-600 text-sm mb-2">{{ job.description }}</p>
-              <div class="flex items-center text-sm text-gray-500 mb-1">
-                <ion-icon name="location-outline" class="mr-1"></ion-icon>
-                <span>{{ job.locations[0]?.address }}</span>
-                <span *ngIf="job.distance" class="ml-2 text-blue-600">
-                  ({{ job.distance | number:'1.1-1' }} km away)
+              <div class="flex items-center mb-2">
+                <h4 class="font-bold text-gray-800 text-lg mr-3">
+                  {{ job.title }}
+                </h4>
+                <span
+                  class="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-md"
+                >
+                  {{ job.categoryName }}
                 </span>
               </div>
-              <div class="flex items-center text-sm text-gray-500">
-                <ion-icon name="time-outline" class="mr-1"></ion-icon>
-                <span>{{ job.schedule.date }} at {{ job.schedule.time }}</span>
+              <p class="text-gray-700 text-sm mb-3 leading-relaxed">
+                {{ job.description }}
+              </p>
+
+              <div class="space-y-2">
+                <div class="flex items-center text-sm text-gray-600">
+                  <div
+                    class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3"
+                  >
+                    <ion-icon name="location" class="text-blue-600"></ion-icon>
+                  </div>
+                  <span class="flex-1">{{ job.location?.address }}</span>
+                  <span
+                    *ngIf="job.distance"
+                    class="ml-2 text-blue-600 font-semibold"
+                  >
+                    {{ job.distance | number:'1.1-1' }} km away
+                  </span>
+                </div>
+                <div class="flex items-center text-sm text-gray-600">
+                  <div
+                    class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3"
+                  >
+                    <ion-icon name="time" class="text-purple-600"></ion-icon>
+                  </div>
+                  <span
+                    >{{ job.schedule.date }} at {{ job.schedule.time }}</span
+                  >
+                </div>
               </div>
-            </div>
-            
-            <div class="text-right ml-4">
-              <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                {{ job.category }}
-              </span>
             </div>
           </div>
 
-          <!-- Price Breakdown -->
-          <div class="bg-gray-50 rounded-lg p-3 mb-4">
-            <div class="flex justify-between text-sm text-gray-600 mb-1">
-              <span>Service Price:</span>
-              <span>₱{{ job.price | number:'1.2-2' }}</span>
-            </div>
-            <div class="flex justify-between text-sm text-gray-600 mb-1">
-              <span>Service Fee:</span>
-              <span>-₱{{ job.serviceCharge | number:'1.2-2' }}</span>
-            </div>
-            <div class="flex justify-between text-sm text-gray-600 mb-1">
-              <span>Transport Fee:</span>
-              <span>₱{{ job.transportFee | number:'1.2-2' }}</span>
-            </div>
-            <div class="border-t pt-1 mt-1">
-              <div class="flex justify-between font-semibold text-gray-800">
-                <span>Your Payout:</span>
-                <span>₱{{ (job.price - job.serviceCharge + job.transportFee) | number:'1.2-2' }}</span>
+          <!-- Enhanced Price Breakdown -->
+          <div
+            class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-4 border border-gray-200"
+          >
+            <h5 class="font-semibold text-gray-800 mb-3 flex items-center">
+              <ion-icon
+                name="calculator"
+                class="mr-2 text-green-600"
+              ></ion-icon>
+              Payment Breakdown
+            </h5>
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm text-gray-700">
+                <span>Service Price:</span>
+                <span class="font-semibold text-green-600"
+                  >₱{{ job.pricing.basePrice | number:'1.2-2' }}</span
+                >
+              </div>
+              <div class="flex justify-between text-sm text-gray-700">
+                <span>Platform Fee:</span>
+                <span class="font-semibold text-red-500"
+                  >-₱{{ job.pricing.serviceCharge | number:'1.2-2' }}</span
+                >
+              </div>
+              <div class="flex justify-between text-sm text-gray-700">
+                <span>Transport Fee:</span>
+                <span class="font-semibold text-blue-600"
+                  >+₱{{ job.pricing.transportFee | number:'1.2-2' }}</span
+                >
+              </div>
+              <div class="border-t border-gray-300 pt-2 mt-2">
+                <div class="flex justify-between font-bold text-lg">
+                  <span class="text-gray-800">Your Earnings:</span>
+                  <span
+                    class="text-green-700 bg-green-100 px-3 py-1 rounded-lg"
+                  >
+                    ₱{{ (job.pricing.basePrice - job.pricing.serviceCharge +
+                    job.pricing.transportFee) | number:'1.2-2' }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Action Buttons -->
+          <!-- Enhanced Action Buttons -->
           <div class="flex space-x-3">
-            <button 
+            <button
               (click)="acceptJob(job)"
               [disabled]="job.isProcessing"
-              class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50">
+              class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none flex items-center justify-center"
+            >
+              <ion-icon
+                *ngIf="!job.isProcessing"
+                name="checkmark-circle"
+                class="mr-2"
+              ></ion-icon>
+              <ion-icon
+                *ngIf="job.isProcessing"
+                name="hourglass"
+                class="mr-2 animate-spin"
+              ></ion-icon>
               <span *ngIf="!job.isProcessing">Accept Job</span>
               <span *ngIf="job.isProcessing">Processing...</span>
             </button>
-            <button 
+            <button
               (click)="declineJob(job)"
-              class="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+              class="flex-1 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center"
+            >
+              <ion-icon name="close-circle" class="mr-2"></ion-icon>
               Decline
             </button>
           </div>
@@ -176,36 +611,69 @@
       </div>
     </div>
 
-    <!-- Empty State for Available Jobs -->
-    <div *ngIf="availableJobs.length === 0" class="bg-white rounded-xl shadow-lg p-6 mb-6 text-center">
-      <ion-icon name="briefcase-outline" class="text-6xl text-gray-300 mb-4"></ion-icon>
-      <h3 class="text-lg font-semibold text-gray-600 mb-2">No Available Jobs</h3>
-      <p class="text-gray-500 text-sm mb-4">Check back later for new job opportunities matching your skills.</p>
-      <ion-button fill="clear" (click)="refreshJobs()">
-        <ion-icon name="refresh" slot="start"></ion-icon>
-        Refresh Jobs
-      </ion-button>
+    <!-- Enhanced Empty State for Available Jobs -->
+    <div
+      *ngIf="availableJobs.length === 0"
+      class="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl p-8 mb-6 text-center border border-gray-100"
+    >
+      <div
+        class="w-24 h-24 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
+        <ion-icon
+          name="briefcase-outline"
+          class="text-4xl text-green-600"
+        ></ion-icon>
+      </div>
+      <h3 class="text-xl font-bold text-gray-800 mb-2">
+        No Available Jobs Right Now
+      </h3>
+      <p class="text-gray-600 text-sm mb-6 max-w-md mx-auto leading-relaxed">
+        Don't worry! New job opportunities matching your skills will appear
+        here. Make sure your availability is ON to receive notifications.
+      </p>
+      <div class="space-y-3">
+        <button
+          (click)="refreshJobs()"
+          class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center mx-auto"
+        >
+          <ion-icon name="refresh" class="mr-2"></ion-icon>
+          Check for New Jobs
+        </button>
+        <p class="text-xs text-gray-500">
+          Last updated: {{ lastRefreshTime | date:'short' }}
+        </p>
+      </div>
     </div>
 
     <!-- Ongoing Jobs -->
     <div class="mb-6" *ngIf="ongoingJobs.length > 0">
       <h3 class="text-xl font-semibold text-gray-800 mb-4">My Active Jobs</h3>
-      
+
       <div class="space-y-4">
-        <div *ngFor="let job of ongoingJobs" class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-blue-500">
+        <div
+          *ngFor="let job of ongoingJobs"
+          class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-blue-500"
+        >
           <div class="flex justify-between items-start mb-3">
             <div class="flex-1">
               <div class="flex items-center mb-2">
-                <h4 class="font-semibold text-gray-800 mr-2">{{ job.title }}</h4>
-                <span [class]="getStatusBadgeClass(job.status)" class="px-2 py-1 rounded-full text-xs font-medium">
+                <h4 class="font-semibold text-gray-800 mr-2">
+                  {{ job.title }}
+                </h4>
+                <span
+                  [class]="getStatusBadgeClass(job.status)"
+                  class="px-2 py-1 rounded-full text-xs font-medium"
+                >
                   {{ job.status }}
                 </span>
               </div>
               <p class="text-gray-600 text-sm mb-2">{{ job.description }}</p>
-              
+
               <!-- Client Contact Info -->
               <div class="bg-blue-50 rounded-lg p-3 mb-3">
-                <h5 class="font-medium text-blue-800 mb-1">Client Information</h5>
+                <h5 class="font-medium text-blue-800 mb-1">
+                  Client Information
+                </h5>
                 <div class="text-sm text-blue-700">
                   <p>{{ job.clientName || 'Client' }}</p>
                   <div class="flex items-center mt-1">
@@ -214,10 +682,10 @@
                   </div>
                 </div>
               </div>
-              
+
               <div class="flex items-center text-sm text-gray-500 mb-1">
                 <ion-icon name="location-outline" class="mr-1"></ion-icon>
-                <span>{{ job.locations[0]?.address }}</span>
+                <span>{{ job.location?.address }}</span>
               </div>
               <div class="flex items-center text-sm text-gray-500">
                 <ion-icon name="time-outline" class="mr-1"></ion-icon>
@@ -228,25 +696,28 @@
 
           <!-- Action Buttons -->
           <div class="flex space-x-3 mt-4">
-            <button 
+            <button
               *ngIf="job.status === 'accepted'"
               (click)="startJob(job)"
               [disabled]="job.isProcessing"
-              class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50">
+              class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
               <span *ngIf="!job.isProcessing">Start Job</span>
               <span *ngIf="job.isProcessing">Starting...</span>
             </button>
-            <button 
-              *ngIf="job.status === 'in-progress'"
+            <button
+              *ngIf="job.status === 'in_progress'"
               (click)="completeJob(job)"
               [disabled]="job.isProcessing"
-              class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50">
+              class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
               <span *ngIf="!job.isProcessing">Mark as Completed</span>
               <span *ngIf="job.isProcessing">Completing...</span>
             </button>
-            <button 
+            <button
               (click)="viewJobLocation(job)"
-              class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+              class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
               <ion-icon name="map-outline" class="mr-1"></ion-icon>
               View Map
             </button>
@@ -256,10 +727,18 @@
     </div>
 
     <!-- Empty State for Ongoing Jobs -->
-    <div *ngIf="ongoingJobs.length === 0" class="bg-white rounded-xl shadow-lg p-6 text-center">
-      <ion-icon name="checkmark-circle-outline" class="text-6xl text-gray-300 mb-4"></ion-icon>
+    <div
+      *ngIf="ongoingJobs.length === 0"
+      class="bg-white rounded-xl shadow-lg p-6 text-center"
+    >
+      <ion-icon
+        name="checkmark-circle-outline"
+        class="text-6xl text-gray-300 mb-4"
+      ></ion-icon>
       <h3 class="text-lg font-semibold text-gray-600 mb-2">No Active Jobs</h3>
-      <p class="text-gray-500 text-sm">You don't have any ongoing jobs at the moment.</p>
+      <p class="text-gray-500 text-sm">
+        You don't have any ongoing jobs at the moment.
+      </p>
     </div>
   </div>
 </ion-content>

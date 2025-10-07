@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { WorkerDashboardPageRoutingModule } from './dashboard-routing.module';
 import { WorkerDashboardPage } from './dashboard.page';
+import { JobDetailsModalComponent } from '../../../components/job-details-modal/job-details-modal.component';
 
 @NgModule({
   imports: [
@@ -12,6 +13,6 @@ import { WorkerDashboardPage } from './dashboard.page';
     IonicModule,
     WorkerDashboardPageRoutingModule,
   ],
-  declarations: [WorkerDashboardPage],
+  declarations: [WorkerDashboardPage, JobDetailsModalComponent],
 })
 export class WorkerDashboardPageModule {}

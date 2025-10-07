@@ -1,0 +1,445 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Booking Details</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex items-center justify-center min-h-96">
+    <div class="text-center">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p class="mt-4 text-gray-600">Loading booking details...</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="text-center py-16">
+    <ion-icon name="warning-outline" class="text-6xl text-red-500"></ion-icon>
+    <h2 class="text-xl font-semibold mt-4 text-gray-900">{{ error }}</h2>
+    <ion-button fill="outline" (click)="goBack()" class="mt-4">
+      Go Back
+    </ion-button>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="booking && !isLoading && !error" class="space-y-6">
+    <!-- Booking Status Header -->
+    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-3">
+          <div
+            [class]="getCategoryColor(booking.categoryId) + ' p-3 rounded-full'"
+          >
+            <ion-icon
+              [name]="getCategoryIcon(booking.categoryId)"
+              class="text-xl"
+            ></ion-icon>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-gray-900">
+              {{ booking.categoryName }}
+            </h1>
+            <p class="text-gray-600">{{ booking.subService }}</p>
+          </div>
+        </div>
+        <div
+          [class]="getStatusColor(booking.status) + ' px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1'"
+        >
+          <ion-icon
+            [name]="getStatusIcon(booking.status)"
+            class="text-sm"
+          ></ion-icon>
+          <span class="capitalize">{{ booking.status }}</span>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="mb-4">
+        <div class="flex justify-between text-sm text-gray-600 mb-2">
+          <span>Progress</span>
+          <span>{{ getJobProgress() }}%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2">
+          <div
+            class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            [style.width.%]="getJobProgress()"
+          ></div>
+        </div>
+        <p class="text-sm text-gray-600 mt-2">{{ getJobProgressText() }}</p>
+      </div>
+
+      <!-- Booking ID and Date -->
+      <div class="text-sm text-gray-500 space-y-1">
+        <p>
+          <span class="font-medium">Booking ID:</span> #{{ booking.id ?
+          booking.id.slice(-8).toUpperCase() : 'N/A' }}
+        </p>
+        <p>
+          <span class="font-medium">Created:</span> {{ booking.createdAt |
+          date:'medium' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Worker Information -->
+    <div
+      *ngIf="booking.assignedWorker"
+      class="bg-white rounded-lg shadow-sm p-4 border border-gray-200"
+    >
+      <h2 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+        <ion-icon name="person-outline" class="mr-2"></ion-icon>
+        Worker Information
+      </h2>
+
+      <div *ngIf="workerProfile" class="space-y-3">
+        <div class="flex items-center space-x-3">
+          <div
+            class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"
+          >
+            <ion-icon name="person" class="text-blue-600 text-xl"></ion-icon>
+          </div>
+          <div class="flex-1">
+            <h3 class="font-semibold text-gray-900">
+              {{ workerProfile.fullName }}
+            </h3>
+            <div class="flex items-center space-x-1">
+              <ion-icon name="star" class="text-yellow-500 text-sm"></ion-icon>
+              <span class="text-sm text-gray-600"
+                >{{ workerProfile.rating.toFixed(1) }}</span
+              >
+              <span class="text-sm text-gray-400">•</span>
+              <span class="text-sm text-gray-600"
+                >{{ workerProfile.completedJobs }} jobs</span
+              >
+            </div>
+          </div>
+          <ion-button
+            *ngIf="canContactWorker()"
+            fill="clear"
+            size="small"
+            (click)="contactWorker()"
+          >
+            <ion-icon name="call-outline"></ion-icon>
+          </ion-button>
+        </div>
+
+        <div
+          *ngIf="workerProfile.bio"
+          class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg"
+        >
+          {{ workerProfile.bio }}
+        </div>
+
+        <div *ngIf="workerProfile.skills.length > 0" class="space-y-2">
+          <p class="text-sm font-medium text-gray-700">Skills:</p>
+          <div class="flex flex-wrap gap-2">
+            <span
+              *ngFor="let skill of workerProfile.skills"
+              class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+            >
+              {{ skill }}
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div class="flex items-center space-x-2">
+            <ion-icon
+              name="shield-checkmark-outline"
+              class="text-green-600"
+            ></ion-icon>
+            <span
+              [class]="workerProfile.verificationStatus === 'verified' ? 'text-green-600' : 'text-orange-600'"
+            >
+              {{ workerProfile.verificationStatus | titlecase }}
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <ion-icon name="calendar-outline" class="text-gray-500"></ion-icon>
+            <span class="text-gray-600"
+              >Joined {{ workerProfile.joinedDate | date:'MMM yyyy' }}</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!workerProfile" class="text-center py-4">
+        <ion-spinner name="dots"></ion-spinner>
+        <p class="text-sm text-gray-600 mt-2">Loading worker information...</p>
+      </div>
+    </div>
+
+    <!-- No Worker Assigned -->
+    <div
+      *ngIf="!booking.assignedWorker"
+      class="bg-white rounded-lg shadow-sm p-4 border border-gray-200"
+    >
+      <h2 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+        <ion-icon name="search-outline" class="mr-2"></ion-icon>
+        Worker Assignment
+      </h2>
+      <div class="text-center py-4">
+        <ion-icon
+          name="hourglass-outline"
+          class="text-4xl text-blue-500"
+        ></ion-icon>
+        <p class="text-gray-600 mt-2">Searching for available workers...</p>
+        <p class="text-sm text-gray-500">
+          We're finding the best worker for your service
+        </p>
+      </div>
+    </div>
+
+    <!-- Service Details -->
+    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+      <h2 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+        <ion-icon name="list-outline" class="mr-2"></ion-icon>
+        Service Details
+      </h2>
+
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm font-medium text-gray-700">Category</p>
+            <p class="text-gray-900">{{ booking.categoryName }}</p>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-700">Sub Service</p>
+            <p class="text-gray-900">{{ booking.subService }}</p>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-sm font-medium text-gray-700">Estimated Duration</p>
+          <p class="text-gray-900">
+            {{ formatDuration(booking.estimatedDuration) }}
+          </p>
+        </div>
+
+        <div *ngIf="booking.scheduledDate">
+          <p class="text-sm font-medium text-gray-700">Scheduled Date & Time</p>
+          <p class="text-gray-900">
+            {{ booking.scheduledDate | date:'mediumDate' }}
+            <span *ngIf="booking.scheduledTime">
+              at {{ booking.scheduledTime }}</span
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Details -->
+    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+      <h2 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+        <ion-icon name="location-outline" class="mr-2"></ion-icon>
+        Service Location
+      </h2>
+
+      <div class="space-y-2">
+        <p class="text-gray-900">{{ booking.location.address }}</p>
+        <div
+          *ngIf="booking.location.city || booking.location.province"
+          class="text-sm text-gray-600"
+        >
+          <span *ngIf="booking.location.city">{{ booking.location.city }}</span>
+          <span *ngIf="booking.location.city && booking.location.province"
+            >,
+          </span>
+          <span *ngIf="booking.location.province"
+            >{{ booking.location.province }}</span
+          >
+        </div>
+        <div class="text-xs text-gray-500">
+          {{ booking.location.lat.toFixed(6) }}, {{
+          booking.location.lng.toFixed(6) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing Details -->
+    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+      <h2 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+        <ion-icon name="card-outline" class="mr-2"></ion-icon>
+        Pricing Details
+      </h2>
+
+      <div class="space-y-2">
+        <div class="flex justify-between">
+          <span class="text-gray-600">Base Price</span>
+          <span class="text-gray-900"
+            >{{ formatCurrency(booking.pricing.basePrice) }}</span
+          >
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Service Charge</span>
+          <span class="text-gray-900"
+            >{{ formatCurrency(booking.pricing.serviceCharge) }}</span
+          >
+        </div>
+        <div class="border-t pt-2">
+          <div class="flex justify-between font-semibold">
+            <span class="text-gray-900">Total</span>
+            <span class="text-blue-600"
+              >{{ formatCurrency(booking.pricing.total) }}</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+      <h2 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+        <ion-icon name="time-outline" class="mr-2"></ion-icon>
+        Timeline
+      </h2>
+
+      <div class="space-y-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900">Booking Created</p>
+            <p class="text-xs text-gray-600">
+              {{ booking.createdAt | date:'medium' }}
+            </p>
+          </div>
+        </div>
+
+        <div *ngIf="booking.acceptedAt" class="flex items-center space-x-3">
+          <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900">Worker Accepted</p>
+            <p class="text-xs text-gray-600">
+              {{ booking.acceptedAt | date:'medium' }}
+            </p>
+          </div>
+        </div>
+
+        <div *ngIf="booking.startedAt" class="flex items-center space-x-3">
+          <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900">Service Started</p>
+            <p class="text-xs text-gray-600">
+              {{ booking.startedAt | date:'medium' }}
+            </p>
+          </div>
+        </div>
+
+        <div *ngIf="booking.completedAt" class="flex items-center space-x-3">
+          <div class="w-3 h-3 bg-emerald-500 rounded-full"></div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900">Service Completed</p>
+            <p class="text-xs text-gray-600">
+              {{ booking.completedAt | date:'medium' }}
+            </p>
+          </div>
+        </div>
+
+        <div *ngIf="booking.cancelledAt" class="flex items-center space-x-3">
+          <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900">Booking Cancelled</p>
+            <p class="text-xs text-gray-600">
+              {{ booking.cancelledAt | date:'medium' }}
+            </p>
+            <p
+              *ngIf="booking.cancellationReason"
+              class="text-xs text-gray-500 italic"
+            >
+              "{{ booking.cancellationReason }}"
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rating Section -->
+    <div
+      *ngIf="booking.status === 'completed'"
+      class="bg-white rounded-lg shadow-sm p-4 border border-gray-200"
+    >
+      <h2 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+        <ion-icon name="star-outline" class="mr-2"></ion-icon>
+        Your Rating
+      </h2>
+
+      <div *ngIf="booking.clientRating" class="space-y-2">
+        <div class="flex items-center space-x-1">
+          <ion-icon
+            *ngFor="let i of [1,2,3,4,5]"
+            [name]="i <= booking.clientRating! ? 'star' : 'star-outline'"
+            [class]="i <= booking.clientRating! ? 'text-yellow-500' : 'text-gray-300'"
+          >
+          </ion-icon>
+          <span class="ml-2 text-sm text-gray-600"
+            >{{ booking.clientRating }}/5</span
+          >
+        </div>
+        <div *ngIf="booking.clientReview" class="bg-gray-50 p-3 rounded-lg">
+          <p class="text-sm text-gray-700">"{{ booking.clientReview }}"</p>
+        </div>
+        <p class="text-xs text-gray-500">
+          Rated on {{ booking.reviewedAt | date:'medium' }}
+        </p>
+      </div>
+
+      <div *ngIf="!booking.clientRating" class="text-center py-4">
+        <ion-icon
+          name="star-outline"
+          class="text-4xl text-yellow-500"
+        ></ion-icon>
+        <p class="text-gray-600 mt-2">How was your service?</p>
+        <ion-button (click)="rateService()" class="mt-2">
+          Rate Service
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="space-y-3">
+      <ion-button expand="block" (click)="rebookService()" class="mb-2">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        Rebook Service
+      </ion-button>
+
+      <div class="grid grid-cols-2 gap-3">
+        <ion-button
+          *ngIf="canContactWorker()"
+          expand="block"
+          fill="outline"
+          (click)="contactWorker()"
+        >
+          <ion-icon name="call-outline" slot="start"></ion-icon>
+          Contact Worker
+        </ion-button>
+
+        <ion-button
+          *ngIf="canRateService()"
+          expand="block"
+          fill="outline"
+          (click)="rateService()"
+        >
+          <ion-icon name="star-outline" slot="start"></ion-icon>
+          Rate Service
+        </ion-button>
+
+        <ion-button
+          *ngIf="canCancelBooking()"
+          expand="block"
+          fill="outline"
+          color="danger"
+          (click)="cancelBooking()"
+        >
+          <ion-icon name="close-outline" slot="start"></ion-icon>
+          Cancel Booking
+        </ion-button>
+      </div>
+    </div>
+  </div>
+</ion-content>

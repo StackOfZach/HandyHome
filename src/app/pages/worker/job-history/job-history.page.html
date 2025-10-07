@@ -1,0 +1,315 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Job History</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="refreshJobs()">
+        <ion-icon name="refresh-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex items-center justify-center min-h-96">
+    <div class="text-center">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p class="mt-4 text-gray-600">Loading job history...</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="text-center py-16">
+    <ion-icon name="warning-outline" class="text-6xl text-red-500"></ion-icon>
+    <h2 class="text-xl font-semibold mt-4 text-gray-900">{{ error }}</h2>
+    <ion-button fill="outline" (click)="refreshJobs()" class="mt-4">
+      Try Again
+    </ion-button>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading && !error">
+    <!-- Stats Overview -->
+    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 mb-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">
+        Job History Overview
+      </h2>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="text-center p-3 bg-green-50 rounded-lg">
+          <div class="text-2xl font-bold text-green-600">
+            {{ getCompletedCount() }}
+          </div>
+          <div class="text-sm text-green-700">Completed</div>
+        </div>
+        <div class="text-center p-3 bg-red-50 rounded-lg">
+          <div class="text-2xl font-bold text-red-600">
+            {{ getCancelledCount() }}
+          </div>
+          <div class="text-sm text-red-700">Cancelled</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="text-center p-3 bg-blue-50 rounded-lg">
+          <div class="text-lg font-bold text-blue-600">
+            {{ getTotalEarnings() | currency:'PHP':'symbol':'1.0-0' }}
+          </div>
+          <div class="text-xs text-blue-700">Total Earned</div>
+        </div>
+        <div class="text-center p-3 bg-orange-50 rounded-lg">
+          <div class="text-lg font-bold text-orange-600">
+            {{ getQuickBookingsCount() }}
+          </div>
+          <div class="text-xs text-orange-700">Quick Jobs</div>
+        </div>
+        <div class="text-center p-3 bg-purple-50 rounded-lg">
+          <div class="text-lg font-bold text-purple-600">
+            {{ getRegularBookingsCount() }}
+          </div>
+          <div class="text-xs text-purple-700">Regular Jobs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 mb-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
+
+      <!-- Search Bar -->
+      <div class="relative mb-4">
+        <ion-searchbar
+          [(ngModel)]="searchTerm"
+          (ionInput)="onSearchChange()"
+          placeholder="Search jobs..."
+          class="bg-gray-50 rounded-lg"
+        >
+        </ion-searchbar>
+        <button
+          *ngIf="searchTerm"
+          (click)="clearSearch()"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+        >
+          <ion-icon name="close-circle"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Filter Row -->
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Status Filter -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Status</label
+          >
+          <ion-select
+            [(ngModel)]="selectedStatus"
+            (ionChange)="onStatusFilterChange()"
+            placeholder="Select status"
+            interface="popover"
+          >
+            <ion-select-option
+              *ngFor="let option of statusOptions"
+              [value]="option.value"
+            >
+              {{ option.label }}
+            </ion-select-option>
+          </ion-select>
+        </div>
+
+        <!-- Job Type Filter -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Job Type</label
+          >
+          <ion-select
+            [(ngModel)]="selectedJobType"
+            (ionChange)="onJobTypeFilterChange()"
+            placeholder="Select job type"
+            interface="popover"
+          >
+            <ion-select-option
+              *ngFor="let option of jobTypeOptions"
+              [value]="option.value"
+            >
+              {{ option.label }}
+            </ion-select-option>
+          </ion-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jobs List -->
+    <div *ngIf="filteredJobs.length > 0" class="space-y-4">
+      <div
+        *ngFor="let job of filteredJobs"
+        class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 hover:shadow-md transition-shadow"
+      >
+        <!-- Job Header -->
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex-1">
+            <div class="flex items-center space-x-3 mb-2">
+              <div class="p-2 bg-gray-100 rounded-lg">
+                <ion-icon
+                  [name]="getCategoryIcon(getJobCategory(job))"
+                  class="text-gray-600"
+                ></ion-icon>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900">
+                  {{ getJobTitle(job) }}
+                </h3>
+                <div class="flex items-center space-x-2">
+                  <span
+                    [class]="getJobTypeColor(getJobType(job)) + ' px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1'"
+                  >
+                    <ion-icon
+                      [name]="getJobTypeIcon(getJobType(job))"
+                      class="text-xs"
+                    ></ion-icon>
+                    <span
+                      >{{ getJobType(job) === 'quick' ? 'Quick' : 'Regular'
+                      }}</span
+                    >
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            [class]="getStatusColor(job.status) + ' px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1'"
+          >
+            <ion-icon
+              [name]="getStatusIcon(job.status)"
+              class="text-sm"
+            ></ion-icon>
+            <span class="capitalize">{{ job.status }}</span>
+          </div>
+        </div>
+
+        <!-- Job Details -->
+        <div class="space-y-2 mb-4">
+          <!-- Location -->
+          <div class="flex items-center text-sm text-gray-600">
+            <ion-icon
+              name="location-outline"
+              class="mr-2 text-gray-500"
+            ></ion-icon>
+            <span>{{ getJobLocation(job) }}</span>
+          </div>
+
+          <!-- Date -->
+          <div class="flex items-center text-sm text-gray-600">
+            <ion-icon
+              name="calendar-outline"
+              class="mr-2 text-gray-500"
+            ></ion-icon>
+            <span>{{ job.createdAt | date:'mediumDate' }}</span>
+          </div>
+
+          <!-- Completion/Cancellation Date -->
+          <div
+            *ngIf="job.completedAt"
+            class="flex items-center text-sm text-green-600"
+          >
+            <ion-icon name="checkmark-circle-outline" class="mr-2"></ion-icon>
+            <span>Completed on {{ job.completedAt | date:'mediumDate' }}</span>
+          </div>
+
+          <div
+            *ngIf="job.cancelledAt"
+            class="flex items-center text-sm text-red-600"
+          >
+            <ion-icon name="close-circle-outline" class="mr-2"></ion-icon>
+            <span>Cancelled on {{ job.cancelledAt | date:'mediumDate' }}</span>
+          </div>
+
+          <!-- Client Rating -->
+          <div
+            *ngIf="job.status === 'completed' && getJobRating(job)"
+            class="flex items-center text-sm text-yellow-600"
+          >
+            <ion-icon name="star" class="mr-2"></ion-icon>
+            <span>{{ getJobRating(job) }}/5 stars</span>
+          </div>
+        </div>
+
+        <!-- Earnings -->
+        <div class="bg-gray-50 rounded-lg p-3 mb-4">
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Earnings</span>
+            <span class="font-semibold text-lg text-green-600"
+              >{{ formatCurrency(getJobEarnings(job)) }}</span
+            >
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="flex justify-end">
+          <ion-button fill="outline" size="small" (click)="viewJobDetails(job)">
+            <ion-icon name="eye-outline" slot="start"></ion-icon>
+            View Details
+          </ion-button>
+        </div>
+
+        <!-- Cancellation Reason -->
+        <div
+          *ngIf="job.cancellationReason"
+          class="mt-3 p-3 bg-red-50 rounded-lg border border-red-200"
+        >
+          <p class="text-sm text-red-700">
+            <strong>Cancellation Reason:</strong> {{ job.cancellationReason }}
+          </p>
+        </div>
+
+        <!-- Client Review -->
+        <div
+          *ngIf="getJobReview(job) && job.status === 'completed'"
+          class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200"
+        >
+          <p class="text-sm text-blue-700">
+            <strong>Client Review:</strong> "{{ getJobReview(job) }}"
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div
+      *ngIf="filteredJobs.length === 0 && allJobs.length > 0"
+      class="text-center py-16"
+    >
+      <ion-icon name="filter-outline" class="text-6xl text-gray-400"></ion-icon>
+      <h3 class="text-xl font-semibold mt-4 text-gray-900">
+        No jobs match your filters
+      </h3>
+      <p class="text-gray-600 mt-2">
+        Try adjusting your search or filter criteria
+      </p>
+      <ion-button
+        fill="outline"
+        (click)="selectedStatus = 'all'; selectedJobType = 'all'; searchTerm = ''; applyFilters();"
+        class="mt-4"
+      >
+        Clear Filters
+      </ion-button>
+    </div>
+
+    <!-- No Jobs State -->
+    <div *ngIf="allJobs.length === 0" class="text-center py-16">
+      <ion-icon name="time-outline" class="text-6xl text-purple-500"></ion-icon>
+      <h3 class="text-xl font-semibold mt-4 text-gray-900">
+        No job history yet
+      </h3>
+      <p class="text-gray-600 mt-2">
+        Your completed and cancelled jobs will appear here
+      </p>
+      <ion-button (click)="refreshJobs()" class="mt-4">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        Refresh
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

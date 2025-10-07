@@ -1,8 +1,16 @@
 import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService, UserProfile } from '../../../services/auth.service';
-import { DashboardService } from '../../../services/dashboard.service';
+import {
+  DashboardService,
+  ServiceCategory,
+} from '../../../services/dashboard.service';
 import { WorkerService, WorkerProfile } from '../../../services/worker.service';
-import { AlertController, ToastController, ModalController } from '@ionic/angular';
+import {
+  AlertController,
+  ToastController,
+  ModalController,
+} from '@ionic/angular';
 
 interface AnalyticsData {
   totalClients: number;
@@ -28,7 +36,7 @@ export class AdminDashboardPage implements OnInit {
     pendingVerifications: 0,
     activeBookings: 0,
     completedBookings: 0,
-    totalRevenue: 0
+    totalRevenue: 0,
   };
 
   // Worker Management Properties
@@ -41,28 +49,336 @@ export class AdminDashboardPage implements OnInit {
   processingWorker: string | null = null;
   workerSearchTerm: string = '';
   pendingWorkerSearchTerm: string = '';
-  
+
   // Modal Properties
   isWorkerModalOpen: boolean = false;
   selectedWorker: WorkerProfile | null = null;
 
+  // Service Management Properties
+  serviceCategories: ServiceCategory[] = [];
+  isLoadingServices: boolean = false;
+  isServiceModalOpen: boolean = false;
+  isEditingService: boolean = false;
+  isSavingService: boolean = false;
+  selectedService: ServiceCategory | null = null;
+  serviceForm!: FormGroup;
+  subServices: string[] = [];
+  requirements: string[] = [];
+
+  // Client Management Properties
+  clients: UserProfile[] = [];
+  isLoadingClients: boolean = false;
+  clientSearchTerm: string = '';
+  filteredClients: UserProfile[] = [];
+  selectedClient: UserProfile | null = null;
+  isClientModalOpen: boolean = false;
+
+  // Icon Picker Properties
+  showIconPicker: boolean = false;
+  iconSearchTerm: string = '';
+  selectedIconCategory: string = 'all';
+
+  iconCategories = [
+    { key: 'all', name: 'All Icons' },
+    { key: 'services', name: 'Services' },
+    { key: 'tools', name: 'Tools' },
+    { key: 'home', name: 'Home' },
+    { key: 'tech', name: 'Technology' },
+    { key: 'transport', name: 'Transport' },
+    { key: 'business', name: 'Business' },
+    { key: 'health', name: 'Health' },
+  ];
+
+  iconsByCategory: { [key: string]: string[] } = {
+    services: [
+      'construct',
+      'hammer',
+      'build',
+      'settings',
+      'cog',
+      'flash',
+      'bulb',
+      'water',
+      'flame',
+      'brush',
+      'clean',
+    ],
+    tools: [
+      'hammer',
+      'build',
+      'construct',
+      'settings',
+      'cog',
+      'wrench',
+      'cut',
+      'hardware-chip',
+      'flashlight',
+    ],
+    home: [
+      'home',
+      'bed',
+      'cafe',
+      'restaurant',
+      'storefront',
+      'business',
+      'flower',
+      'leaf',
+      'sunny',
+    ],
+    tech: [
+      'laptop',
+      'desktop',
+      'phone-portrait',
+      'tablet-portrait',
+      'tv',
+      'camera',
+      'videocam',
+      'headset',
+      'bluetooth',
+      'wifi',
+    ],
+    transport: [
+      'car',
+      'car-sport',
+      'bicycle',
+      'bus',
+      'airplane',
+      'boat',
+      'train',
+      'walk',
+      'rocket',
+    ],
+    business: [
+      'briefcase',
+      'business',
+      'card',
+      'cash',
+      'calculator',
+      'analytics',
+      'bar-chart',
+      'trending-up',
+    ],
+    health: [
+      'fitness',
+      'medical',
+      'heart',
+      'shield',
+      'leaf',
+      'water',
+      'nutrition',
+    ],
+  };
+
+  popularIcons: string[] = [
+    'construct',
+    'hammer',
+    'flash',
+    'home',
+    'car',
+    'leaf',
+    'medical',
+    'restaurant',
+    'laptop',
+    'camera',
+    'fitness',
+    'business',
+    'water',
+    'brush',
+    'settings',
+  ];
+
+  availableIcons: string[] = [
+    // Service-related icons
+    'construct',
+    'hammer',
+    'build',
+    'settings',
+    'cog',
+    'flash',
+    'bulb',
+    'water',
+    'flame',
+    'leaf',
+    'car',
+    'home',
+    'business',
+    'storefront',
+
+    // Cleaning & Maintenance
+    'brush',
+    'clean',
+    'trash',
+    'refresh',
+    'sync',
+    'reload',
+    'repeat',
+
+    // Technology & Electronics
+    'laptop',
+    'desktop',
+    'phone-portrait',
+    'tablet-portrait',
+    'tv',
+    'camera',
+    'videocam',
+    'headset',
+    'bluetooth',
+    'wifi',
+
+    // Transportation & Delivery
+    'car-sport',
+    'bicycle',
+    'bus',
+    'airplane',
+    'boat',
+    'train',
+    'walk',
+    'rocket',
+    'speedometer',
+
+    // Health & Beauty
+    'fitness',
+    'medical',
+    'heart',
+    'cut',
+    'color-palette',
+    'brush',
+
+    // Food & Cooking
+    'restaurant',
+    'fast-food',
+    'pizza',
+    'cafe',
+    'wine',
+    'nutrition',
+
+    // Garden & Outdoor
+    'flower',
+    'tree',
+    'leaf',
+    'sunny',
+    'partly-sunny',
+    'rainy',
+    'snow',
+    'thunderstorm',
+
+    // Tools & Equipment
+    'hammer',
+    'build',
+    'construct',
+    'settings',
+    'cog',
+    'wrench',
+    'hardware-chip',
+    'flashlight',
+
+    // Education & Learning
+    'school',
+    'library',
+    'book',
+    'bookmark',
+    'pencil',
+    'create',
+    'document-text',
+    'calculator',
+
+    // Business & Professional
+    'briefcase',
+    'business',
+    'card',
+    'cash',
+    'calculator',
+    'analytics',
+    'bar-chart',
+    'pie-chart',
+    'trending-up',
+
+    // Communication
+    'call',
+    'chatbubble',
+    'mail',
+    'send',
+    'share',
+    'megaphone',
+
+    // Security & Safety
+    'shield',
+    'lock-closed',
+    'key',
+    'finger-print',
+    'eye',
+    'warning',
+
+    // Art & Design
+    'color-palette',
+    'brush',
+    'images',
+    'camera',
+    'videocam',
+    'musical-notes',
+
+    // Sports & Recreation
+    'football',
+    'basketball',
+    'baseball',
+    'tennis',
+    'golf',
+    'fitness',
+    'bicycle',
+    'boat',
+    'fish',
+
+    // General Utility
+    'star',
+    'heart',
+    'thumbs-up',
+    'checkmark',
+    'close',
+    'add',
+    'remove',
+    'search',
+    'filter',
+    'options',
+    'menu',
+    'grid',
+    'list',
+    'albums',
+    'folder',
+    'archive',
+    'download',
+    'upload',
+    'share',
+    'copy',
+    'cut',
+    'paste',
+    'duplicate',
+    'swap-horizontal',
+  ];
+  filteredIcons: string[] = [];
+
   constructor(
+    private formBuilder: FormBuilder,
     private authService: AuthService,
     private dashboardService: DashboardService,
     private workerService: WorkerService,
     private alertController: AlertController,
     private toastController: ToastController,
     private modalController: ModalController
-  ) {}
+  ) {
+    this.initializeServiceForm();
+  }
 
   ngOnInit() {
     this.authService.userProfile$.subscribe((profile) => {
       this.userProfile = profile;
     });
-    
+
     this.loadAnalytics();
     this.loadPendingWorkers();
     this.loadVerifiedWorkers();
+    this.loadServices();
+    this.loadClients();
+    this.initializeIconPicker();
   }
 
   setActiveSection(section: string) {
@@ -71,15 +387,15 @@ export class AdminDashboardPage implements OnInit {
 
   getSectionTitle(): string {
     const titles: { [key: string]: string } = {
-      'dashboard': 'Dashboard Overview',
-      'workers': 'Worker Management',
-      'clients': 'Client Management',
-      'bookings': 'Booking Management',
-      'reports': 'Reports & Disputes',
-      'services': 'Services Management',
-      'finance': 'Finance',
-      'notifications': 'Notifications',
-      'settings': 'Settings'
+      dashboard: 'Dashboard Overview',
+      workers: 'Worker Management',
+      clients: 'Client Management',
+      bookings: 'Booking Management',
+      reports: 'Reports & Disputes',
+      services: 'Services Management',
+      finance: 'Finance',
+      notifications: 'Notifications',
+      settings: 'Settings',
     };
     return titles[this.activeSection] || 'Dashboard';
   }
@@ -89,7 +405,7 @@ export class AdminDashboardPage implements OnInit {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   }
 
@@ -105,7 +421,7 @@ export class AdminDashboardPage implements OnInit {
         pendingVerifications: 12,
         activeBookings: 34,
         completedBookings: 567,
-        totalRevenue: 125430.50
+        totalRevenue: 125430.5,
       };
     }
   }
@@ -128,7 +444,8 @@ export class AdminDashboardPage implements OnInit {
   async loadPendingWorkers() {
     this.isLoadingWorkers = true;
     try {
-      this.pendingWorkers = await this.workerService.getWorkersForVerification();
+      this.pendingWorkers =
+        await this.workerService.getWorkersForVerification();
       this.filteredPendingWorkers = [...this.pendingWorkers];
       console.log('Loaded pending workers:', this.pendingWorkers);
     } catch (error) {
@@ -160,13 +477,16 @@ export class AdminDashboardPage implements OnInit {
     }
 
     const searchTerm = this.workerSearchTerm.toLowerCase();
-    this.filteredVerifiedWorkers = this.verifiedWorkers.filter(worker => 
-      worker.fullName.toLowerCase().includes(searchTerm) ||
-      worker.email.toLowerCase().includes(searchTerm) ||
-      (worker.skills && worker.skills.some(skill => 
-        skill.toLowerCase().includes(searchTerm)
-      )) ||
-      (worker.fullAddress && worker.fullAddress.toLowerCase().includes(searchTerm))
+    this.filteredVerifiedWorkers = this.verifiedWorkers.filter(
+      (worker) =>
+        worker.fullName.toLowerCase().includes(searchTerm) ||
+        worker.email.toLowerCase().includes(searchTerm) ||
+        (worker.skills &&
+          worker.skills.some((skill) =>
+            skill.toLowerCase().includes(searchTerm)
+          )) ||
+        (worker.fullAddress &&
+          worker.fullAddress.toLowerCase().includes(searchTerm))
     );
   }
 
@@ -177,13 +497,16 @@ export class AdminDashboardPage implements OnInit {
     }
 
     const searchTerm = this.pendingWorkerSearchTerm.toLowerCase();
-    this.filteredPendingWorkers = this.pendingWorkers.filter(worker => 
-      worker.fullName.toLowerCase().includes(searchTerm) ||
-      worker.email.toLowerCase().includes(searchTerm) ||
-      (worker.skills && worker.skills.some(skill => 
-        skill.toLowerCase().includes(searchTerm)
-      )) ||
-      (worker.fullAddress && worker.fullAddress.toLowerCase().includes(searchTerm))
+    this.filteredPendingWorkers = this.pendingWorkers.filter(
+      (worker) =>
+        worker.fullName.toLowerCase().includes(searchTerm) ||
+        worker.email.toLowerCase().includes(searchTerm) ||
+        (worker.skills &&
+          worker.skills.some((skill) =>
+            skill.toLowerCase().includes(searchTerm)
+          )) ||
+        (worker.fullAddress &&
+          worker.fullAddress.toLowerCase().includes(searchTerm))
     );
   }
 
@@ -194,16 +517,16 @@ export class AdminDashboardPage implements OnInit {
       buttons: [
         {
           text: 'Cancel',
-          role: 'cancel'
+          role: 'cancel',
         },
         {
           text: 'Approve',
           cssClass: 'alert-button-confirm',
           handler: () => {
             this.processWorkerApproval(worker, true);
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
     await alert.present();
   }
@@ -215,16 +538,16 @@ export class AdminDashboardPage implements OnInit {
       buttons: [
         {
           text: 'Cancel',
-          role: 'cancel'
+          role: 'cancel',
         },
         {
           text: 'Reject',
           cssClass: 'alert-button-destructive',
           handler: () => {
             this.processWorkerApproval(worker, false);
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
     await alert.present();
   }
@@ -233,11 +556,13 @@ export class AdminDashboardPage implements OnInit {
     this.processingWorker = worker.uid;
     try {
       await this.workerService.verifyWorker(worker.uid, approved);
-      
+
       // Remove from pending workers
-      this.pendingWorkers = this.pendingWorkers.filter(w => w.uid !== worker.uid);
+      this.pendingWorkers = this.pendingWorkers.filter(
+        (w) => w.uid !== worker.uid
+      );
       this.filterPendingWorkers();
-      
+
       // If approved, add to verified workers
       if (approved) {
         worker.status = 'verified';
@@ -249,8 +574,8 @@ export class AdminDashboardPage implements OnInit {
       this.loadAnalytics();
 
       this.showSuccessToast(
-        approved 
-          ? `${worker.fullName} has been approved successfully!` 
+        approved
+          ? `${worker.fullName} has been approved successfully!`
           : `${worker.fullName} has been rejected.`
       );
     } catch (error) {
@@ -268,16 +593,16 @@ export class AdminDashboardPage implements OnInit {
       buttons: [
         {
           text: 'Cancel',
-          role: 'cancel'
+          role: 'cancel',
         },
         {
           text: 'Suspend',
           cssClass: 'alert-button-confirm',
           handler: () => {
             this.processWorkerStatusChange(worker, 'suspended');
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
     await alert.present();
   }
@@ -289,16 +614,16 @@ export class AdminDashboardPage implements OnInit {
       buttons: [
         {
           text: 'Cancel',
-          role: 'cancel'
+          role: 'cancel',
         },
         {
           text: 'Ban',
           cssClass: 'alert-button-destructive',
           handler: () => {
             this.processWorkerStatusChange(worker, 'banned');
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
     await alert.present();
   }
@@ -307,9 +632,11 @@ export class AdminDashboardPage implements OnInit {
     this.processingWorker = worker.uid;
     try {
       await this.workerService.updateWorkerStatus(worker.uid, newStatus as any);
-      
+
       // Remove from verified workers
-      this.verifiedWorkers = this.verifiedWorkers.filter(w => w.uid !== worker.uid);
+      this.verifiedWorkers = this.verifiedWorkers.filter(
+        (w) => w.uid !== worker.uid
+      );
       this.filterVerifiedWorkers();
 
       // Update analytics
@@ -332,15 +659,15 @@ export class AdminDashboardPage implements OnInit {
       component: null, // We'll create a simple photo viewer
       componentProps: {
         photoData: photoData,
-        title: title
-      }
+        title: title,
+      },
     });
-    
+
     // For now, we'll use a simple alert with the image
     const alert = await this.alertController.create({
       header: title,
       message: `<img src="${photoData}" style="max-width: 100%; height: auto;" />`,
-      buttons: ['Close']
+      buttons: ['Close'],
     });
     await alert.present();
   }
@@ -350,7 +677,7 @@ export class AdminDashboardPage implements OnInit {
       message: message,
       duration: 3000,
       color: 'success',
-      position: 'bottom'
+      position: 'bottom',
     });
     await toast.present();
   }
@@ -360,7 +687,7 @@ export class AdminDashboardPage implements OnInit {
       message: message,
       duration: 3000,
       color: 'danger',
-      position: 'bottom'
+      position: 'bottom',
     });
     await toast.present();
   }
@@ -370,7 +697,7 @@ export class AdminDashboardPage implements OnInit {
   getInitials(fullName: string): string {
     return fullName
       .split(' ')
-      .map(name => name.charAt(0))
+      .map((name) => name.charAt(0))
       .join('')
       .toUpperCase()
       .substring(0, 2);
@@ -418,5 +745,348 @@ export class AdminDashboardPage implements OnInit {
   async rejectWorkerFromModal(worker: WorkerProfile) {
     await this.processWorkerApproval(worker, false);
     this.closeWorkerModal();
+  }
+
+  // Service Management Methods
+
+  initializeServiceForm() {
+    this.serviceForm = this.formBuilder.group({
+      name: ['', [Validators.required, Validators.minLength(2)]],
+      description: ['', [Validators.required, Validators.minLength(10)]],
+      icon: ['', Validators.required],
+      color: ['#3B82F6', Validators.required],
+      averagePrice: [0, [Validators.required, Validators.min(1)]],
+      estimatedDuration: [60, [Validators.required, Validators.min(15)]],
+      isActive: [true],
+    });
+  }
+
+  async loadServices() {
+    this.isLoadingServices = true;
+    try {
+      this.serviceCategories =
+        await this.dashboardService.getServiceCategories();
+    } catch (error) {
+      console.error('Error loading services:', error);
+      this.showToast('Error loading services', 'danger');
+    }
+    this.isLoadingServices = false;
+  }
+
+  openAddServiceModal() {
+    this.isEditingService = false;
+    this.selectedService = null;
+    this.resetServiceForm();
+    this.isServiceModalOpen = true;
+  }
+
+  editService(service: ServiceCategory) {
+    this.isEditingService = true;
+    this.selectedService = service;
+    this.populateServiceForm(service);
+    this.isServiceModalOpen = true;
+  }
+
+  populateServiceForm(service: ServiceCategory) {
+    this.serviceForm.patchValue({
+      name: service.name,
+      description: service.description,
+      icon: service.icon,
+      color: service.color,
+      averagePrice: service.averagePrice,
+      estimatedDuration: service.estimatedDuration,
+      isActive: service.isActive,
+    });
+
+    this.subServices = [...(service.services || [])];
+    this.requirements = [...(service.requirements || [])];
+  }
+
+  resetServiceForm() {
+    this.serviceForm.reset({
+      name: '',
+      description: '',
+      icon: '',
+      color: '#3B82F6',
+      averagePrice: 0,
+      estimatedDuration: 60,
+      isActive: true,
+    });
+
+    this.subServices = [];
+    this.requirements = [];
+  }
+
+  closeServiceModal() {
+    this.isServiceModalOpen = false;
+    this.isEditingService = false;
+    this.selectedService = null;
+    this.showIconPicker = false;
+    this.iconSearchTerm = '';
+    this.filteredIcons = [...this.availableIcons];
+    this.resetServiceForm();
+  }
+
+  addSubService() {
+    this.subServices.push('');
+  }
+
+  removeSubService(index: number) {
+    this.subServices.splice(index, 1);
+  }
+
+  addRequirement() {
+    this.requirements.push('');
+  }
+
+  removeRequirement(index: number) {
+    this.requirements.splice(index, 1);
+  }
+
+  async saveService() {
+    if (this.serviceForm.invalid) {
+      this.showToast('Please fill in all required fields', 'danger');
+      return;
+    }
+
+    this.isSavingService = true;
+
+    try {
+      const formValue = this.serviceForm.value;
+      const serviceData: ServiceCategory = {
+        id: this.isEditingService
+          ? this.selectedService!.id
+          : this.generateServiceId(),
+        name: formValue.name,
+        description: formValue.description,
+        icon: formValue.icon,
+        color: formValue.color,
+        averagePrice: formValue.averagePrice,
+        estimatedDuration: formValue.estimatedDuration,
+        isActive: formValue.isActive,
+        services: this.subServices.filter((s) => s.trim() !== ''),
+        requirements: this.requirements.filter((r) => r.trim() !== ''),
+      };
+
+      if (this.isEditingService) {
+        await this.dashboardService.updateServiceCategory(serviceData);
+        this.showToast('Service updated successfully', 'success');
+      } else {
+        await this.dashboardService.addServiceCategory(serviceData);
+        this.showToast('Service created successfully', 'success');
+      }
+
+      await this.loadServices();
+      this.closeServiceModal();
+    } catch (error) {
+      console.error('Error saving service:', error);
+      this.showToast('Error saving service. Please try again.', 'danger');
+    }
+
+    this.isSavingService = false;
+  }
+
+  async toggleServiceStatus(service: ServiceCategory) {
+    const alert = await this.alertController.create({
+      header: service.isActive ? 'Deactivate Service' : 'Activate Service',
+      message: `Are you sure you want to ${
+        service.isActive ? 'deactivate' : 'activate'
+      } "${service.name}"?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: service.isActive ? 'Deactivate' : 'Activate',
+          handler: async () => {
+            try {
+              const updatedService = {
+                ...service,
+                isActive: !service.isActive,
+              };
+              await this.dashboardService.updateServiceCategory(updatedService);
+              await this.loadServices();
+              this.showToast(
+                `Service ${
+                  service.isActive ? 'deactivated' : 'activated'
+                } successfully`,
+                'success'
+              );
+            } catch (error) {
+              console.error('Error updating service status:', error);
+              this.showToast('Error updating service status', 'danger');
+            }
+          },
+        },
+      ],
+    });
+
+    await alert.present();
+  }
+
+  async deleteService(service: ServiceCategory) {
+    const alert = await this.alertController.create({
+      header: 'Delete Service',
+      message: `Are you sure you want to delete "${service.name}"? This action cannot be undone.`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async () => {
+            try {
+              await this.dashboardService.deleteServiceCategory(service.id);
+              await this.loadServices();
+              this.showToast('Service deleted successfully', 'success');
+            } catch (error) {
+              console.error('Error deleting service:', error);
+              this.showToast('Error deleting service', 'danger');
+            }
+          },
+        },
+      ],
+    });
+
+    await alert.present();
+  }
+
+  private generateServiceId(): string {
+    return (
+      'service_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+    );
+  }
+
+  // Client Management Methods
+
+  async loadClients() {
+    this.isLoadingClients = true;
+    try {
+      console.log('Loading clients...');
+      this.clients = await this.dashboardService.getUsersByRole('client');
+      console.log('Loaded clients:', this.clients);
+      this.filteredClients = [...this.clients];
+      console.log('Filtered clients:', this.filteredClients);
+    } catch (error) {
+      console.error('Error loading clients:', error);
+      this.showToast('Error loading clients', 'danger');
+    }
+    this.isLoadingClients = false;
+  }
+
+  filterClients() {
+    if (!this.clientSearchTerm.trim()) {
+      this.filteredClients = [...this.clients];
+      return;
+    }
+
+    const searchTerm = this.clientSearchTerm.toLowerCase();
+    this.filteredClients = this.clients.filter(
+      (client) =>
+        client.fullName.toLowerCase().includes(searchTerm) ||
+        client.email.toLowerCase().includes(searchTerm) ||
+        client.phone?.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  viewClientDetails(client: UserProfile) {
+    this.selectedClient = client;
+    this.isClientModalOpen = true;
+  }
+
+  closeClientModal() {
+    this.isClientModalOpen = false;
+    this.selectedClient = null;
+  }
+
+  async sendMessageToClient(client: UserProfile) {
+    // This would open a messaging modal or redirect to messaging system
+    this.showToast(
+      `Messaging feature for ${client.fullName} coming soon`,
+      'warning'
+    );
+  }
+
+  async deleteClient(client: UserProfile) {
+    const alert = await this.alertController.create({
+      header: 'Delete Client',
+      message: `Are you sure you want to permanently delete "${client.fullName}"? This action cannot be undone.`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async () => {
+            // For now, just show a warning that this feature is not yet implemented
+            this.showToast('Delete functionality coming soon', 'warning');
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  // Icon Picker Methods
+
+  initializeIconPicker() {
+    this.filteredIcons = [...this.availableIcons];
+  }
+
+  filterIcons() {
+    let iconsToFilter = this.availableIcons;
+
+    // Filter by category first
+    if (this.selectedIconCategory !== 'all') {
+      iconsToFilter = this.iconsByCategory[this.selectedIconCategory] || [];
+    }
+
+    // Then filter by search term
+    if (!this.iconSearchTerm.trim()) {
+      this.filteredIcons = [...iconsToFilter];
+    } else {
+      const searchTerm = this.iconSearchTerm.toLowerCase();
+      this.filteredIcons = iconsToFilter.filter((icon) =>
+        icon.toLowerCase().includes(searchTerm)
+      );
+    }
+  }
+
+  selectIcon(icon: string) {
+    this.serviceForm.patchValue({ icon });
+    this.showIconPicker = false;
+    this.iconSearchTerm = '';
+    this.filteredIcons = [...this.availableIcons];
+  }
+
+  selectIconCategory(categoryKey: string) {
+    this.selectedIconCategory = categoryKey;
+    this.filterIcons();
+  }
+
+  getActiveServicesCount(): number {
+    return this.serviceCategories.filter((service) => service.isActive).length;
+  }
+
+  getInactiveServicesCount(): number {
+    return this.serviceCategories.filter((service) => !service.isActive).length;
+  }
+
+  private async showToast(
+    message: string,
+    color: 'success' | 'danger' | 'warning'
+  ) {
+    const toast = await this.toastController.create({
+      message,
+      duration: 3000,
+      color,
+      position: 'bottom',
+    });
+    await toast.present();
   }
 }

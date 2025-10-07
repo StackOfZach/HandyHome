@@ -6,8 +6,11 @@ import {
   BookingDetails,
   WorkerProfile,
   NotificationData,
+  ServiceCategory,
 } from '../../../services/dashboard.service';
-import { Subscription } from 'rxjs';
+import { QuickBookingService } from '../../../services/quick-booking.service';
+import { Subscription, combineLatest } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface Booking {
   id: string;
@@ -46,14 +49,6 @@ export interface Worker {
   isOnline: boolean;
 }
 
-export interface ServiceCategory {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-  description: string;
-}
-
 @Component({
   selector: 'app-client-dashboard',
   templateUrl: './dashboard.page.html',
@@ -73,10 +68,9 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private dashboardService: DashboardService,
+    private quickBookingService: QuickBookingService,
     private router: Router
-  ) {
-    this.initializeServiceCategories();
-  }
+  ) {}
 
   ngOnInit() {
     // Subscribe to user profile
@@ -93,71 +87,70 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
-  private initializeServiceCategories() {
-    this.serviceCategories = [
-      {
-        id: 'cleaning',
-        name: 'Cleaning',
-        icon: 'sparkles-outline',
-        color: 'from-blue-500 to-cyan-500',
-        description: 'House & office cleaning',
-      },
-      {
-        id: 'plumbing',
-        name: 'Plumbing',
-        icon: 'water-outline',
-        color: 'from-indigo-500 to-blue-500',
-        description: 'Pipes, fixtures & repairs',
-      },
-      {
-        id: 'electrical',
-        name: 'Electrical',
-        icon: 'flash-outline',
-        color: 'from-yellow-500 to-orange-500',
-        description: 'Wiring & electrical work',
-      },
-      {
-        id: 'gardening',
-        name: 'Gardening',
-        icon: 'leaf-outline',
-        color: 'from-green-500 to-emerald-500',
-        description: 'Lawn care & landscaping',
-      },
-      {
-        id: 'carpentry',
-        name: 'Carpentry',
-        icon: 'hammer-outline',
-        color: 'from-amber-500 to-yellow-500',
-        description: 'Wood work & furniture',
-      },
-      {
-        id: 'painting',
-        name: 'Painting',
-        icon: 'brush-outline',
-        color: 'from-purple-500 to-pink-500',
-        description: 'Interior & exterior painting',
-      },
-      {
-        id: 'laundry',
-        name: 'Laundry',
-        icon: 'shirt-outline',
-        color: 'from-teal-500 to-cyan-500',
-        description: 'Washing & dry cleaning',
-      },
-      {
-        id: 'appliance',
-        name: 'Appliances',
-        icon: 'build-outline',
-        color: 'from-gray-500 to-slate-500',
-        description: 'Repair & maintenance',
-      },
-    ];
+  private async loadServiceCategories() {
+    try {
+      // Load service categories from database
+      this.serviceCategories =
+        await this.dashboardService.getServiceCategories();
+
+      // Filter to show only active categories
+      this.serviceCategories = this.serviceCategories.filter(
+        (category) => category.isActive
+      );
+
+      // If no active categories are found, use fallback
+      if (this.serviceCategories.length === 0) {
+        throw new Error('No active categories found');
+      }
+    } catch (error) {
+      console.error('Error loading service categories:', error);
+
+      // Fallback to default categories if database fetch fails
+      this.serviceCategories = [
+        {
+          id: 'cleaning',
+          name: 'Cleaning',
+          icon: 'sparkles-outline',
+          color: '#3B82F6',
+          description: 'House & office cleaning',
+          isActive: true,
+          services: ['House Cleaning', 'Office Cleaning'],
+          averagePrice: 500,
+          estimatedDuration: 120,
+        },
+        {
+          id: 'plumbing',
+          name: 'Plumbing',
+          icon: 'water-outline',
+          color: '#6366F1',
+          description: 'Pipes, fixtures & repairs',
+          isActive: true,
+          services: ['Pipe Repair', 'Fixture Installation'],
+          averagePrice: 800,
+          estimatedDuration: 90,
+        },
+        {
+          id: 'electrical',
+          name: 'Electrical',
+          icon: 'flash-outline',
+          color: '#F59E0B',
+          description: 'Wiring & electrical work',
+          isActive: true,
+          services: ['Wiring', 'Electrical Repair'],
+          averagePrice: 1000,
+          estimatedDuration: 120,
+        },
+      ];
+    }
   }
 
   private async loadDashboardData() {
     if (!this.userProfile?.uid) return;
 
     try {
+      // Load service categories
+      await this.loadServiceCategories();
+
       // Load upcoming bookings
       await this.loadUpcomingBookings();
 
@@ -177,11 +170,25 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
   private async loadUpcomingBookings() {
     if (!this.userProfile?.uid) return;
 
-    const bookingsSub = this.dashboardService
-      .loadActiveBookings(this.userProfile.uid)
+    // Combine regular bookings and quick bookings
+    const bookingsSub = combineLatest([
+      this.dashboardService.loadActiveBookings(this.userProfile.uid),
+      this.dashboardService.loadActiveQuickBookings(this.userProfile.uid),
+    ])
+      .pipe(
+        map(([regularBookings, quickBookings]) => {
+          // Combine and sort by creation date (most recent first)
+          const allBookings = [...regularBookings, ...quickBookings];
+          return allBookings.sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        })
+      )
       .subscribe((bookings) => {
         this.upcomingBookings = bookings;
       });
+
     this.subscriptions.push(bookingsSub);
   }
 
@@ -259,8 +266,18 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
     });
   }
 
+  quickBooking() {
+    this.router.navigate(['/client/select-category'], {
+      queryParams: { type: 'quick' },
+    });
+  }
+
   viewBookings() {
     this.router.navigate(['/pages/my-bookings']);
+  }
+
+  viewQuickBookingsHistory() {
+    this.router.navigate(['/pages/quick-bookings-history']);
   }
 
   async trackWorker(booking: Booking) {
