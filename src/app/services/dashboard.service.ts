@@ -104,9 +104,9 @@ export interface ServiceCategory {
   color: string;
   isActive: boolean;
   services: string[];
-  averagePrice: number;
-  estimatedDuration: number;
   requirements?: string[];
+  averagePrice?: number; // Optional - can be set by system defaults
+  estimatedDuration?: number; // Optional - can be set by system defaults
 }
 
 export interface NotificationData {

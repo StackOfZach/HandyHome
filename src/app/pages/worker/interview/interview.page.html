@@ -459,48 +459,91 @@
             <ion-icon name="list" class="text-purple-600"></ion-icon>
             <span>Services You Provide *</span>
           </label>
-          <p class="text-gray-500 text-sm mb-4">
-            Select all the services you can professionally provide
+          <p class="text-gray-500 text-sm mb-2">
+            Select up to 3 services you can professionally provide
           </p>
+          
+          <!-- Limit Information -->
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
+            <div class="flex items-center space-x-2">
+              <ion-icon name="information-circle" class="text-blue-500 text-lg"></ion-icon>
+              <p class="text-blue-800 text-sm">
+                <strong>Service Limit:</strong> You can select a maximum of 3 services to specialize in.
+              </p>
+            </div>
+          </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <!-- Loading State -->
+          <div *ngIf="isLoadingServices" class="flex items-center justify-center py-8">
+            <div class="text-center">
+              <ion-spinner name="crescent" class="w-8 h-8 text-purple-600 mb-3"></ion-spinner>
+              <p class="text-gray-500 text-sm">Loading available services...</p>
+            </div>
+          </div>
+
+          <!-- Services Grid -->  
+          <div *ngIf="!isLoadingServices && availableServices.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div
               *ngFor="let service of availableServices"
               (click)="toggleSkill(service)"
-              class="group cursor-pointer transition-all duration-300 ease-in-out rounded-2xl p-4 border-2 hover:shadow-lg"
+              class="group transition-all duration-300 ease-in-out rounded-2xl p-4 border-2"
               [class]="isSkillSelected(service) ? 
-                'bg-gradient-to-r from-purple-500 to-pink-600 text-white border-purple-500 shadow-lg transform scale-[1.02]' : 
-                'bg-gray-50 text-gray-700 border-gray-200 hover:border-purple-300 hover:bg-purple-50'"
+                'bg-gradient-to-r from-purple-500 to-pink-600 text-white border-purple-500 shadow-lg transform scale-[1.02] cursor-pointer' : 
+                (isSelectionLimitReached() && !isSkillSelected(service)) ?
+                'bg-gray-100 text-gray-400 border-gray-200 opacity-60 cursor-not-allowed' :
+                'bg-gray-50 text-gray-700 border-gray-200 hover:border-purple-300 hover:bg-purple-50 cursor-pointer hover:shadow-lg'"
             >
               <div class="flex items-center justify-between">
                 <span class="font-medium text-sm">{{ service }}</span>
                 <div
                   class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200"
-                  [class]="isSkillSelected(service) ? 'bg-white border-white' : 'border-gray-300 group-hover:border-purple-400'"
+                  [class]="isSkillSelected(service) ? 'bg-white border-white' : 
+                    (isSelectionLimitReached() && !isSkillSelected(service)) ?
+                    'border-gray-300' :
+                    'border-gray-300 group-hover:border-purple-400'"
                 >
                   <ion-icon
                     *ngIf="isSkillSelected(service)"
                     name="checkmark"
                     class="text-purple-600 text-sm font-bold"
                   ></ion-icon>
+                  <ion-icon
+                    *ngIf="!isSkillSelected(service) && isSelectionLimitReached()"
+                    name="lock-closed"
+                    class="text-gray-400 text-xs"
+                  ></ion-icon>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!isLoadingServices && availableServices.length === 0" class="text-center py-8">
+            <div class="bg-orange-50 border border-orange-200 rounded-2xl p-6">
+              <ion-icon name="warning" class="text-orange-500 text-3xl mb-3"></ion-icon>
+              <h4 class="text-lg font-semibold text-orange-800 mb-2">No Services Available</h4>
+              <p class="text-orange-600 text-sm">
+                Unable to load service categories. Please try refreshing the page or contact support.
+              </p>
             </div>
           </div>
 
           <!-- Skills Counter -->
           <div *ngIf="getSelectedSkills().length > 0" class="text-center">
             <div
-              class="inline-flex items-center space-x-2 bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-medium"
+              class="inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium"
+              [class]="isSelectionLimitReached() ? 
+                'bg-green-100 text-green-800' : 
+                'bg-purple-100 text-purple-800'"
             >
               <ion-icon
-                name="checkmark-circle"
-                class="text-purple-600"
+                [name]="isSelectionLimitReached() ? 'checkmark-done-circle' : 'checkmark-circle'"
+                [class]="isSelectionLimitReached() ? 'text-green-600' : 'text-purple-600'"
               ></ion-icon>
-              <span
-                >{{ getSelectedSkills().length }} service{{
-                getSelectedSkills().length > 1 ? 's' : '' }} selected</span
-              >
+              <span>
+                {{ getSelectedSkills().length }}/3 service{{ getSelectedSkills().length > 1 ? 's' : '' }} selected
+                <span *ngIf="isSelectionLimitReached()" class="font-bold">(Maximum reached)</span>
+              </span>
             </div>
           </div>
         </div>

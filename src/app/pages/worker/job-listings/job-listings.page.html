@@ -1,278 +1,218 @@
-<ion-header [translucent]="true">
-  <ion-toolbar color="primary">
-    <ion-buttons slot="start">
-      <ion-button (click)="goBack()">
-        <ion-icon name="arrow-back-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-    <ion-title>Job Listings</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="refreshJobs()">
-        <ion-icon name="refresh-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+  <!-- Custom Header -->
+  <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 pt-12 pb-6 px-4 shadow-xl">
+    <div class="flex items-center justify-between mb-2">
+      <button
+        (click)="goBack()"
+        class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm"
+      >
+        <ion-icon name="chevron-back" class="text-white text-xl"></ion-icon>
+      </button>
+      
+      <button
+        (click)="refreshBookingRequests()"
+        class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm"
+      >
+        <ion-icon name="refresh" class="text-white text-lg"></ion-icon>
+      </button>
+    </div>
+    
+    <div class="flex items-center">
+      <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mr-4">
+        <ion-icon name="mail-open" class="text-white text-2xl"></ion-icon>
+      </div>
+      <div>
+        <h1 class="text-white text-2xl font-bold">Job Requests</h1>
+        <p class="text-blue-100 text-sm">Review and respond to customer requests</p>
+      </div>
+    </div>
+  </div>
 
-<ion-content [fullscreen]="true" class="ion-padding">
   <!-- Loading State -->
-  <div *ngIf="isLoading" class="flex items-center justify-center min-h-96">
+  <div *ngIf="isLoading" class="flex justify-center items-center py-20">
     <div class="text-center">
-      <ion-spinner name="crescent"></ion-spinner>
-      <p class="mt-4 text-gray-600">Loading job listings...</p>
+      <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mb-4 mx-auto"></div>
+      <p class="text-gray-500">Loading booking requests...</p>
     </div>
   </div>
 
   <!-- Error State -->
-  <div *ngIf="error && !isLoading" class="text-center py-16">
-    <ion-icon name="warning-outline" class="text-6xl text-red-500"></ion-icon>
-    <h2 class="text-xl font-semibold mt-4 text-gray-900">{{ error }}</h2>
-    <ion-button fill="outline" (click)="refreshJobs()" class="mt-4">
+  <div *ngIf="error && !isLoading" class="text-center py-16 px-4">
+    <div class="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+      <ion-icon name="alert-circle-outline" class="text-4xl text-white"></ion-icon>
+    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ error }}</h3>
+    <button
+      (click)="refreshBookingRequests()"
+      class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-2xl font-semibold shadow-lg transform hover:scale-105 transition-all duration-300"
+    >
       Try Again
-    </ion-button>
+    </button>
   </div>
 
-  <!-- Main Content -->
-  <div *ngIf="!isLoading && !error">
-    <!-- Stats Header -->
-    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 mb-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-3">Job Statistics</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <div class="text-center">
-          <div class="text-2xl font-bold text-blue-600">
-            {{ allJobs.length }}
-          </div>
-          <div class="text-sm text-gray-600">Total Jobs</div>
+  <!-- Job Requests Content -->
+  <div *ngIf="!isLoading && !error" class="px-4 pb-20 -mt-4">
+    
+    <!-- Stats Card -->
+    <div class="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-4 mb-6 border border-white/20">
+      <h2 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+        <ion-icon name="analytics" class="mr-2 text-indigo-600"></ion-icon>
+        Request Statistics
+      </h2>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="text-center p-3 bg-blue-50 rounded-xl">
+          <div class="text-xl font-bold text-blue-600">{{ totalRequests }}</div>
+          <div class="text-xs text-blue-700">Total</div>
         </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-green-600">
-            {{ filteredJobs.length }}
-          </div>
-          <div class="text-sm text-gray-600">Showing</div>
+        <div class="text-center p-3 bg-yellow-50 rounded-xl">
+          <div class="text-xl font-bold text-yellow-600">{{ pendingRequests }}</div>
+          <div class="text-xs text-yellow-700">Pending</div>
+        </div>
+        <div class="text-center p-3 bg-green-50 rounded-xl">
+          <div class="text-xl font-bold text-green-600">{{ todayRequests }}</div>
+          <div class="text-xs text-green-700">Today</div>
         </div>
       </div>
     </div>
 
-    <!-- Filters Section -->
-    <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 mb-6">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
-
-      <!-- Search Bar -->
-      <div class="relative mb-4">
-        <ion-searchbar
-          [(ngModel)]="searchTerm"
-          (ionInput)="onSearchChange()"
-          placeholder="Search jobs..."
-          class="bg-gray-50 rounded-lg"
-        >
-        </ion-searchbar>
-        <button
-          *ngIf="searchTerm"
-          (click)="clearSearch()"
-          class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-        >
-          <ion-icon name="close-circle"></ion-icon>
-        </button>
-      </div>
-
-      <!-- Status Filter -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2"
-          >Status Filter</label
-        >
-        <ion-select
-          [(ngModel)]="selectedStatus"
-          (ionChange)="onStatusFilterChange()"
-          placeholder="Select status"
-          interface="popover"
-          class="w-full"
-        >
-          <ion-select-option
-            *ngFor="let option of statusOptions"
-            [value]="option.value"
-          >
-            {{ option.label }}
-          </ion-select-option>
-        </ion-select>
-      </div>
-    </div>
-
-    <!-- Jobs List -->
-    <div *ngIf="filteredJobs.length > 0" class="space-y-4">
+    <!-- Booking Requests List -->
+    <div *ngIf="bookingRequests.length > 0" class="space-y-4">
       <div
-        *ngFor="let job of filteredJobs"
-        class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 hover:shadow-md transition-shadow"
+        *ngFor="let request of bookingRequests; trackBy: trackByBookingId"
+        class="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 overflow-hidden transform hover:scale-[1.02] transition-all duration-300"
       >
-        <!-- Job Header -->
-        <div class="flex items-start justify-between mb-3">
-          <div class="flex-1">
-            <div class="flex items-center space-x-3 mb-2">
-              <div class="p-2 bg-blue-100 rounded-lg">
-                <ion-icon
-                  [name]="getCategoryIcon(job.category)"
-                  class="text-blue-600"
-                ></ion-icon>
+        <!-- Request Header -->
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-3">
+                <ion-icon name="construct" class="text-white text-lg"></ion-icon>
               </div>
               <div>
-                <h3 class="font-semibold text-gray-900">{{ job.title }}</h3>
-                <p class="text-sm text-gray-600">{{ job.category }}</p>
+                <h3 class="text-white font-bold text-lg">{{ getBookingTitle(request) }}</h3>
+                <p class="text-indigo-100 text-sm">{{ getBookingCategory(request) }}</p>
+              </div>
+            </div>
+            <div class="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+              <span class="text-white text-xs font-medium">{{ getTimeAgo(request.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Request Details -->
+        <div class="p-4">
+          <!-- Customer Info -->
+          <div class="flex items-center mb-4 p-3 bg-gray-50 rounded-xl">
+            <div class="w-12 h-12 rounded-full overflow-hidden mr-3 border-2 border-blue-200">
+              <img 
+                *ngIf="getClientProfileImage(request)" 
+                [src]="getClientProfileImage(request)" 
+                [alt]="getClientName(request)"
+                class="w-full h-full object-cover"
+              />
+              <div 
+                *ngIf="!getClientProfileImage(request)"
+                class="w-full h-full bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center"
+              >
+                <ion-icon name="person" class="text-white text-lg"></ion-icon>
+              </div>
+            </div>
+            <div class="flex-1">
+              <h4 class="font-semibold text-gray-800">{{ getClientName(request) }}</h4>
+              <div class="flex flex-col space-y-1 text-xs text-gray-600">
+                <span *ngIf="getClientEmail(request)" class="flex items-center">
+                  <ion-icon name="mail" class="mr-1"></ion-icon>
+                  {{ getClientEmail(request) }}
+                </span>
+                <span *ngIf="getClientPhone(request)" class="flex items-center">
+                  <ion-icon name="call" class="mr-1"></ion-icon>
+                  {{ getClientPhone(request) }}
+                </span>
               </div>
             </div>
           </div>
-          <div
-            [class]="getStatusColor(job.status) + ' px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1'"
-          >
-            <ion-icon
-              [name]="getStatusIcon(job.status)"
-              class="text-sm"
-            ></ion-icon>
-            <span class="capitalize">{{ job.status }}</span>
-          </div>
-        </div>
 
-        <!-- Job Details -->
-        <div class="space-y-2 mb-4">
-          <p class="text-sm text-gray-700">{{ job.description }}</p>
-
-          <!-- Location -->
-          <div
-            *ngIf="job.locations && job.locations.length > 0"
-            class="flex items-center text-sm text-gray-600"
-          >
-            <ion-icon
-              name="location-outline"
-              class="mr-2 text-gray-500"
-            ></ion-icon>
-            <span>{{ job.locations[0].address }}</span>
-          </div>
-
-          <!-- Schedule -->
-          <div
-            *ngIf="job.schedule"
-            class="flex items-center text-sm text-gray-600"
-          >
-            <ion-icon
-              name="calendar-outline"
-              class="mr-2 text-gray-500"
-            ></ion-icon>
-            <span>{{ job.schedule.date }} at {{ job.schedule.time }}</span>
-          </div>
-
-          <!-- Worker Info -->
-          <div
-            *ngIf="job.workerName"
-            class="flex items-center text-sm text-gray-600"
-          >
-            <ion-icon
-              name="person-outline"
-              class="mr-2 text-gray-500"
-            ></ion-icon>
-            <span>Assigned to: {{ job.workerName }}</span>
-          </div>
-        </div>
-
-        <!-- Pricing Info -->
-        <div class="bg-gray-50 rounded-lg p-3 mb-4">
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span class="text-gray-600">Price Type:</span>
-              <span class="font-medium text-gray-900 ml-1 capitalize"
-                >{{ job.priceType }}</span
-              >
+          <!-- Key Details -->
+          <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+            <div class="flex items-center">
+              <ion-icon name="location" class="mr-2 text-red-500"></ion-icon>
+              <span class="text-gray-700 truncate">{{ getBookingLocation(request) }}</span>
             </div>
-            <div>
-              <span class="text-gray-600">Base Price:</span>
-              <span class="font-medium text-gray-900 ml-1"
-                >{{ formatCurrency(job.price) }}</span
-              >
+            <div class="flex items-center">
+              <ion-icon name="calendar" class="mr-2 text-blue-500"></ion-icon>
+              <span class="text-gray-700">{{ getBookingDate(request) }}</span>
             </div>
-            <div>
-              <span class="text-gray-600">Service Charge:</span>
-              <span class="font-medium text-red-600 ml-1"
-                >-{{ formatCurrency(job.serviceCharge) }}</span
-              >
+            <div class="flex items-center">
+              <ion-icon name="time" class="mr-2 text-purple-500"></ion-icon>
+              <span class="text-gray-700">{{ getBookingTime(request) }}</span>
             </div>
-            <div>
-              <span class="text-gray-600">Total:</span>
-              <span class="font-semibold text-green-600 ml-1"
-                >{{ formatCurrency(job.total) }}</span
-              >
+            <div class="flex items-center">
+              <ion-icon name="cash" class="mr-2 text-green-500"></ion-icon>
+              <span class="text-gray-700 font-semibold">₱{{ getBookingPrice(request) | number:'1.2-2' }}</span>
             </div>
           </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div class="flex space-x-3">
-          <ion-button
-            fill="outline"
-            size="small"
-            (click)="viewJobDetails(job)"
-            class="flex-1"
+          <!-- Description (if available) -->
+          <div *ngIf="getBookingDescription(request)" class="mb-4 p-3 bg-blue-50 rounded-xl">
+            <h5 class="font-medium text-blue-800 mb-1">Additional Notes</h5>
+            <p class="text-sm text-blue-700">{{ getBookingDescription(request) }}</p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex space-x-2">
+            <!-- Approve Button -->
+            <button
+              (click)="approveRequest(request)"
+              [disabled]="isRequestProcessing(request)"
+              class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center justify-center"
+            >
+              <ion-icon *ngIf="!isRequestProcessing(request)" name="checkmark-circle" class="mr-2"></ion-icon>
+              <ion-icon *ngIf="isRequestProcessing(request)" name="hourglass" class="mr-2 animate-spin"></ion-icon>
+              <span *ngIf="!isRequestProcessing(request)">Approve</span>
+              <span *ngIf="isRequestProcessing(request)">Processing...</span>
+            </button>
+
+            <!-- Reject Button -->
+            <button
+              (click)="rejectRequest(request)"
+              [disabled]="isRequestProcessing(request)"
+              class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none flex items-center justify-center"
+            >
+              <ion-icon *ngIf="!isRequestProcessing(request)" name="close-circle" class="mr-2"></ion-icon>
+              <ion-icon *ngIf="isRequestProcessing(request)" name="hourglass" class="mr-2 animate-spin"></ion-icon>
+              <span *ngIf="!isRequestProcessing(request)">Reject</span>
+              <span *ngIf="isRequestProcessing(request)">Processing...</span>
+            </button>
+          </div>
+
+          <!-- View Details Button -->
+          <button
+            (click)="viewRequestDetails(request)"
+            class="w-full mt-3 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2.5 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center"
           >
-            <ion-icon name="eye-outline" slot="start"></ion-icon>
+            <ion-icon name="eye" class="mr-2"></ion-icon>
             View Details
-          </ion-button>
-
-          <ion-button
-            *ngIf="canAcceptJob(job)"
-            (click)="acceptJob(job)"
-            size="small"
-            class="flex-1"
-          >
-            <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
-            Accept Job
-          </ion-button>
-        </div>
-
-        <!-- Timestamp -->
-        <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
-          Created: {{ job.createdAt | date:'medium' }}
-          <span
-            *ngIf="job.updatedAt && job.updatedAt.getTime() !== job.createdAt.getTime()"
-          >
-            • Updated: {{ job.updatedAt | date:'medium' }}
-          </span>
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div
-      *ngIf="filteredJobs.length === 0 && allJobs.length > 0"
-      class="text-center py-16"
-    >
-      <ion-icon name="filter-outline" class="text-6xl text-gray-400"></ion-icon>
-      <h3 class="text-xl font-semibold mt-4 text-gray-900">
-        No jobs match your filters
-      </h3>
-      <p class="text-gray-600 mt-2">
-        Try adjusting your search or filter criteria
+    <!-- Empty State - No Requests -->
+    <div *ngIf="bookingRequests.length === 0" class="text-center py-16 px-4">
+      <div class="w-32 h-32 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+        <ion-icon name="mail-open-outline" class="text-5xl text-indigo-600"></ion-icon>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-800 mb-3">No Job Requests</h3>
+      <p class="text-gray-600 mb-6 max-w-md mx-auto leading-relaxed">
+        There are no pending job requests at the moment. Make sure your profile is complete and your availability is set to receive new requests.
       </p>
-      <ion-button
-        fill="outline"
-        (click)="selectedStatus = 'all'; searchTerm = ''; applyFilters();"
-        class="mt-4"
+      <button
+        (click)="refreshBookingRequests()"
+        class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-2xl font-semibold shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center mx-auto"
       >
-        Clear Filters
-      </ion-button>
-    </div>
-
-    <!-- No Jobs State -->
-    <div *ngIf="allJobs.length === 0" class="text-center py-16">
-      <ion-icon
-        name="briefcase-outline"
-        class="text-6xl text-blue-500"
-      ></ion-icon>
-      <h3 class="text-xl font-semibold mt-4 text-gray-900">
-        No jobs available
-      </h3>
-      <p class="text-gray-600 mt-2">
-        Job listings from the regular bookings collection will appear here
-      </p>
-      <ion-button (click)="refreshJobs()" class="mt-4">
-        <ion-icon name="refresh-outline" slot="start"></ion-icon>
-        Refresh
-      </ion-button>
+        <ion-icon name="refresh" class="mr-2"></ion-icon>
+        Check for Requests
+      </button>
     </div>
   </div>
 </ion-content>

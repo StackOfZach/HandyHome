@@ -115,8 +115,6 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
           description: 'House & office cleaning',
           isActive: true,
           services: ['House Cleaning', 'Office Cleaning'],
-          averagePrice: 500,
-          estimatedDuration: 120,
         },
         {
           id: 'plumbing',
@@ -126,8 +124,6 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
           description: 'Pipes, fixtures & repairs',
           isActive: true,
           services: ['Pipe Repair', 'Fixture Installation'],
-          averagePrice: 800,
-          estimatedDuration: 90,
         },
         {
           id: 'electrical',
@@ -137,8 +133,6 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
           description: 'Wiring & electrical work',
           isActive: true,
           services: ['Wiring', 'Electrical Repair'],
-          averagePrice: 1000,
-          estimatedDuration: 120,
         },
       ];
     }
@@ -261,7 +255,7 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
 
   // Navigation methods
   bookService(categoryId?: string) {
-    this.router.navigate(['/pages/book-service'], {
+    this.router.navigate(['/client/browse-workers'], {
       queryParams: { category: categoryId },
     });
   }

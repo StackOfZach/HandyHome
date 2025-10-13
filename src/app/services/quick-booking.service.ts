@@ -9,6 +9,7 @@ import {
   addDoc,
   updateDoc,
   getDoc,
+  onSnapshot,
   orderBy,
   limit,
   Timestamp,
@@ -422,6 +423,71 @@ export class QuickBookingService {
       );
 
       return distance <= maxDistance;
+    });
+  }
+
+  // ===============================================================
+  // 🚀 Auto-redirect functionality for client when worker accepts
+  // ===============================================================
+
+  /**
+   * Monitor booking status changes and return observable for auto-redirect
+   * @param bookingId - The booking ID to monitor
+   * @returns Observable that emits when status changes to 'accepted'
+   */
+  monitorBookingStatus(bookingId: string): Observable<BookingData | null> {
+    const quickBookingRef = doc(this.firestore, 'quickbookings', bookingId);
+
+    return new Observable((observer) => {
+      const unsubscribe = onSnapshot(
+        quickBookingRef,
+        (doc: any) => {
+          if (doc.exists()) {
+            const data = doc.data() as BookingData;
+            const booking = { id: doc.id, ...data };
+            observer.next(booking);
+          } else {
+            observer.next(null);
+          }
+        },
+        (error: any) => {
+          console.error('Error monitoring booking status:', error);
+          observer.error(error);
+        }
+      );
+
+      // Return cleanup function
+      return () => unsubscribe();
+    });
+  }
+
+  /**
+   * Monitor regular booking status changes (for non-quick bookings)
+   * @param bookingId - The booking ID to monitor
+   * @returns Observable that emits when status changes
+   */
+  monitorRegularBookingStatus(bookingId: string): Observable<any> {
+    const bookingRef = doc(this.firestore, 'bookings', bookingId);
+
+    return new Observable((observer) => {
+      const unsubscribe = onSnapshot(
+        bookingRef,
+        (doc: any) => {
+          if (doc.exists()) {
+            const data = doc.data();
+            const booking = { id: doc.id, ...data };
+            observer.next(booking);
+          } else {
+            observer.next(null);
+          }
+        },
+        (error: any) => {
+          console.error('Error monitoring regular booking status:', error);
+          observer.error(error);
+        }
+      );
+
+      return () => unsubscribe();
     });
   }
 

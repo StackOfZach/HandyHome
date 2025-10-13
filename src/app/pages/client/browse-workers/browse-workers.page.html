@@ -1,0 +1,244 @@
+<ion-content [fullscreen]="true" class="bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+  <!-- Header -->
+  <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 pt-12 pb-6 px-6 shadow-xl mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center space-x-4">
+        <button
+          (click)="goBack()"
+          class="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm"
+        >
+          <ion-icon name="chevron-back" class="text-white text-xl"></ion-icon>
+        </button>
+        <div>
+          <h1 class="text-white text-2xl font-bold">Browse Workers</h1>
+          <p class="text-blue-100 text-sm">Find skilled professionals near you</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="relative mb-4">
+      <ion-searchbar
+        (ionInput)="onSearchChange($event)"
+        placeholder="Search workers or services..."
+        class="custom-searchbar"
+        showClearButton="focus"
+      ></ion-searchbar>
+    </div>
+
+    <!-- Filter Toggle -->
+    <button
+      (click)="toggleFilter()"
+      class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-xl flex items-center space-x-2 hover:bg-white/30 transition-all duration-200"
+    >
+      <ion-icon name="options" class="text-lg"></ion-icon>
+      <span class="text-sm font-medium">Filters</span>
+      <span *ngIf="filters.selectedServices.length > 0" class="bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold">
+        {{ filters.selectedServices.length }}
+      </span>
+    </button>
+  </div>
+
+  <!-- Filters Panel -->
+  <div *ngIf="showFilters" class="bg-white mx-4 rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
+    <!-- Services Filter -->
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+        <ion-icon name="construct" class="text-indigo-600 mr-2"></ion-icon>
+        Services
+      </h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-2" *ngIf="!isLoading && allServices.length > 0">
+        <button
+          *ngFor="let service of allServices"
+          (click)="toggleService(service)"
+          class="p-2 rounded-lg text-sm font-medium transition-all duration-200"
+          [class]="isServiceSelected(service) ? 
+            'bg-indigo-100 text-indigo-800 border-2 border-indigo-300' : 
+            'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'"
+        >
+          {{ service }}
+        </button>
+      </div>
+      
+      <!-- Loading state for services -->
+      <div *ngIf="isLoading" class="flex justify-center py-4">
+        <ion-spinner name="crescent" class="text-indigo-600"></ion-spinner>
+      </div>
+      
+      <!-- Empty state for services -->
+      <div *ngIf="!isLoading && allServices.length === 0" class="text-center py-4">
+        <p class="text-gray-500 text-sm">No services available</p>
+      </div>
+    </div>
+
+    <!-- Rating Filter -->
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+        <ion-icon name="star" class="text-yellow-500 mr-2"></ion-icon>
+        Minimum Rating
+      </h3>
+      <ion-range
+        min="0"
+        max="5"
+        step="1"
+        snaps="true"
+        color="warning"
+        (ionKnobMoveEnd)="onRatingChange($event)"
+        [value]="filters.minRating"
+      >
+        <ion-label slot="start">0</ion-label>
+        <ion-label slot="end">5</ion-label>
+      </ion-range>
+      <div class="text-center mt-2">
+        <span class="text-sm text-gray-600">{{ filters.minRating }} stars and above</span>
+      </div>
+    </div>
+
+    <!-- Sort Options -->
+    <div class="mb-4">
+      <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+        <ion-icon name="swap-vertical" class="text-green-600 mr-2"></ion-icon>
+        Sort By
+      </h3>
+      <ion-select 
+        [value]="filters.sortBy" 
+        (ionChange)="onSortChange($event)"
+        placeholder="Select sorting option"
+        class="w-full"
+      >
+        <ion-select-option value="rating">Rating</ion-select-option>
+        <ion-select-option value="experience">Experience</ion-select-option>
+        <ion-select-option value="distance">Distance</ion-select-option>
+      </ion-select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+    <div class="text-center">
+      <ion-spinner name="crescent" class="w-12 h-12 text-indigo-600 mb-4"></ion-spinner>
+      <p class="text-gray-500">Loading workers...</p>
+    </div>
+  </div>
+
+  <!-- Workers Grid -->
+  <div *ngIf="!isLoading" class="px-4 pb-6">
+    <!-- Results Counter -->
+    <div class="mb-4">
+      <p class="text-gray-600 text-sm">
+        Found {{ filteredWorkers.length }} worker{{ filteredWorkers.length !== 1 ? 's' : '' }}
+      </p>
+    </div>
+
+    <!-- Workers List -->
+    <div class="space-y-4" *ngIf="filteredWorkers.length > 0">
+      <div
+        *ngFor="let worker of filteredWorkers"
+        class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300"
+      >
+        <!-- Worker Header -->
+        <div class="flex items-start space-x-4 mb-4">
+          <!-- Avatar -->
+          <div class="w-16 h-16 rounded-full overflow-hidden shadow-lg border-2 border-indigo-200">
+            <img 
+              *ngIf="worker.profilePhotoData" 
+              [src]="worker.profilePhotoData.startsWith('data:') ? worker.profilePhotoData : 'data:image/jpeg;base64,' + worker.profilePhotoData" 
+              alt="Worker Profile"
+              class="w-full h-full object-cover"
+            />
+            <div 
+              *ngIf="!worker.profilePhotoData" 
+              class="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center"
+            >
+              <span class="text-white text-xl font-bold">
+                {{ worker.fullName.charAt(0).toUpperCase() }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Worker Info -->
+          <div class="flex-1">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-xl font-bold text-gray-800">{{ worker.fullName }}</h3>
+              <div class="flex items-center space-x-1">
+                <ion-icon 
+                  *ngFor="let filled of getStarArray(worker.rating || 0)"
+                  [name]="filled ? 'star' : 'star-outline'"
+                  [class]="filled ? 'text-yellow-400' : 'text-gray-300'"
+                  class="text-sm"
+                ></ion-icon>
+                <span class="text-sm text-gray-600 ml-1">({{ worker.rating || 0 }})</span>
+              </div>
+            </div>
+
+            <!-- Experience -->
+            <div class="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+              <div class="flex items-center">
+                <ion-icon name="briefcase" class="mr-1 text-green-600"></ion-icon>
+                <span>{{ worker.jobsCompleted || 0 }} jobs completed</span>
+              </div>
+              <div class="flex items-center">
+                <ion-icon name="location" class="mr-1 text-red-600"></ion-icon>
+                <span>{{ worker.workRadius || 5 }}km radius</span>
+              </div>
+            </div>
+
+            <!-- Skills -->
+            <div class="mb-4">
+              <p class="text-sm text-gray-600 mb-2">Services:</p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  *ngFor="let skill of worker.skills?.slice(0, 3)"
+                  class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs font-medium"
+                >
+                  {{ skill }}
+                </span>
+                <span
+                  *ngIf="worker.skills && worker.skills.length > 3"
+                  class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium"
+                >
+                  +{{ worker.skills.length - 3 }} more
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex space-x-3">
+          <button
+            (click)="viewWorkerDetails(worker)"
+            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center"
+          >
+            <ion-icon name="information-circle" class="mr-2"></ion-icon>
+            View Details
+          </button>
+          <button
+            (click)="scheduleBooking(worker)"
+            class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center shadow-lg"
+          >
+            <ion-icon name="calendar" class="mr-2"></ion-icon>
+            Schedule Booking
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredWorkers.length === 0" class="text-center py-12">
+      <div class="bg-white rounded-2xl shadow-lg p-8 mx-4">
+        <ion-icon name="search" class="text-6xl text-gray-300 mb-4"></ion-icon>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">No Workers Found</h3>
+        <p class="text-gray-600 mb-4">
+          Try adjusting your search criteria or filters to find more workers.
+        </p>
+        <button
+          (click)="filters.searchTerm = ''; filters.selectedServices = []; filters.minRating = 0; applyFilters()"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200"
+        >
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+</ion-content>

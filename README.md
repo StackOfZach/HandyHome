@@ -22,12 +22,14 @@ Before running this project, ensure you have the following installed:
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/your-username/HandyHome.git
    cd HandyHome
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -63,6 +65,7 @@ The application will be available at `http://localhost:8100` by default.
 ### Mobile Development
 
 #### For iOS (macOS only)
+
 ```bash
 # Add iOS platform
 ionic capacitor add ios
@@ -75,6 +78,7 @@ ionic capacitor open ios
 ```
 
 #### For Android
+
 ```bash
 # Add Android platform
 ionic capacitor add android
@@ -91,10 +95,12 @@ ionic capacitor open android
 ### Initial Setup
 
 1. **Download and Install GitHub Desktop**
+
    - Go to [desktop.github.com](https://desktop.github.com/)
    - Download and install for Windows
 
 2. **Sign in to GitHub**
+
    - Open GitHub Desktop
    - Sign in with your GitHub account
 
@@ -106,6 +112,7 @@ ionic capacitor open android
 ### Daily Workflow with GitHub Desktop
 
 #### Making Changes
+
 1. **Open GitHub Desktop**
 2. **Make your code changes** in VS Code or your preferred editor
 3. **Review changes** in GitHub Desktop:
@@ -113,6 +120,7 @@ ionic capacitor open android
    - See line-by-line differences in the main panel
 
 #### Committing Changes
+
 1. **Stage changes** by checking files you want to commit
 2. **Write commit message**:
    - Summary (required): Brief description of changes
@@ -120,20 +128,24 @@ ionic capacitor open android
 3. **Click "Commit to main"** (or your current branch)
 
 #### Pushing to GitHub
+
 1. **Click "Push origin"** to upload commits to GitHub
 2. If prompted, authenticate with GitHub
 
 #### Pulling Updates
+
 1. **Click "Fetch origin"** to check for updates
 2. **Click "Pull origin"** if updates are available
 
 #### Creating Branches
+
 1. **Click "Current Branch"** dropdown
 2. **Click "New Branch"**
 3. **Name your branch** (e.g., `feature/new-booking-system`)
 4. **Click "Create Branch"**
 
 #### Creating Pull Requests
+
 1. **Push your branch** to GitHub
 2. **Click "Create Pull Request"** in GitHub Desktop
 3. **Fill out PR details** in the web browser
@@ -149,6 +161,7 @@ ionic capacitor open android
 ## 🔧 Development Tools
 
 ### VS Code Extensions (Recommended)
+
 - Angular Language Service
 - Ionic Extension Pack
 - TypeScript Hero
@@ -157,6 +170,7 @@ ionic capacitor open android
 - GitLens
 
 ### Project Structure
+
 ```
 src/
 ├── app/
@@ -173,10 +187,12 @@ src/
 ## 🔥 Firebase Setup
 
 1. **Create Firebase Project**
+
    - Go to [Firebase Console](https://console.firebase.google.com/)
    - Create new project or use existing
 
 2. **Configure Firebase**
+
    - Update `src/environments/environment.ts` with your Firebase config
    - Enable Authentication, Firestore, and other required services
 
@@ -200,6 +216,7 @@ src/
 ### Common Issues
 
 **Port already in use:**
+
 ```bash
 # Kill process on port 8100
 netstat -ano | findstr :8100
@@ -207,6 +224,7 @@ taskkill /PID <PID_NUMBER> /F
 ```
 
 **Node modules issues:**
+
 ```bash
 # Clear npm cache and reinstall
 npm cache clean --force
@@ -215,6 +233,7 @@ npm install
 ```
 
 **Capacitor sync issues:**
+
 ```bash
 # Clean and rebuild
 ionic capacitor clean
@@ -222,6 +241,7 @@ ionic capacitor sync
 ```
 
 **GitHub Desktop not detecting changes:**
+
 - Ensure you're in the correct repository
 - Check if `.git` folder exists
 - Restart GitHub Desktop
@@ -229,6 +249,7 @@ ionic capacitor sync
 ## 📞 Support
 
 For issues and questions:
+
 - Check existing [GitHub Issues](https://github.com/your-username/HandyHome/issues)
 - Create new issue with detailed description
 - Include error messages and steps to reproduce
@@ -242,6 +263,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 **Happy coding! 🎉**
 
 For more information about Ionic and Angular, visit:
+
 - [Ionic Documentation](https://ionicframework.com/docs)
 - [Angular Documentation](https://angular.io/docs)
 - [Capacitor Documentation](https://capacitorjs.com/docs)

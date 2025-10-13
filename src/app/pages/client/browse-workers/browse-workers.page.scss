@@ -1,0 +1,230 @@
+// Browse Workers Page Styles
+
+.custom-searchbar {
+  --background: rgba(255, 255, 255, 0.15);
+  --color: white;
+  --placeholder-color: rgba(255, 255, 255, 0.8);
+  --icon-color: rgba(255, 255, 255, 0.8);
+  --clear-button-color: rgba(255, 255, 255, 0.8);
+  
+  .searchbar-input {
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  &:focus-within {
+    --background: rgba(255, 255, 255, 0.25);
+  }
+}
+
+// Worker Card Animations
+.worker-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+}
+
+// Star Rating Styles
+.star-rating {
+  .star-filled {
+    color: #fbbf24;
+    filter: drop-shadow(0 1px 2px rgba(251, 191, 36, 0.3));
+  }
+  
+  .star-empty {
+    color: #d1d5db;
+  }
+}
+
+// Filter Panel Animation
+.filter-panel {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Gradient Text
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Skills Chips
+.skill-chip {
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+  }
+  
+  &:hover::before {
+    left: 100%;
+  }
+}
+
+// Button Styles
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 4px 15px 0 rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px 0 rgba(102, 126, 234, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.btn-secondary {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  color: #475569;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+  }
+}
+
+// Loading States
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// Range Slider Customization
+ion-range {
+  --bar-background: #e2e8f0;
+  --bar-background-active: #667eea;
+  --bar-height: 6px;
+  --bar-border-radius: 3px;
+  --knob-background: #667eea;
+  --knob-size: 20px;
+  --knob-border-radius: 10px;
+  --knob-box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+// Select Customization
+ion-select {
+  --background: #f8fafc;
+  --color: #475569;
+  --border-radius: 12px;
+  --border-color: #e2e8f0;
+  --border-width: 2px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  
+  &:focus {
+    --border-color: #667eea;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .worker-card {
+    margin: 0 -4px;
+  }
+  
+  .filter-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .filter-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// Dark Mode Support
+@media (prefers-color-scheme: dark) {
+  .worker-card {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+  
+  .filter-panel {
+    background: #1f2937;
+    border-color: #374151;
+  }
+}
+
+// Accessibility
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Focus States
+button:focus,
+ion-searchbar:focus,
+ion-select:focus,
+ion-range:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+// High Contrast Mode
+@media (prefers-contrast: high) {
+  .worker-card {
+    border: 2px solid #000;
+  }
+  
+  .btn-primary {
+    background: #0066cc;
+    color: #fff;
+  }
+  
+  .btn-secondary {
+    background: #fff;
+    color: #000;
+    border: 2px solid #000;
+  }
+}

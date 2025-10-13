@@ -19,6 +19,7 @@ import { IonicModule } from '@ionic/angular';
 // Services
 import { AuthService } from '../../../services/auth.service';
 import { WorkerService } from '../../../services/worker.service';
+import { DashboardService, ServiceCategory } from '../../../services/dashboard.service';
 
 // Components
 import { MapPickerComponent } from '../../../components/map-picker/map-picker.component';
@@ -79,20 +80,9 @@ export class InterviewPage implements OnInit, OnDestroy {
   selectedLocation: { lat: number; lng: number } | null = null;
 
   // Skills and services
-  availableServices = [
-    'House Cleaning',
-    'Plumbing',
-    'Electrical Work',
-    'Carpentry',
-    'Painting',
-    'Gardening',
-    'Appliance Repair',
-    'AC Maintenance',
-    'Pest Control',
-    'Home Security',
-    'Moving Services',
-    'General Handyman',
-  ];
+  serviceCategories: ServiceCategory[] = [];
+  availableServices: string[] = [];
+  isLoadingServices = false;
 
   // Available days
   availableDays = [
@@ -115,6 +105,7 @@ export class InterviewPage implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private authService: AuthService,
     private workerService: WorkerService,
+    private dashboardService: DashboardService,
     private router: Router,
     private loadingController: LoadingController,
     private alertController: AlertController,
@@ -125,6 +116,7 @@ export class InterviewPage implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadWorkerProfile();
+    this.loadServiceCategories();
   }
 
   ngOnDestroy() {
@@ -205,6 +197,41 @@ export class InterviewPage implements OnInit, OnDestroy {
       this.showErrorAlert('Failed to load profile');
     } finally {
       loading.dismiss();
+    }
+  }
+
+  /**
+   * Load service categories from Firestore
+   */
+  async loadServiceCategories() {
+    this.isLoadingServices = true;
+    try {
+      this.serviceCategories = await this.dashboardService.getServiceCategories();
+      // Extract only the names of active service categories for the availableServices array
+      this.availableServices = this.serviceCategories
+        .filter(category => category.isActive)
+        .map(category => category.name);
+      console.log('Loaded service categories:', this.serviceCategories);
+      console.log('Available services:', this.availableServices);
+    } catch (error) {
+      console.error('Error loading service categories:', error);
+      // Fallback to hardcoded services if Firestore fails
+      this.availableServices = [
+        'House Cleaning',
+        'Plumbing', 
+        'Electrical Work',
+        'Carpentry',
+        'Painting',
+        'Gardening',
+        'Appliance Repair',
+        'AC Maintenance',
+        'Pest Control',
+        'Home Security',
+        'Moving Services',
+        'General Handyman'
+      ];
+    } finally {
+      this.isLoadingServices = false;
     }
   }
 
@@ -529,7 +556,7 @@ export class InterviewPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Toggle skill selection
+   * Toggle skill selection (limited to 3 services maximum)
    */
   toggleSkill(skill: string) {
     const currentSkills = this.skillsForm.get('skills')?.value || [];
@@ -539,8 +566,15 @@ export class InterviewPage implements OnInit, OnDestroy {
       // Remove skill
       currentSkills.splice(index, 1);
     } else {
-      // Add skill
-      currentSkills.push(skill);
+      // Check if we can add more skills (limit to 3)
+      if (currentSkills.length < 3) {
+        // Add skill
+        currentSkills.push(skill);
+      } else {
+        // Show toast message when limit is reached
+        this.showToast('You can select a maximum of 3 services only.', 'warning');
+        return;
+      }
     }
 
     this.skillsForm.patchValue({ skills: currentSkills });
@@ -559,6 +593,13 @@ export class InterviewPage implements OnInit, OnDestroy {
    */
   getSelectedSkills(): string[] {
     return this.skillsForm.get('skills')?.value || [];
+  }
+
+  /**
+   * Check if maximum service selection limit is reached
+   */
+  isSelectionLimitReached(): boolean {
+    return this.getSelectedSkills().length >= 3;
   }
 
   /**
@@ -732,5 +773,18 @@ export class InterviewPage implements OnInit, OnDestroy {
       console.error('Error submitting interview:', error);
       this.showErrorAlert('Failed to submit application. Please try again.');
     }
+  }
+
+  /**
+   * Show toast message
+   */
+  private async showToast(message: string, color: 'success' | 'warning' | 'danger' = 'success') {
+    const toast = await this.toastController.create({
+      message,
+      duration: 3000,
+      color,
+      position: 'bottom',
+    });
+    await toast.present();
   }
 }

@@ -109,6 +109,10 @@ export class WorkerFoundPage implements OnInit, OnDestroy {
   private trackingSubscription?: Subscription;
   private refreshTimer?: number;
 
+  // Status messages
+  bookingStatusMessage: string = '';
+  workerDistanceMessage: string = '';
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -122,7 +126,7 @@ export class WorkerFoundPage implements OnInit, OnDestroy {
   ngOnInit() {
     this.bookingId = this.route.snapshot.paramMap.get('bookingId') || '';
     if (this.bookingId) {
-      this.loadBookingAndWorkerData();
+      this.initializeBookingTracking();
     } else {
       this.router.navigate(['/client/dashboard']);
     }
@@ -142,6 +146,19 @@ export class WorkerFoundPage implements OnInit, OnDestroy {
     }
 
     this.workerTrackingService.stopTracking();
+  }
+
+  async initializeBookingTracking() {
+    try {
+      await this.determineBookingType();
+      await this.loadBookingData();
+      this.setupRealtimeBookingListener();
+      this.startLocationTracking();
+    } catch (error) {
+      console.error('Error initializing booking tracking:', error);
+      this.showToast('Failed to load booking details', 'danger');
+      this.router.navigate(['/client/dashboard']);
+    }
   }
 
   private async determineBookingType(): Promise<void> {
@@ -416,7 +433,7 @@ export class WorkerFoundPage implements OnInit, OnDestroy {
     await actionSheet.present();
   }
 
-  private callWorker() {
+  callWorker() {
     if (this.workerData?.phone) {
       window.open(`tel:${this.workerData.phone}`, '_system');
     } else {
@@ -424,7 +441,7 @@ export class WorkerFoundPage implements OnInit, OnDestroy {
     }
   }
 
-  private messageWorker() {
+  messageWorker() {
     if (this.workerData?.phone) {
       const message = `Hi ${this.workerData.fullName}, I'm your client for the ${this.bookingData?.categoryName} service. Looking forward to working with you!`;
       window.open(
@@ -747,5 +764,220 @@ export class WorkerFoundPage implements OnInit, OnDestroy {
     if (minutes <= 5) return 'success';
     if (minutes <= 15) return 'warning';
     return 'primary';
+  }
+
+  // ===============================================================
+  // 🚀 Enhanced Methods for Real-time Tracking
+  // ===============================================================
+
+  private async loadBookingData() {
+    try {
+      const collectionName = this.isQuickBooking ? 'quickbookings' : 'bookings';
+      const bookingRef = doc(
+        this.firestore,
+        `${collectionName}/${this.bookingId}`
+      );
+      const bookingSnap = await getDoc(bookingRef);
+
+      if (bookingSnap.exists()) {
+        const data = bookingSnap.data();
+        this.bookingData = {
+          id: bookingSnap.id,
+          ...data,
+        } as BookingData;
+
+        if (this.bookingData.assignedWorker) {
+          await this.loadWorkerData(this.bookingData.assignedWorker);
+        }
+
+        this.updateStatusMessages();
+        this.isLoading = false;
+      } else {
+        throw new Error('Booking not found');
+      }
+    } catch (error) {
+      console.error('Error loading booking data:', error);
+      throw error;
+    }
+  }
+
+  private setupRealtimeBookingListener() {
+    if (!this.bookingId) return;
+
+    const collectionName = this.isQuickBooking ? 'quickbookings' : 'bookings';
+    const bookingRef = doc(
+      this.firestore,
+      `${collectionName}/${this.bookingId}`
+    );
+
+    this.bookingListener = onSnapshot(bookingRef, (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        this.bookingData = {
+          id: doc.id,
+          ...data,
+        } as BookingData;
+
+        this.updateStatusMessages();
+
+        // Handle status changes
+        if (this.bookingData.status === 'completed') {
+          this.showCompletionDialog();
+        }
+      }
+    });
+  }
+
+  private startLocationTracking() {
+    if (!this.bookingData?.assignedWorker) return;
+
+    // Start real-time worker tracking
+    this.trackingSubscription = this.workerTrackingService
+      .startTracking(this.bookingData.assignedWorker)
+      .subscribe((trackingData) => {
+        this.trackingData = trackingData;
+        this.updateMapDisplay();
+        this.updateStatusMessages();
+      });
+
+    // Set up periodic location refresh
+    this.refreshTimer = window.setInterval(() => {
+      this.refreshWorkerLocation();
+    }, 30000); // Refresh every 30 seconds
+  }
+
+  private updateStatusMessages() {
+    if (!this.bookingData) return;
+
+    // Update booking status message
+    switch (this.bookingData.status) {
+      case 'accepted':
+        this.bookingStatusMessage =
+          'Worker has accepted your booking and is preparing to head to your location.';
+        break;
+      case 'on_the_way':
+        this.bookingStatusMessage = 'Worker is on the way to your location.';
+        break;
+      case 'in_progress':
+        this.bookingStatusMessage =
+          'Worker has arrived and is working on your request.';
+        break;
+      case 'completed':
+        this.bookingStatusMessage = 'Job completed successfully!';
+        break;
+      default:
+        this.bookingStatusMessage = 'Tracking your booking...';
+    }
+
+    // Update worker distance message
+    if (this.trackingData) {
+      const distance = this.trackingData.distance || 0;
+      if (distance > 2) {
+        this.workerDistanceMessage =
+          'Worker is on the move, please prepare your location.';
+      } else if (distance > 0.5) {
+        this.workerDistanceMessage = 'Worker is nearby, get ready!';
+      } else {
+        this.workerDistanceMessage = 'Worker has arrived at your location.';
+      }
+    } else {
+      this.workerDistanceMessage = 'Locating worker...';
+    }
+  }
+
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number {
+    const R = 6371; // km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) ** 2;
+    const distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return distance;
+  }
+
+  private async showCompletionDialog() {
+    const alert = await this.alertController.create({
+      header: 'Job Completed!',
+      message:
+        'Your service has been completed successfully. Would you like to rate the worker?',
+      buttons: [
+        {
+          text: 'Later',
+          role: 'cancel',
+        },
+        {
+          text: 'Rate Worker',
+          handler: () => {
+            this.showRatingDialog();
+          },
+        },
+      ],
+    });
+
+    await alert.present();
+  }
+
+  private async showRatingDialog() {
+    // Implementation for rating dialog
+    const alert = await this.alertController.create({
+      header: 'Rate Worker',
+      message: 'How would you rate this worker?',
+      inputs: [
+        {
+          name: 'rating',
+          type: 'number',
+          placeholder: 'Rating (1-5)',
+          min: 1,
+          max: 5,
+        },
+        {
+          name: 'comment',
+          type: 'textarea',
+          placeholder: 'Optional comment',
+        },
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Submit',
+          handler: (data) => {
+            this.submitRating(data.rating, data.comment);
+          },
+        },
+      ],
+    });
+
+    await alert.present();
+  }
+
+  private async submitRating(rating: number, comment: string) {
+    try {
+      // TODO: Implement rating submission to Firestore
+      console.log('Rating submitted:', { rating, comment });
+      this.showToast('Thank you for your feedback!', 'success');
+
+      // Navigate back to dashboard after rating
+      setTimeout(() => {
+        this.router.navigate(['/client/dashboard']);
+      }, 2000);
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      this.showToast('Failed to submit rating', 'danger');
+    }
+  }
+
+  goBack() {
+    this.router.navigate(['/client/dashboard']);
   }
 }

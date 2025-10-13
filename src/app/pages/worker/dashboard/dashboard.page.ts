@@ -26,6 +26,18 @@ import {
 import { JobDetailsModalComponent } from '../../../components/job-details-modal/job-details-modal.component';
 import { Subscription, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
+import {
+  Firestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  updateDoc,
+  onSnapshot,
+  orderBy,
+  Timestamp,
+} from '@angular/fire/firestore';
 
 interface WorkerStats {
   jobsCompleted: number;
@@ -89,6 +101,12 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   availableJobs: JobData[] = [];
   ongoingJobs: JobData[] = [];
 
+  // Track if worker has active job (prevents accepting new jobs)
+  hasActiveJob: boolean = false;
+
+  // Available bookings from quickbookings collection
+  availableBookings: any[] = [];
+
   // Slideshow data
   bookingsSlides: BookingSlide[] = [];
   currentSlideIndex: number = 0;
@@ -118,6 +136,7 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     private bookingService: BookingService,
     private quickBookingService: QuickBookingService,
     private dashboardService: DashboardService,
+    private firestore: Firestore,
     private notificationService: NotificationService,
     private jobManagementService: JobManagementService,
     private locationTrackingService: LocationTrackingService,
@@ -138,6 +157,7 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
           this.setupLocationTracking();
           this.setupQuickBookingMonitoring();
           this.initializeSlideshow();
+          this.loadAvailableBookings();
         }
       })
     );
@@ -260,6 +280,8 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.jobManagementService.getOngoingJobs().subscribe((jobs) => {
         this.ongoingJobs = jobs;
+        // Update hasActiveJob flag - worker cannot accept new jobs if they have 1 or more active jobs
+        this.hasActiveJob = jobs.length >= 1;
       })
     );
   }
@@ -283,6 +305,10 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
           }
         })
     );
+
+    // Also set up real-time monitoring for the available bookings list
+    // This ensures the list is always up-to-date without manual refresh
+    this.loadAvailableBookings();
   }
 
   private showQuickBookingNotification(booking: any) {
@@ -569,6 +595,15 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   async acceptJob(job: JobData) {
     if (!job.id) return;
 
+    // Check if worker already has an active job
+    if (this.hasActiveJob) {
+      this.showToast(
+        'You cannot accept another job while you have an active job. Please complete your current job first.',
+        'medium'
+      );
+      return;
+    }
+
     const alert = await this.alertController.create({
       header: 'Accept Job',
       message: `Are you sure you want to accept "${job.title}"?`,
@@ -783,6 +818,16 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   async acceptQuickBooking() {
     if (!this.quickBookingNotification) return;
 
+    // Check if worker already has an active job
+    if (this.hasActiveJob) {
+      this.showToast(
+        'You cannot accept another job while you have an active job. Please complete your current job first.',
+        'medium'
+      );
+      this.dismissQuickNotification();
+      return;
+    }
+
     try {
       // Accept the quick booking
       await this.quickBookingService.acceptBooking(
@@ -820,5 +865,150 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
   async logout() {
     await this.authService.logout();
+  }
+
+  // Load available bookings from quickbookings collection
+  async loadAvailableBookings() {
+    if (!this.userProfile?.uid || !this.workerProfile) return;
+
+    try {
+      const quickBookingsRef = collection(this.firestore, 'quickbookings');
+      const q = query(
+        quickBookingsRef,
+        where('status', '==', 'searching'),
+        orderBy('createdAt', 'desc')
+      );
+
+      // Real-time listener for available bookings
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        this.availableBookings = [];
+
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          const booking = {
+            id: doc.id,
+            ...data,
+            isProcessing: false,
+            distance: this.calculateDistanceToBooking(data['location']),
+          };
+
+          // Only show bookings that match worker's skills
+          if (this.isBookingRelevantToWorker(booking)) {
+            this.availableBookings.push(booking);
+          }
+        });
+
+        // Sort by distance if location is available
+        if (this.currentLocation) {
+          this.availableBookings.sort(
+            (a, b) => (a.distance || 999) - (b.distance || 999)
+          );
+        }
+      });
+
+      // Store the unsubscribe function to clean up later
+      this.subscriptions.push({ unsubscribe } as any);
+    } catch (error) {
+      console.error('Error loading available bookings:', error);
+      this.showToast('Error loading available bookings', 'danger');
+    }
+  }
+
+  // Check if booking is relevant to worker's skills
+  private isBookingRelevantToWorker(booking: any): boolean {
+    if (!this.workerProfile?.skills || !booking.categoryId) return true;
+
+    // Check if worker has skills matching the booking category or sub-service
+    return this.workerProfile.skills.some(
+      (skill) =>
+        skill === booking.categoryId ||
+        skill === booking.subService ||
+        skill
+          .toLowerCase()
+          .includes(booking.categoryName?.toLowerCase() || '') ||
+        skill.toLowerCase().includes(booking.subService?.toLowerCase() || '')
+    );
+  }
+
+  // Calculate distance from worker's current location to booking location
+  private calculateDistanceToBooking(bookingLocation: any): number | null {
+    if (
+      !this.currentLocation ||
+      !bookingLocation?.lat ||
+      !bookingLocation?.lng
+    ) {
+      return null;
+    }
+
+    const R = 6371; // Earth's radius in km
+    const dLat = this.deg2rad(
+      bookingLocation.lat - this.currentLocation.latitude
+    );
+    const dLng = this.deg2rad(
+      bookingLocation.lng - this.currentLocation.longitude
+    );
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.deg2rad(this.currentLocation.latitude)) *
+        Math.cos(this.deg2rad(bookingLocation.lat)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI / 180);
+  }
+
+  // Accept a booking
+  async acceptBooking(booking: any) {
+    if (!this.userProfile?.uid || booking.isProcessing) return;
+
+    // Check if worker already has an active job
+    if (this.hasActiveJob) {
+      this.showToast(
+        'You cannot accept another job while you have an active job. Please complete your current job first.',
+        'medium'
+      );
+      return;
+    }
+
+    booking.isProcessing = true;
+
+    try {
+      // Update the booking in Firestore
+      const bookingRef = doc(this.firestore, 'quickbookings', booking.id);
+      await updateDoc(bookingRef, {
+        assignedWorker: this.userProfile.uid,
+        status: 'accepted',
+        acceptedAt: Timestamp.now(),
+        workerDetails: {
+          id: this.userProfile.uid,
+          name: this.userProfile.fullName,
+          phone: this.userProfile.email, // Using email as contact for now
+          rating: this.workerProfile?.rating || 0,
+        },
+      });
+
+      this.showToast('Booking accepted successfully!', 'success');
+
+      // Navigate to booking details page
+      this.router.navigate(['/pages/worker/booking-details'], {
+        queryParams: { bookingId: booking.id },
+      });
+    } catch (error) {
+      console.error('Error accepting booking:', error);
+      this.showToast('Error accepting booking. Please try again.', 'danger');
+      booking.isProcessing = false;
+    }
+  }
+
+  // Refresh available bookings
+  async refreshAvailableBookings() {
+    await this.loadAvailableBookings();
+    this.showToast('Available bookings refreshed', 'success');
   }
 }

@@ -1,0 +1,226 @@
+<ion-header>
+  <!-- Header with gradient background -->
+  <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 pt-12 pb-6 px-4 shadow-xl">
+    <div class="flex items-center justify-between mb-2">
+      <ion-button 
+        fill="clear" 
+        (click)="goBack()" 
+        class="text-white p-2 -ml-2"
+      >
+        <ion-icon name="arrow-back" size="large"></ion-icon>
+      </ion-button>
+      
+      <h1 class="text-xl font-bold text-white flex-1 text-center mr-10">
+        Booking Request Details
+      </h1>
+    </div>
+    
+    <div class="flex items-center">
+      <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mr-4">
+        <ion-icon name="document-text" class="text-2xl text-white"></ion-icon>
+      </div>
+      <div>
+        <h2 class="text-lg font-semibold text-white">{{ getServiceName() }}</h2>
+        <p class="text-white/80 text-sm">{{ getCustomerName() }}</p>
+      </div>
+    </div>
+  </div>
+</ion-header>
+
+<ion-content>
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex justify-center items-center py-20">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mb-4 mx-auto"></div>
+      <p class="text-gray-600">Loading booking details...</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="text-center py-16 px-4">
+    <div class="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+      <ion-icon name="alert-circle" class="text-4xl text-white"></ion-icon>
+    </div>
+    <h3 class="text-xl font-semibold text-gray-900 mb-2">Error Loading Details</h3>
+    <p class="text-gray-600 mb-6">{{ error }}</p>
+    <ion-button (click)="loadBookingDetails()" color="primary">
+      <ion-icon name="refresh-outline" slot="start"></ion-icon>
+      Try Again
+    </ion-button>
+  </div>
+
+  <!-- Booking Details -->
+  <div *ngIf="!loading && !error && booking" class="px-4 pb-20 -mt-4">
+    <!-- Service Information Card -->
+    <div class="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-white/20">
+      <div class="flex items-center mb-4">
+        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mr-4">
+          <ion-icon name="construct" class="text-xl text-white"></ion-icon>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">Service Overview</h3>
+          <p class="text-gray-600 text-sm">Booking request information</p>
+        </div>
+      </div>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm font-medium text-gray-700">Service Type</label>
+          <p class="text-gray-900 font-semibold">{{ getServiceName() }}</p>
+        </div>
+        
+        <div>
+          <label class="text-sm font-medium text-gray-700">Description</label>
+          <p class="text-gray-900">{{ getServiceDescription() }}</p>
+        </div>
+        
+        <div>
+          <label class="text-sm font-medium text-gray-700">Status</label>
+          <ion-badge [color]="getStatusColor()" class="text-sm font-medium">
+            {{ getStatus() | titlecase }}
+          </ion-badge>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customer Information Card -->
+    <div class="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-white/20">
+      <div class="flex items-center mb-4">
+        <div class="w-16 h-16 rounded-full overflow-hidden mr-4 border-3 border-green-200">
+          <img 
+            *ngIf="getCustomerProfileImage()" 
+            [src]="getCustomerProfileImage()" 
+            [alt]="getCustomerName()"
+            class="w-full h-full object-cover"
+          />
+          <div 
+            *ngIf="!getCustomerProfileImage()"
+            class="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center"
+          >
+            <ion-icon name="person" class="text-2xl text-white"></ion-icon>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">Customer Information</h3>
+          <p class="text-gray-600 text-sm">Contact details</p>
+        </div>
+      </div>
+      
+      <div class="space-y-4">
+        <div class="flex items-center">
+          <ion-icon name="person" class="mr-3 text-gray-500"></ion-icon>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Name</label>
+            <p class="text-gray-900 font-semibold">{{ getCustomerName() }}</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center">
+          <ion-icon name="mail" class="mr-3 text-gray-500"></ion-icon>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Email</label>
+            <p class="text-gray-900">{{ getCustomerEmail() }}</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center">
+          <ion-icon name="call" class="mr-3 text-gray-500"></ion-icon>
+          <div>
+            <label class="text-sm font-medium text-gray-700">Phone</label>
+            <p class="text-gray-900">{{ getCustomerPhone() }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule Information Card -->
+    <div class="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-white/20">
+      <div class="flex items-center mb-4">
+        <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mr-4">
+          <ion-icon name="calendar" class="text-xl text-white"></ion-icon>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">Schedule & Location</h3>
+          <p class="text-gray-600 text-sm">When and where</p>
+        </div>
+      </div>
+      
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium text-gray-700">Date</label>
+            <p class="text-gray-900 font-semibold">{{ getScheduledDate() }}</p>
+          </div>
+          
+          <div>
+            <label class="text-sm font-medium text-gray-700">Time</label>
+            <p class="text-gray-900 font-semibold">{{ getScheduledTime() }}</p>
+          </div>
+        </div>
+        
+        <div>
+          <label class="text-sm font-medium text-gray-700">Location</label>
+          <p class="text-gray-900">{{ getLocation() }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing Information Card -->
+    <div class="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-white/20">
+      <div class="flex items-center mb-4">
+        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center mr-4">
+          <ion-icon name="card" class="text-xl text-white"></ion-icon>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">Pricing Breakdown</h3>
+          <p class="text-gray-600 text-sm">Service costs</p>
+        </div>
+      </div>
+      
+      <div class="space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-700">Service Fee</span>
+          <span class="font-semibold text-gray-900">₱{{ getServiceFee() | number:'1.2-2' }}</span>
+        </div>
+        
+        <div class="flex justify-between items-center">
+          <span class="text-gray-700">Transportation Fee</span>
+          <span class="font-semibold text-gray-900">₱{{ getTransportationFee() | number:'1.2-2' }}</span>
+        </div>
+        
+        <div class="border-t pt-3">
+          <div class="flex justify-between items-center">
+            <span class="text-lg font-semibold text-gray-900">Total Amount</span>
+            <span class="text-xl font-bold text-indigo-600">₱{{ getTotalAmount() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div *ngIf="canApproveOrReject()" class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 p-4">
+      <div class="flex space-x-3 max-w-md mx-auto">
+        <ion-button 
+          expand="block" 
+          color="success" 
+          (click)="approveRequest()"
+          class="flex-1"
+        >
+          <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+          Approve Request
+        </ion-button>
+        
+        <ion-button 
+          expand="block" 
+          color="danger" 
+          fill="outline"
+          (click)="rejectRequest()"
+          class="flex-1"
+        >
+          <ion-icon name="close-circle" slot="start"></ion-icon>
+          Reject Request
+        </ion-button>
+      </div>
+    </div>
+  </div>
+</ion-content>

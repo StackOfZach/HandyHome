@@ -1,385 +1,432 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar color="primary">
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/client/dashboard"></ion-back-button>
-    </ion-buttons>
-    <ion-title>Worker Found</ion-title>
-  </ion-toolbar>
-</ion-header>
+<!-- =============================================================== -->
+<!-- 🧠 HandyHome App – Worker Found Page UI Implementation -->
+<!-- =============================================================== -->
+<!-- Framework: Ionic Angular + Firebase + Tailwind CSS -->
+<!-- Goal: Show worker info, real-time location, status updates, -->
+<!--       payment summary, and progress tracking -->
+<!-- =============================================================== -->
 
-<ion-content class="ion-padding">
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-green-50 via-white to-emerald-50"
+>
+  <!-- Custom Header -->
+  <div
+    class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6 relative overflow-hidden"
+  >
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-10">
+      <div
+        class="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"
+      ></div>
+      <div
+        class="absolute top-8 right-8 w-20 h-20 bg-white rounded-full opacity-20"
+      ></div>
+      <div
+        class="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full translate-x-20 translate-y-20"
+      ></div>
+    </div>
+
+    <div class="relative z-10">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center space-x-4">
+          <button
+            (click)="goBack()"
+            class="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm"
+          >
+            <ion-icon name="arrow-back" class="text-white text-xl"></ion-icon>
+          </button>
+          <div>
+            <h1 class="text-white text-2xl font-bold">Worker Found!</h1>
+            <p class="text-green-100 text-sm">
+              Your HandyHome professional is ready
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button
+            (click)="callWorker()"
+            class="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm"
+          >
+            <ion-icon name="call" class="text-white text-xl"></ion-icon>
+          </button>
+          <button
+            (click)="messageWorker()"
+            class="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm"
+          >
+            <ion-icon name="chatbubble" class="text-white text-xl"></ion-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Loading State -->
-  <div *ngIf="isLoading" class="loading-container">
-    <ion-spinner name="crescent" class="large-spinner"></ion-spinner>
-    <p class="loading-text">Loading worker details...</p>
+  <div *ngIf="isLoading" class="flex flex-col items-center justify-center p-8">
+    <div
+      class="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mb-4 animate-pulse"
+    >
+      <ion-icon name="person-add" class="text-2xl text-green-600"></ion-icon>
+    </div>
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">
+      Finding Your Worker
+    </h3>
+    <p class="text-gray-600 text-sm text-center">
+      Loading worker details and location...
+    </p>
   </div>
 
   <!-- Worker Found Content -->
-  <div
-    *ngIf="!isLoading && workerData && bookingData"
-    class="worker-found-content"
-  >
-    <!-- Success Banner -->
-    <div class="success-banner">
-      <ion-icon name="checkmark-circle" class="success-icon"></ion-icon>
-      <div class="success-content">
-        <h2>Worker Found!</h2>
-        <p>A qualified worker has been assigned to your job</p>
-      </div>
-    </div>
-
-    <!-- Worker Profile Card -->
-    <ion-card class="worker-profile-card">
-      <ion-card-content>
-        <div class="worker-header">
-          <div class="worker-avatar">
-            <!-- Profile image with base64 support -->
+  <div *ngIf="!isLoading && workerData && bookingData" class="p-4 space-y-6">
+    <!-- =============================================================== -->
+    <!-- 🧩 Worker Information Card -->
+    <!-- =============================================================== -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-green-100">
+      <div class="flex items-center space-x-4 mb-4">
+        <!-- Worker Avatar -->
+        <div class="relative">
+          <div
+            class="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-green-200"
+          >
             <img
               *ngIf="hasWorkerProfileImage()"
               [src]="getWorkerProfileImageSrc()"
               [alt]="workerData.fullName"
+              class="w-full h-full object-cover"
               (error)="onImageError($event)"
             />
-            <!-- Fallback: Initials -->
-            <div *ngIf="!hasWorkerProfileImage()" class="avatar-placeholder">
-              {{ getWorkerInitials() }}
-            </div>
-          </div>
-
-          <div class="worker-info">
-            <h3>{{ workerData.fullName }}</h3>
-            <div class="worker-rating">
-              <ion-icon name="star" class="star-icon"></ion-icon>
-              <span>{{ workerData.rating || 4.5 }}/5</span>
-              <span class="job-count"
-                >({{ workerData.totalJobs || 0 }} jobs)</span
-              >
-            </div>
-            <div
-              class="verification-badge"
-              *ngIf="workerData.verificationStatus === 'verified'"
+            <span
+              *ngIf="!hasWorkerProfileImage()"
+              class="text-green-600 font-bold text-2xl"
+              >{{ getWorkerInitials() }}</span
             >
-              <ion-icon name="shield-checkmark"></ion-icon>
-              <span>Verified Worker</span>
-            </div>
-
-            <!-- Contact Information -->
-            <div
-              class="worker-contact"
-              *ngIf="workerData.phone || workerData.email"
-            >
-              <div class="contact-item" *ngIf="workerData.phone">
-                <ion-icon name="call" class="contact-icon"></ion-icon>
-                <span>{{ workerData.phone }}</span>
-              </div>
-              <div class="contact-item" *ngIf="workerData.email">
-                <ion-icon name="mail" class="contact-icon"></ion-icon>
-                <span>{{ workerData.email }}</span>
-              </div>
-            </div>
           </div>
-        </div>
-
-        <!-- Worker Skills -->
-        <div class="worker-skills">
-          <h4>Skills</h4>
-          <div class="skills-list">
-            <ion-chip
-              *ngFor="let skill of workerData.skills"
-              color="primary"
-              outline="true"
-            >
-              <ion-label>{{ skill }}</ion-label>
-            </ion-chip>
-          </div>
-        </div>
-
-        <!-- Real-time Location & ETA -->
-        <div class="location-info">
-          <div class="info-item">
-            <ion-icon name="location" class="info-icon"></ion-icon>
-            <div class="info-content">
-              <span class="info-label">Distance</span>
-              <span class="info-value" *ngIf="trackingData"
-                >{{ getFormattedDistance() }}</span
-              >
-              <span class="info-value" *ngIf="!trackingData"
-                >{{ distance.toFixed(1) }} km away</span
-              >
-            </div>
-          </div>
-
-          <div class="info-item">
-            <ion-icon
-              name="time"
-              class="info-icon"
-              [color]="getETAColor()"
-            ></ion-icon>
-            <div class="info-content">
-              <span class="info-label">Estimated Arrival</span>
-              <span class="info-value" [class]="'eta-' + getETAColor()"
-                >{{ estimatedArrival }}</span
-              >
-            </div>
-          </div>
-
-          <div class="info-item" *ngIf="trackingData">
-            <ion-icon name="refresh" class="info-icon"></ion-icon>
-            <div class="info-content">
-              <span class="info-label">Last Update</span>
-              <span class="info-value">{{ getLastUpdateTime() }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Dynamic Status Message -->
-        <div class="status-message" *ngIf="trackingData">
-          <ion-chip color="success" class="status-chip">
-            <ion-icon name="radio-button-on" class="pulse-icon"></ion-icon>
-            <ion-label>{{ getTrackingStatusMessage() }}</ion-label>
-          </ion-chip>
-        </div>
-
-        <!-- Map Toggle Button -->
-        <div class="map-controls">
-          <ion-button
-            fill="outline"
-            size="small"
-            (click)="toggleMap()"
-            [disabled]="!trackingData"
+          <!-- Verification Badge -->
+          <div
+            *ngIf="workerData.verificationStatus === 'verified'"
+            class="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-2 border-2 border-white"
           >
-            <ion-icon
-              [name]="showMap ? 'eye-off' : 'map'"
-              slot="start"
-            ></ion-icon>
-            {{ showMap ? 'Hide Map' : 'Show Map' }}
-          </ion-button>
-
-          <ion-button
-            fill="clear"
-            size="small"
-            (click)="refreshWorkerLocation()"
-            [disabled]="!trackingData"
-          >
-            <ion-icon name="refresh" slot="icon-only"></ion-icon>
-          </ion-button>
+            <ion-icon name="checkmark" class="text-white text-sm"></ion-icon>
+          </div>
         </div>
-      </ion-card-content>
-    </ion-card>
 
-    <!-- Real-time Map Display -->
-    <ion-card *ngIf="showMap && trackingData" class="map-card">
-      <ion-card-header>
-        <ion-card-title class="map-title">
-          <ion-icon name="map" class="map-title-icon"></ion-icon>
-          Live Tracking
-        </ion-card-title>
-        <ion-card-subtitle class="map-subtitle">
-          Worker and your location in real-time
-        </ion-card-subtitle>
-      </ion-card-header>
+        <!-- Worker Info -->
+        <div class="flex-1">
+          <h3 class="text-xl font-bold text-gray-800">
+            {{ workerData.fullName }}
+          </h3>
+          <p class="text-sm text-gray-600 mb-1">
+            {{ workerData.skills.join(', ') }}
+          </p>
+          <div class="flex items-center space-x-3">
+            <div class="flex items-center" *ngIf="workerData.rating">
+              <ion-icon
+                name="star"
+                class="text-yellow-500 text-sm mr-1"
+              ></ion-icon>
+              <span class="text-sm text-gray-600"
+                >{{ workerData.rating | number:'1.1-1' }}</span
+              >
+            </div>
+            <span
+              class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full"
+              >{{ workerData.totalJobs }} jobs completed</span
+            >
+          </div>
+        </div>
+      </div>
 
-      <ion-card-content class="map-content">
-        <app-map
-          [coordinates]="mapCoordinates"
-          [pins]="mapPins"
-          [tracePath]="tracePath"
-          [height]="'300px'"
-          [zoom]="14"
-          [allowPinPlacement]="false"
-          [showCurrentLocation]="false"
+      <!-- Quick Actions -->
+      <div class="grid grid-cols-2 gap-3">
+        <button
+          (click)="callWorker()"
+          class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-3 rounded-xl font-semibold text-sm shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center"
         >
-        </app-map>
-
-        <!-- Map Legend -->
-        <div class="map-legend">
-          <div class="legend-item">
-            <div class="legend-dot primary"></div>
-            <span>{{ trackingData.worker.fullName }}</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot danger"></div>
-            <span>Your Location</span>
-          </div>
-          <div class="legend-item" *ngIf="tracePath.length > 0">
-            <div class="legend-line"></div>
-            <span>Route Path</span>
-          </div>
-        </div>
-
-        <!-- Map Controls -->
-        <div class="map-controls-bottom">
-          <ion-button
-            fill="clear"
-            size="small"
-            (click)="centerMapOnWorker()"
-            [disabled]="!trackingData"
-          >
-            <ion-icon name="person" slot="start"></ion-icon>
-            Center on Worker
-          </ion-button>
-
-          <ion-button
-            fill="clear"
-            size="small"
-            (click)="fitMapToAll()"
-            [disabled]="!trackingData"
-          >
-            <ion-icon name="scan" slot="start"></ion-icon>
-            Fit All
-          </ion-button>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- Booking Status -->
-    <ion-card class="status-card">
-      <ion-card-content>
-        <div class="status-header">
-          <h3>Booking Status</h3>
-          <ion-chip [color]="getStatusColor()">
-            <ion-label>{{ getStatusText() }}</ion-label>
-          </ion-chip>
-        </div>
-
-        <div class="booking-timeline">
-          <div class="timeline-item completed">
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <span class="timeline-title">Booking Confirmed</span>
-              <span class="timeline-time"
-                >{{ bookingData.createdAt?.toDate() | date:'short' }}</span
-              >
-            </div>
-          </div>
-
-          <div
-            class="timeline-item"
-            [class.completed]="bookingData.status !== 'searching'"
-          >
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <span class="timeline-title">Worker Assigned</span>
-              <span class="timeline-time" *ngIf="bookingData.acceptedAt"
-                >{{ bookingData.acceptedAt?.toDate() | date:'short' }}</span
-              >
-            </div>
-          </div>
-
-          <div
-            class="timeline-item"
-            [class.completed]="bookingData.status === 'in_progress' || bookingData.status === 'completed'"
-          >
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <span class="timeline-title">Job Started</span>
-              <span
-                class="timeline-time"
-                *ngIf="bookingData.status === 'in_progress'"
-                >In progress</span
-              >
-            </div>
-          </div>
-
-          <div
-            class="timeline-item"
-            [class.completed]="bookingData.status === 'completed'"
-          >
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <span class="timeline-title">Job Completed</span>
-              <span
-                class="timeline-time"
-                *ngIf="bookingData.status === 'completed'"
-                >Finished</span
-              >
-            </div>
-          </div>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- Service Details -->
-    <ion-card class="service-details-card">
-      <ion-card-content>
-        <h3>Service Details</h3>
-
-        <div class="service-info">
-          <div class="info-row">
-            <span class="label">Category:</span>
-            <span class="value">{{ bookingData.categoryName }}</span>
-          </div>
-
-          <div class="info-row">
-            <span class="label">Service:</span>
-            <span class="value">{{ bookingData.subService }}</span>
-          </div>
-
-          <div class="info-row">
-            <span class="label">Duration:</span>
-            <span class="value">{{ bookingData.estimatedDuration }}</span>
-          </div>
-
-          <div class="info-row">
-            <span class="label">Location:</span>
-            <span class="value">{{ bookingData.location.address }}</span>
-          </div>
-
-          <div class="info-row total-row">
-            <span class="label">Total Amount:</span>
-            <span class="value"
-              >₱{{ bookingData.pricing.total.toFixed(2) }}</span
-            >
-          </div>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-    <!-- Action Buttons -->
-    <div class="action-buttons">
-      <ion-button
-        expand="block"
-        color="primary"
-        size="large"
-        (click)="contactWorker()"
-      >
-        <ion-icon name="call" slot="start"></ion-icon>
-        Contact Worker
-      </ion-button>
-
-      <ion-button
-        expand="block"
-        fill="outline"
-        color="danger"
-        size="large"
-        (click)="cancelBooking()"
-      >
-        <ion-icon name="close-circle" slot="start"></ion-icon>
-        Cancel Booking
-      </ion-button>
+          <ion-icon name="call" class="mr-2"></ion-icon>
+          Call Worker
+        </button>
+        <button
+          (click)="messageWorker()"
+          class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white p-3 rounded-xl font-semibold text-sm shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center"
+        >
+          <ion-icon name="chatbubble" class="mr-2"></ion-icon>
+          Message
+        </button>
+      </div>
     </div>
 
-    <!-- Emergency Contact -->
-    <div class="emergency-info">
-      <ion-icon name="shield-checkmark" class="shield-icon"></ion-icon>
-      <p>
-        For emergencies or concerns, contact HandyHome support at
-        <strong>0917-123-4567</strong>
+    <!-- =============================================================== -->
+    <!-- 📊 Booking Status Card -->
+    <!-- =============================================================== -->
+    <div
+      class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl p-6 shadow-lg"
+    >
+      <div class="flex items-center mb-3">
+        <ion-icon name="information-circle" class="text-2xl mr-3"></ion-icon>
+        <h4 class="font-bold text-lg">Booking Status</h4>
+      </div>
+      <p class="text-blue-100 text-sm mb-4">{{ bookingStatusMessage }}</p>
+
+      <!-- Progress Tracker -->
+      <div class="flex items-center justify-between text-xs text-blue-200">
+        <div class="flex flex-col items-center">
+          <div
+            [class]="bookingData.status === 'accepted' ? 'bg-white text-blue-600' : 'bg-blue-400/50'"
+            class="w-8 h-8 rounded-full flex items-center justify-center mb-1"
+          >
+            <ion-icon name="checkmark"></ion-icon>
+          </div>
+          <span>Accepted</span>
+        </div>
+        <div
+          class="flex-1 h-0.5 bg-blue-400/50 mx-2"
+          [class.bg-white]="['on_the_way', 'in_progress', 'completed'].includes(bookingData.status)"
+        ></div>
+        <div class="flex flex-col items-center">
+          <div
+            [class]="['on_the_way', 'in_progress', 'completed'].includes(bookingData.status) ? 'bg-white text-blue-600' : 'bg-blue-400/50'"
+            class="w-8 h-8 rounded-full flex items-center justify-center mb-1"
+          >
+            <ion-icon name="car"></ion-icon>
+          </div>
+          <span>On the Way</span>
+        </div>
+        <div
+          class="flex-1 h-0.5 bg-blue-400/50 mx-2"
+          [class.bg-white]="['in_progress', 'completed'].includes(bookingData.status)"
+        ></div>
+        <div class="flex flex-col items-center">
+          <div
+            [class]="['in_progress', 'completed'].includes(bookingData.status) ? 'bg-white text-blue-600' : 'bg-blue-400/50'"
+            class="w-8 h-8 rounded-full flex items-center justify-center mb-1"
+          >
+            <ion-icon name="construct"></ion-icon>
+          </div>
+          <span>Working</span>
+        </div>
+        <div
+          class="flex-1 h-0.5 bg-blue-400/50 mx-2"
+          [class.bg-white]="bookingData.status === 'completed'"
+        ></div>
+        <div class="flex flex-col items-center">
+          <div
+            [class]="bookingData.status === 'completed' ? 'bg-white text-blue-600' : 'bg-blue-400/50'"
+            class="w-8 h-8 rounded-full flex items-center justify-center mb-1"
+          >
+            <ion-icon name="checkmark-done"></ion-icon>
+          </div>
+          <span>Done</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- 🗺️ "Where Is He" Card with Map -->
+    <!-- =============================================================== -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-green-100">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="font-bold text-lg text-gray-800">Where is the worker?</h4>
+        <button
+          (click)="refreshWorkerLocation()"
+          class="bg-green-100 hover:bg-green-200 text-green-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center"
+        >
+          <ion-icon name="refresh" class="mr-1"></ion-icon>
+          Refresh
+        </button>
+      </div>
+
+      <p class="text-gray-600 text-sm mb-4">{{ workerDistanceMessage }}</p>
+
+      <!-- Distance and ETA Info -->
+      <div *ngIf="trackingData" class="bg-gray-50 rounded-xl p-4 mb-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="text-center">
+            <div class="text-2xl font-bold text-green-600">
+              {{ getFormattedDistance() }}
+            </div>
+            <div class="text-xs text-gray-500">Distance</div>
+          </div>
+          <div class="text-center">
+            <div
+              class="text-2xl font-bold"
+              [class]="'text-' + getETAColor() + '-600'"
+            >
+              {{ trackingData.estimatedTravelTime || 0 }}m
+            </div>
+            <div class="text-xs text-gray-500">ETA</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map Container -->
+      <div
+        class="w-full h-64 bg-gray-100 rounded-xl overflow-hidden shadow-inner relative"
+      >
+        <div *ngIf="!showMap" class="flex items-center justify-center h-full">
+          <div class="text-center">
+            <ion-icon name="map" class="text-4xl text-gray-400 mb-2"></ion-icon>
+            <p class="text-gray-500 text-sm">Loading map...</p>
+          </div>
+        </div>
+
+        <!-- TODO: Add Google Maps component here -->
+        <div *ngIf="showMap" id="workerLocationMap" class="w-full h-full"></div>
+      </div>
+
+      <p class="text-xs text-gray-400 mt-2 text-center">
+        Last updated: {{ getLastUpdateTime() }}
       </p>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- 💰 Payment Summary Card -->
+    <!-- =============================================================== -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-green-100">
+      <div class="flex items-center mb-4">
+        <ion-icon
+          name="calculator"
+          class="text-2xl text-green-600 mr-3"
+        ></ion-icon>
+        <h4 class="font-bold text-lg text-gray-800">Payment Summary</h4>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600"
+            >Service ({{ bookingData.categoryName }})</span
+          >
+          <span class="font-semibold text-gray-800"
+            >₱{{ bookingData.pricing.basePrice | number:'1.2-2' }}</span
+          >
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600">Service Charge</span>
+          <span class="font-semibold text-gray-800"
+            >₱{{ bookingData.pricing.serviceCharge | number:'1.2-2' }}</span
+          >
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600">Transport Fee</span>
+          <span class="font-semibold text-gray-800"
+            >₱{{ bookingData.pricing.transportFee | number:'1.2-2' }}</span
+          >
+        </div>
+        <div class="border-t border-gray-200 pt-3 mt-3">
+          <div class="flex justify-between font-bold text-lg">
+            <span class="text-gray-800">Total Amount</span>
+            <span class="text-green-700 bg-green-100 px-3 py-1 rounded-lg"
+              >₱{{ bookingData.pricing.total | number:'1.2-2' }}</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+        <p class="text-xs text-blue-700">
+          <ion-icon name="information-circle" class="mr-1"></ion-icon>Payment
+          will be processed after service completion
+        </p>
+      </div>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- 📝 Job Details Card -->
+    <!-- =============================================================== -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-green-100">
+      <h4 class="font-bold text-lg text-gray-800 mb-4">Job Details</h4>
+
+      <div class="space-y-3">
+        <div class="flex items-start">
+          <ion-icon
+            name="construct"
+            class="text-green-600 mt-1 mr-3"
+          ></ion-icon>
+          <div>
+            <p class="font-semibold text-gray-800">
+              {{ bookingData.subService }}
+            </p>
+            <p class="text-sm text-gray-600">{{ bookingData.categoryName }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-start">
+          <ion-icon name="location" class="text-blue-600 mt-1 mr-3"></ion-icon>
+          <div>
+            <p class="font-semibold text-gray-800">Service Location</p>
+            <p class="text-sm text-gray-600">
+              {{ bookingData.location.address }}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start">
+          <ion-icon name="time" class="text-purple-600 mt-1 mr-3"></ion-icon>
+          <div>
+            <p class="font-semibold text-gray-800">Estimated Duration</p>
+            <p class="text-sm text-gray-600">
+              {{ bookingData.estimatedDuration }}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-start">
+          <ion-icon
+            name="calendar"
+            class="text-orange-600 mt-1 mr-3"
+          ></ion-icon>
+          <div>
+            <p class="font-semibold text-gray-800">Booking Created</p>
+            <p class="text-sm text-gray-600">
+              {{ bookingData.createdAt?.toDate() | date:'short' }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- 🚨 Emergency & Help Section -->
+    <!-- =============================================================== -->
+    <div class="bg-red-50 border border-red-200 rounded-2xl p-4">
+      <div class="flex items-center mb-2">
+        <ion-icon name="warning" class="text-red-500 mr-2"></ion-icon>
+        <h5 class="font-semibold text-red-800">Need Help?</h5>
+      </div>
+      <p class="text-sm text-red-700 mb-3">
+        If you have any issues or concerns, contact HandyHome support
+        immediately.
+      </p>
+      <button
+        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center"
+      >
+        <ion-icon name="call" class="mr-2"></ion-icon>
+        Emergency Support
+      </button>
     </div>
   </div>
 
   <!-- Error State -->
   <div
     *ngIf="!isLoading && (!workerData || !bookingData)"
-    class="error-container"
+    class="flex flex-col items-center justify-center p-8"
   >
-    <ion-icon name="alert-circle" class="error-icon"></ion-icon>
-    <h2>Unable to Load Worker Details</h2>
-    <p>Please check your connection and try again.</p>
-    <ion-button fill="clear" (click)="loadBookingAndWorkerData()">
-      <ion-icon name="refresh" slot="start"></ion-icon>
+    <div
+      class="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mb-4"
+    >
+      <ion-icon name="alert-circle" class="text-2xl text-red-600"></ion-icon>
+    </div>
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">
+      Unable to Load Worker Details
+    </h3>
+    <p class="text-gray-600 text-sm text-center mb-4">
+      Please check your connection and try again.
+    </p>
+    <button
+      (click)="initializeBookingTracking()"
+      class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold text-sm shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center"
+    >
+      <ion-icon name="refresh" class="mr-2"></ion-icon>
       Retry
-    </ion-button>
+    </button>
   </div>
 </ion-content>

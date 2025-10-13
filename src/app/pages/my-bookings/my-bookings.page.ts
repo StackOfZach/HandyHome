@@ -6,7 +6,7 @@ import {
   AlertController,
 } from '@ionic/angular';
 import { AuthService, UserProfile } from '../../services/auth.service';
-import { BookingService, BookingData } from '../../services/booking.service';
+import { BookingService, BookingData, NewBookingData } from '../../services/booking.service';
 
 @Component({
   selector: 'app-my-bookings',
@@ -16,7 +16,7 @@ import { BookingService, BookingData } from '../../services/booking.service';
 })
 export class MyBookingsPage implements OnInit {
   userProfile: UserProfile | null = null;
-  bookings: BookingData[] = [];
+  bookings: (BookingData | NewBookingData)[] = [];
   isLoading = true;
   error: string | null = null;
 
@@ -45,8 +45,8 @@ export class MyBookingsPage implements OnInit {
       this.isLoading = true;
       this.error = null;
 
-      // Fetch real bookings from Firestore
-      this.bookings = await this.bookingService.getUserBookings(
+      // Fetch real bookings from Firestore (both old and new formats)
+      this.bookings = await this.bookingService.getAllUserBookings(
         this.userProfile.uid
       );
 
@@ -164,21 +164,96 @@ export class MyBookingsPage implements OnInit {
     await alert.present();
   }
 
-  async trackWorker(booking: BookingData) {
+  async trackWorker(booking: BookingData | NewBookingData) {
     // TODO: Implement worker tracking functionality with real-time location
-    console.log('Track worker for booking:', booking.id);
+    console.log('Track worker for booking:', this.getBookingId(booking));
     this.showToast('Worker tracking feature coming soon!', 'warning');
   }
 
-  async rebookService(booking: BookingData) {
-    // Navigate to book service with pre-filled data
-    this.router.navigate(['/pages/book-service'], {
-      queryParams: {
-        category: booking.category,
-        rebook: true,
-        title: booking.title,
-        description: booking.description,
-      },
-    });
+  async rebookService(booking: BookingData | NewBookingData) {
+    if (this.isNewBooking(booking)) {
+      // Navigate to browse workers for new booking format
+      this.router.navigate(['/pages/client/browse-workers']);
+    } else {
+      // Navigate to book service with pre-filled data for old format
+      this.router.navigate(['/pages/book-service'], {
+        queryParams: {
+          category: booking.category,
+          rebook: true,
+          title: booking.title,
+          description: booking.description,
+        },
+      });
+    }
+  }
+
+  // Helper methods to handle different booking formats
+  isNewBooking(booking: BookingData | NewBookingData): booking is NewBookingData {
+    return 'serviceName' in booking && 'workerName' in booking;
+  }
+
+  getBookingTitle(booking: BookingData | NewBookingData): string {
+    if (this.isNewBooking(booking)) {
+      return booking.serviceName;
+    }
+    return booking.title;
+  }
+
+  getBookingWorkerName(booking: BookingData | NewBookingData): string | null {
+    if (this.isNewBooking(booking)) {
+      return booking.workerName;
+    }
+    return booking.workerName || null;
+  }
+
+  getBookingDate(booking: BookingData | NewBookingData): Date | null {
+    if (this.isNewBooking(booking)) {
+      return booking.date;
+    }
+    if (booking.schedule?.date) {
+      return new Date(booking.schedule.date);
+    }
+    return null;
+  }
+
+  getBookingTime(booking: BookingData | NewBookingData): string | null {
+    if (this.isNewBooking(booking)) {
+      return booking.time;
+    }
+    return booking.schedule?.time || null;
+  }
+
+  getBookingAddress(booking: BookingData | NewBookingData): string | null {
+    if (this.isNewBooking(booking)) {
+      return booking.address;
+    }
+    return booking.locations?.[0]?.address || null;
+  }
+
+  getBookingPrice(booking: BookingData | NewBookingData): number {
+    if (this.isNewBooking(booking)) {
+      return booking.price;
+    }
+    return booking.total;
+  }
+
+  getBookingDescription(booking: BookingData | NewBookingData): string | null {
+    if (this.isNewBooking(booking)) {
+      return booking.notes || null;
+    }
+    return booking.description;
+  }
+
+  getBookingId(booking: BookingData | NewBookingData): string | undefined {
+    return (booking as any).id;
+  }
+
+  viewBookingDetails(booking: BookingData | NewBookingData) {
+    const bookingId = this.getBookingId(booking);
+    if (bookingId) {
+      this.router.navigate(['/pages/client/booking-details', bookingId]);
+    } else {
+      this.showToast('Unable to view booking details', 'danger');
+    }
   }
 }

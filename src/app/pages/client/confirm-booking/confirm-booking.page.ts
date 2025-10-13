@@ -120,7 +120,8 @@ export class ConfirmBookingPage implements OnInit {
   calculatePricing() {
     if (!this.category) return;
 
-    this.basePrice = this.category.averagePrice;
+    // Use default price of 500 if not set by admin
+    this.basePrice = this.category.averagePrice || 500;
     // Service charge is 10% of base price
     this.serviceCharge = Math.round(
       this.basePrice * (this.category.serviceChargeRate || 0.1)
@@ -192,7 +193,7 @@ export class ConfirmBookingPage implements OnInit {
           serviceCharge: this.serviceCharge,
           total: this.totalPrice,
         },
-        estimatedDuration: this.category!.estimatedDuration,
+        estimatedDuration: this.category!.estimatedDuration || 60,
         status: 'searching',
         assignedWorker: null,
         createdAt: Timestamp.now(),
@@ -224,7 +225,7 @@ export class ConfirmBookingPage implements OnInit {
       const completeBookingData = {
         id: bookingDoc.id,
         ...bookingData,
-        estimatedDuration: `${this.category!.estimatedDuration} minutes`,
+        estimatedDuration: `${this.category!.estimatedDuration || 60} minutes`,
         pricing: {
           ...bookingData.pricing,
           transportFee: 0, // Will be calculated by worker matching service

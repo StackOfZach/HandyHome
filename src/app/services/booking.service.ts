@@ -6,8 +6,11 @@ import {
   where,
   orderBy,
   getDocs,
+  getDoc,
   doc,
   updateDoc,
+  addDoc,
+  onSnapshot,
   Timestamp,
   CollectionReference,
   DocumentData,
@@ -64,6 +67,23 @@ export interface BookingData {
   cancelledAt?: Date;
 }
 
+// New interface for simplified booking structure from schedule-booking
+export interface NewBookingData {
+  workerId: string;
+  workerName: string;
+  clientId: string;
+  serviceId: string;
+  serviceName: string;
+  date: Date;
+  time: string;
+  duration: number;
+  price: number;
+  address: string;
+  notes: string;
+  status: string;
+  createdAt: Date;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -75,7 +95,57 @@ export class BookingService {
   }
 
   /**
-   * Fetch all bookings for a specific user
+   * Create a new booking
+   */
+  async createBooking(bookingData: NewBookingData): Promise<string> {
+    try {
+      const docRef = await addDoc(this.bookingsCollection, {
+        ...bookingData,
+        createdAt: Timestamp.fromDate(bookingData.createdAt),
+        date: Timestamp.fromDate(bookingData.date)
+      });
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch all bookings for a specific user (including new format)
+   */
+  async getAllUserBookings(userId: string): Promise<(BookingData | NewBookingData)[]> {
+    try {
+      const q = query(
+        this.bookingsCollection,
+        where('clientId', '==', userId),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const bookings: (BookingData | NewBookingData)[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const booking = {
+          id: doc.id,
+          ...data,
+          createdAt: data['createdAt']?.toDate ? data['createdAt'].toDate() : new Date(),
+          date: data['date']?.toDate ? data['date'].toDate() : data['date'],
+          updatedAt: data['updatedAt']?.toDate ? data['updatedAt'].toDate() : undefined,
+        } as any;
+        bookings.push(booking);
+      });
+
+      return bookings;
+    } catch (error) {
+      console.error('Error fetching user bookings:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch all bookings for a specific user (old format)
    */
   async getUserBookings(userId: string): Promise<BookingData[]> {
     try {
@@ -396,5 +466,50 @@ export class BookingService {
       console.error('Error accepting booking:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get a single booking by ID
+   */
+  async getBookingById(bookingId: string): Promise<BookingData | null> {
+    try {
+      const bookingRef = doc(this.firestore, 'bookings', bookingId);
+      const bookingDoc = await getDoc(bookingRef);
+      
+      if (bookingDoc.exists()) {
+        return {
+          id: bookingDoc.id,
+          ...bookingDoc.data()
+        } as BookingData;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('Error getting booking by ID:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a booking by ID as an Observable for real-time updates
+   */
+  getBookingById$(bookingId: string): Observable<BookingData | null> {
+    return new Observable((observer) => {
+      const bookingRef = doc(this.firestore, 'bookings', bookingId);
+      const unsubscribe = onSnapshot(bookingRef, (doc) => {
+        if (doc.exists()) {
+          observer.next({
+            id: doc.id,
+            ...doc.data()
+          } as BookingData);
+        } else {
+          observer.next(null);
+        }
+      }, (error) => {
+        observer.error(error);
+      });
+
+      return () => unsubscribe();
+    });
   }
 }

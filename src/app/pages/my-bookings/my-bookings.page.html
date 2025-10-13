@@ -59,36 +59,38 @@
             <div
               class="w-12 h-12 rounded-xl flex items-center justify-center mr-4"
               [ngClass]="{
-                'bg-blue-100': booking.category === 'cleaning',
-                'bg-indigo-100': booking.category === 'plumbing',
-                'bg-yellow-100': booking.category === 'electrical',
-                'bg-green-100': booking.category === 'gardening',
-                'bg-amber-100': booking.category === 'carpentry',
-                'bg-purple-100': booking.category === 'painting',
-                'bg-gray-100': booking.category === 'appliance'
+                'bg-blue-100': !isNewBooking(booking) && booking.category === 'cleaning',
+                'bg-indigo-100': !isNewBooking(booking) && booking.category === 'plumbing',
+                'bg-yellow-100': !isNewBooking(booking) && booking.category === 'electrical',
+                'bg-green-100': !isNewBooking(booking) && booking.category === 'gardening',
+                'bg-amber-100': !isNewBooking(booking) && booking.category === 'carpentry',
+                'bg-purple-100': !isNewBooking(booking) && booking.category === 'painting',
+                'bg-gray-100': !isNewBooking(booking) && booking.category === 'appliance',
+                'bg-handy-blue-100': isNewBooking(booking)
               }"
             >
               <ion-icon
                 [name]="getStatusIcon(booking.status)"
                 class="text-xl"
                 [ngClass]="{
-                  'text-blue-600': booking.category === 'cleaning',
-                  'text-indigo-600': booking.category === 'plumbing',
-                  'text-yellow-600': booking.category === 'electrical',
-                  'text-green-600': booking.category === 'gardening',
-                  'text-amber-600': booking.category === 'carpentry',
-                  'text-purple-600': booking.category === 'painting',
-                  'text-gray-600': booking.category === 'appliance'
+                  'text-blue-600': !isNewBooking(booking) && booking.category === 'cleaning',
+                  'text-indigo-600': !isNewBooking(booking) && booking.category === 'plumbing',
+                  'text-yellow-600': !isNewBooking(booking) && booking.category === 'electrical',
+                  'text-green-600': !isNewBooking(booking) && booking.category === 'gardening',
+                  'text-amber-600': !isNewBooking(booking) && booking.category === 'carpentry',
+                  'text-purple-600': !isNewBooking(booking) && booking.category === 'painting',
+                  'text-gray-600': !isNewBooking(booking) && booking.category === 'appliance',
+                  'text-handy-blue-600': isNewBooking(booking)
                 }"
               ></ion-icon>
             </div>
             <div>
               <h3 class="font-bold text-handy-navy-800 text-lg">
-                {{ booking.title }}
+                {{ getBookingTitle(booking) }}
               </h3>
               <p class="text-handy-navy-600 text-sm">
-                <span *ngIf="booking.workerName; else noWorker"
-                  >with {{ booking.workerName }}</span
+                <span *ngIf="getBookingWorkerName(booking); else noWorker"
+                  >with {{ getBookingWorkerName(booking) }}</span
                 >
                 <ng-template #noWorker>Waiting for assignment</ng-template>
               </p>
@@ -106,7 +108,7 @@
         <div class="space-y-3 mb-4">
           <!-- Date & Time -->
           <div
-            *ngIf="booking.schedule"
+            *ngIf="getBookingDate(booking) && getBookingTime(booking)"
             class="flex items-center text-sm text-handy-navy-600"
           >
             <ion-icon
@@ -114,14 +116,14 @@
               class="mr-2 text-handy-blue-500"
             ></ion-icon>
             <span
-              >{{ booking.schedule.date | date:'EEEE, MMM d, y' }} at {{
-              booking.schedule.time }}</span
+              >{{ getBookingDate(booking) | date:'EEEE, MMM d, y' }} at {{
+              getBookingTime(booking) }}</span
             >
           </div>
 
           <!-- Location -->
           <div
-            *ngIf="booking.locations && booking.locations.length > 0"
+            *ngIf="getBookingAddress(booking)"
             class="flex items-start text-sm text-handy-navy-600"
           >
             <ion-icon
@@ -129,25 +131,20 @@
               class="mr-2 text-handy-blue-500 mt-0.5"
             ></ion-icon>
             <div class="flex-1">
-              <div *ngFor="let location of booking.locations; let i = index">
-                <span>{{ location.address }}</span>
-                <span
-                  *ngIf="location.isDefault"
-                  class="text-xs bg-handy-blue-100 text-handy-blue-600 px-2 py-0.5 rounded-full ml-2"
-                  >Default</span
-                >
-                <br *ngIf="i < booking.locations.length - 1" />
-              </div>
+              <span>{{ getBookingAddress(booking) }}</span>
             </div>
           </div>
 
           <!-- Description -->
-          <div class="flex items-start text-sm text-handy-navy-600">
+          <div 
+            *ngIf="getBookingDescription(booking)"
+            class="flex items-start text-sm text-handy-navy-600"
+          >
             <ion-icon
               name="document-text-outline"
               class="mr-2 text-handy-blue-500 mt-0.5"
             ></ion-icon>
-            <span>{{ booking.description }}</span>
+            <span>{{ getBookingDescription(booking) }}</span>
           </div>
 
           <!-- Price -->
@@ -158,17 +155,18 @@
             ></ion-icon>
             <div class="flex-1">
               <span class="font-semibold"
-                >₱{{ booking.total | number:'1.2-2' }}</span
+                >₱{{ getBookingPrice(booking) | number:'1.2-2' }}</span
               >
-              <span class="text-xs text-gray-500 ml-2"
-                >({{ booking.priceType | titlecase }})</span
-              >
+              <span 
+                *ngIf="!isNewBooking(booking)"
+                class="text-xs text-gray-500 ml-2"
+              >({{ booking.priceType | titlecase }})</span>
             </div>
           </div>
 
           <!-- Rating (for completed bookings) -->
           <div
-            *ngIf="booking.status === 'completed' && booking.rating"
+            *ngIf="booking.status === 'completed' && !isNewBooking(booking) && booking.rating"
             class="flex items-center text-sm text-handy-navy-600"
           >
             <ion-icon name="star" class="mr-2 text-yellow-500"></ion-icon>
@@ -177,22 +175,21 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex gap-3 pt-4 border-t border-gray-200">
-          <!-- Track Worker (for active bookings) -->
+        <div class="flex gap-2 pt-4 border-t border-gray-200">
+          <!-- View Details Button (always visible) -->
           <button
-            *ngIf="booking.status === 'on-the-way' || booking.status === 'in-progress'"
-            (click)="trackWorker(booking)"
-            class="flex-1 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white py-2 px-4 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center"
+            (click)="viewBookingDetails(booking)"
+            class="flex-1 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white py-2 px-3 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center"
           >
-            <ion-icon name="navigate-outline" class="mr-2"></ion-icon>
-            Track Worker
+            <ion-icon name="eye-outline" class="mr-2"></ion-icon>
+            View Details
           </button>
 
           <!-- Cancel Booking (for pending/accepted bookings) -->
           <button
             *ngIf="booking.status === 'pending' || booking.status === 'accepted'"
-            (click)="booking.id && cancelBooking(booking.id)"
-            class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-2 px-4 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center"
+            (click)="getBookingId(booking) && cancelBooking(getBookingId(booking)!)"
+            class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-2 px-3 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center"
           >
             <ion-icon name="close-outline" class="mr-2"></ion-icon>
             Cancel
@@ -201,7 +198,7 @@
           <!-- Rebook Service -->
           <button
             (click)="rebookService(booking)"
-            class="flex-1 bg-gradient-to-r from-handy-yellow-500 to-handy-yellow-600 hover:from-handy-yellow-600 hover:to-handy-yellow-700 text-white py-2 px-4 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center"
+            class="flex-1 bg-gradient-to-r from-handy-yellow-500 to-handy-yellow-600 hover:from-handy-yellow-600 hover:to-handy-yellow-700 text-white py-2 px-3 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center"
           >
             <ion-icon name="repeat-outline" class="mr-2"></ion-icon>
             Book Again

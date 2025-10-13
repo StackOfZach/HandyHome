@@ -1,0 +1,333 @@
+// Worker Detail Page Styles
+
+// Profile Avatar Styles
+.profile-avatar {
+  position: relative;
+  overflow: hidden;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.2);
+  }
+}
+
+// Stats Cards
+.stat-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// Skill Chips Animation
+.skill-chip {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+  }
+  
+  &:hover::before {
+    left: 100%;
+  }
+}
+
+// Review Cards
+.review-card {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background-color: #f8fafc;
+    transform: translateX(4px);
+  }
+}
+
+// Certificate Cards
+.certificate-card {
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+  
+  &:hover {
+    border-left-color: #6366f1;
+    background-color: #f8fafc;
+  }
+  
+  &.verified {
+    border-left-color: #10b981;
+  }
+}
+
+// Star Rating Animation
+.star-rating {
+  .star {
+    transition: all 0.2s ease;
+    
+    &.filled {
+      color: #fbbf24;
+      filter: drop-shadow(0 1px 2px rgba(251, 191, 36, 0.3));
+      animation: starPulse 2s infinite;
+    }
+    
+    &.empty {
+      color: #d1d5db;
+    }
+  }
+}
+
+@keyframes starPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+// Action Buttons
+.action-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transition: all 0.6s ease;
+    transform: translate(-50%, -50%);
+  }
+  
+  &:active::before {
+    width: 300px;
+    height: 300px;
+  }
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 15px 0 rgba(102, 126, 234, 0.3);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px 0 rgba(102, 126, 234, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.secondary-btn {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+  }
+}
+
+// Fixed Bottom Bar
+.bottom-action-bar {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+// Verification Badges
+.verification-badge {
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #10b981, #34d399);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  &:hover::before {
+    opacity: 0.2;
+  }
+}
+
+// Loading States
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// Section Headers
+.section-header {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 2px;
+  }
+}
+
+// Performance Metrics
+.performance-metric {
+  position: relative;
+  
+  .metric-value {
+    background: linear-gradient(135deg, currentColor, transparent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .worker-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    
+    > div {
+      margin-bottom: 8px;
+    }
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    
+    .action-btn {
+      width: 100%;
+      margin-bottom: 12px;
+    }
+  }
+}
+
+// Dark Mode Support
+@media (prefers-color-scheme: dark) {
+  .worker-card {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+  
+  .review-card {
+    background: #1f2937;
+    border-color: #374151;
+    
+    &:hover {
+      background: #374151;
+    }
+  }
+  
+  .certificate-card {
+    background: #1f2937;
+    border-color: #374151;
+    
+    &:hover {
+      background: #374151;
+    }
+  }
+}
+
+// Accessibility
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Focus States
+button:focus,
+.action-btn:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+// High Contrast Mode
+@media (prefers-contrast: high) {
+  .skill-chip {
+    border: 2px solid #000;
+  }
+  
+  .action-btn {
+    border: 2px solid #000;
+  }
+  
+  .primary-btn {
+    background: #0066cc;
+    color: #fff;
+  }
+  
+  .secondary-btn {
+    background: #fff;
+    color: #000;
+    border: 2px solid #000;
+  }
+}
+
+// Print Styles
+@media print {
+  .bottom-action-bar {
+    display: none;
+  }
+  
+  .action-buttons {
+    display: none;
+  }
+  
+  .worker-card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}

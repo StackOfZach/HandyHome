@@ -393,9 +393,6 @@ export class AdminDashboardPage implements OnInit {
       bookings: 'Booking Management',
       reports: 'Reports & Disputes',
       services: 'Services Management',
-      finance: 'Finance',
-      notifications: 'Notifications',
-      settings: 'Settings',
     };
     return titles[this.activeSection] || 'Dashboard';
   }
@@ -755,8 +752,6 @@ export class AdminDashboardPage implements OnInit {
       description: ['', [Validators.required, Validators.minLength(10)]],
       icon: ['', Validators.required],
       color: ['#3B82F6', Validators.required],
-      averagePrice: [0, [Validators.required, Validators.min(1)]],
-      estimatedDuration: [60, [Validators.required, Validators.min(15)]],
       isActive: [true],
     });
   }
@@ -793,8 +788,6 @@ export class AdminDashboardPage implements OnInit {
       description: service.description,
       icon: service.icon,
       color: service.color,
-      averagePrice: service.averagePrice,
-      estimatedDuration: service.estimatedDuration,
       isActive: service.isActive,
     });
 
@@ -808,8 +801,6 @@ export class AdminDashboardPage implements OnInit {
       description: '',
       icon: '',
       color: '#3B82F6',
-      averagePrice: 0,
-      estimatedDuration: 60,
       isActive: true,
     });
 
@@ -861,8 +852,6 @@ export class AdminDashboardPage implements OnInit {
         description: formValue.description,
         icon: formValue.icon,
         color: formValue.color,
-        averagePrice: formValue.averagePrice,
-        estimatedDuration: formValue.estimatedDuration,
         isActive: formValue.isActive,
         services: this.subServices.filter((s) => s.trim() !== ''),
         requirements: this.requirements.filter((r) => r.trim() !== ''),

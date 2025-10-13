@@ -69,11 +69,20 @@ const routes: Routes = [
   // Worker Job History - Protected Route
   {
     path: 'pages/worker/job-history',
+    canActivate: [AuthGuard],
     loadChildren: () =>
       import('./pages/worker/job-history/job-history.module').then(
         (m) => m.JobHistoryPageModule
       ),
+    data: { role: 'worker' },
+  },
+  {
+    path: 'pages/worker/booking-details',
     canActivate: [AuthGuard],
+    loadChildren: () =>
+      import('./pages/worker/booking-details/booking-details.module').then(
+        (m) => m.BookingDetailsPageModule
+      ),
     data: { role: 'worker' },
   },
   // Admin Dashboard - Protected Route
@@ -152,6 +161,46 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { role: 'client' },
   },
+  // Browse Workers - Protected Route
+  {
+    path: 'client/browse-workers',
+    loadChildren: () =>
+      import('./pages/client/browse-workers/browse-workers.module').then(
+        (m) => m.BrowseWorkersPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  // Worker Detail - Protected Route
+  {
+    path: 'client/worker-detail',
+    loadChildren: () =>
+      import('./pages/client/worker-detail/worker-detail.module').then(
+        (m) => m.WorkerDetailPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  // Schedule Booking - Protected Route
+  {
+    path: 'client/schedule-booking',
+    loadChildren: () =>
+      import('./pages/client/schedule-booking/schedule-booking.module').then(
+        (m) => m.ScheduleBookingPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  // Client Booking Details - Protected Route
+  {
+    path: 'pages/client/booking-details/:id',
+    loadChildren: () =>
+      import('./pages/client/booking-details/booking-details.module').then(
+        (m) => m.BookingDetailsPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
   // Profile - Protected Route
   {
     path: 'pages/profile',
@@ -179,7 +228,13 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { role: 'client' },
   },
-  // Wildcard route - redirect to login
+  {
+    path: 'pages/worker/job-request-details/:id',
+    loadChildren: () => import('./pages/worker/job-request-details/job-request-details.module').then( m => m.JobRequestDetailsPageModule),
+    canActivate: [AuthGuard],
+    data: { role: 'worker' }
+  },
+  // Wildcard route - redirect to login (MUST BE LAST)
   {
     path: '**',
     redirectTo: '/pages/auth/login',
