@@ -11,7 +11,12 @@ import {
   ToastController,
   AlertController,
   ActionSheetController,
+  ModalController,
 } from '@ionic/angular';
+import { ReportWorkerModalComponent } from '../../../components/report-worker-modal/report-worker-modal.component';
+import { PaymentModalComponent } from '../../../components/payment-modal/payment-modal.component';
+import { PaymentService } from '../../../services/payment.service';
+import { ReportService } from '../../../services/report.service';
 import {
   WorkerTrackingService,
   TrackingData,
@@ -40,6 +45,13 @@ interface BookingData {
   assignedWorker: string;
   createdAt: any;
   acceptedAt: any;
+  // Payment information
+  paymentDetails?: {
+    status: 'pending' | 'completed' | 'failed';
+    receiptId?: string;
+    amount?: number;
+    completedAt?: Date;
+  };
 }
 
 interface WorkerData {
@@ -120,6 +132,9 @@ export class WorkerFoundPage implements OnInit, OnDestroy {
     private toastController: ToastController,
     private alertController: AlertController,
     private actionSheetController: ActionSheetController,
+    private modalController: ModalController,
+    private paymentService: PaymentService,
+    private reportService: ReportService,
     private workerTrackingService: WorkerTrackingService
   ) {}
 
@@ -974,6 +989,70 @@ export class WorkerFoundPage implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error submitting rating:', error);
       this.showToast('Failed to submit rating', 'danger');
+    }
+  }
+
+  async reportWorker() {
+    if (!this.workerData || !this.bookingData) {
+      await this.showToast('Unable to report worker at this time', 'warning');
+      return;
+    }
+
+    const modal = await this.modalController.create({
+      component: ReportWorkerModalComponent,
+      componentProps: {
+        workerId: this.workerData.uid,
+        workerName: this.workerData.fullName,
+        bookingId: this.bookingId,
+      },
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss();
+    if (data?.success) {
+      await this.showToast('Report submitted successfully', 'success');
+    }
+  }
+
+  async processPayment() {
+    if (!this.workerData || !this.bookingData) {
+      await this.showToast('Unable to process payment at this time', 'warning');
+      return;
+    }
+
+    // Check if payment can be processed
+    const canPay = await this.paymentService.canProcessPayment(this.bookingId);
+    if (!canPay.canPay) {
+      await this.showToast(
+        canPay.reason || 'Cannot process payment',
+        'warning'
+      );
+      return;
+    }
+
+    const modal = await this.modalController.create({
+      component: PaymentModalComponent,
+      componentProps: {
+        bookingId: this.bookingId,
+        workerId: this.workerData.uid,
+        workerName: this.workerData.fullName,
+        amount: this.bookingData.pricing.total,
+        breakdown: {
+          basePrice: this.bookingData.pricing.basePrice,
+          serviceCharge: this.bookingData.pricing.serviceCharge,
+          transportFee: this.bookingData.pricing.transportFee || 0,
+        },
+      },
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss();
+    if (data?.success) {
+      await this.showToast('Payment completed successfully!', 'success');
+      // Refresh booking data to show payment status
+      this.loadBookingData();
     }
   }
 

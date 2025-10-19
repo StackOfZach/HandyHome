@@ -1,0 +1,329 @@
+<ion-header>
+  <ion-toolbar color="danger">
+    <ion-title>Report Worker</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()" fill="clear">
+        <ion-icon name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Progress Indicator -->
+  <div class="progress-container mb-6">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-sm font-medium"
+        >Step {{ currentStep }} of {{ maxSteps }}</span
+      >
+      <span class="text-sm text-gray-500"
+        >{{ Math.round((currentStep / maxSteps) * 100) }}%</span
+      >
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-2">
+      <div
+        class="bg-red-500 h-2 rounded-full transition-all duration-300"
+        [style.width.%]="(currentStep / maxSteps) * 100"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Step 1: Select Report Category -->
+  <div *ngIf="currentStep === 1" class="step-container">
+    <div class="text-center mb-6">
+      <ion-icon name="flag" class="text-4xl text-red-500 mb-2"></ion-icon>
+      <h2 class="text-xl font-bold text-gray-800">What went wrong?</h2>
+      <p class="text-gray-600 text-sm">
+        Select the category that best describes your concern about
+        {{ workerName }}
+      </p>
+    </div>
+
+    <div class="space-y-3">
+      <div
+        *ngFor="let category of reportCategories"
+        (click)="selectCategory(category)"
+        class="report-category-card border-2 rounded-xl p-4 cursor-pointer transition-all hover:shadow-md"
+        [class.border-red-500]="selectedCategory?.id === category.id"
+        [class.bg-red-50]="selectedCategory?.id === category.id"
+        [class.border-gray-200]="selectedCategory?.id !== category.id"
+      >
+        <div class="flex items-start space-x-3">
+          <div class="flex-shrink-0">
+            <div
+              class="w-10 h-10 rounded-full flex items-center justify-center"
+              [ngClass]="getCategorySeverityColor(category)"
+            >
+              <ion-icon
+                [name]="getCategoryIcon(category)"
+                class="text-lg"
+              ></ion-icon>
+            </div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-semibold text-gray-800 mb-1">
+              {{ category.name }}
+            </h3>
+            <p class="text-sm text-gray-600 leading-relaxed">
+              {{ category.description }}
+            </p>
+            <div class="mt-2">
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                [ngClass]="getCategorySeverityColor(category)"
+              >
+                {{ category.severity | titlecase }} Priority
+              </span>
+            </div>
+          </div>
+          <div class="flex-shrink-0">
+            <ion-icon
+              name="chevron-forward"
+              class="text-gray-400"
+              [class.text-red-500]="selectedCategory?.id === category.id"
+            ></ion-icon>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Describe the Issue -->
+  <div *ngIf="currentStep === 2" class="step-container">
+    <div class="text-center mb-6">
+      <ion-icon
+        name="document-text"
+        class="text-4xl text-red-500 mb-2"
+      ></ion-icon>
+      <h2 class="text-xl font-bold text-gray-800">Tell us what happened</h2>
+      <p class="text-gray-600 text-sm">
+        Please provide details about the issue with {{ workerName }}
+      </p>
+    </div>
+
+    <div class="space-y-4">
+      <!-- Selected Category Display -->
+      <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+        <div class="flex items-center space-x-2">
+          <ion-icon
+            [name]="selectedCategory?.icon"
+            class="text-red-600"
+          ></ion-icon>
+          <span class="font-medium text-red-800">{{
+            selectedCategory?.name
+          }}</span>
+        </div>
+      </div>
+
+      <!-- Custom Title (Optional) -->
+      <div>
+        <ion-item lines="none" class="custom-input">
+          <ion-label position="stacked">Report Title (Optional)</ion-label>
+          <ion-input
+            [(ngModel)]="reportForm.title"
+            placeholder="Brief summary of the issue"
+            maxlength="100"
+          ></ion-input>
+        </ion-item>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <ion-item lines="none" class="custom-input">
+          <ion-label position="stacked">Detailed Description *</ion-label>
+          <ion-textarea
+            [(ngModel)]="reportForm.description"
+            placeholder="Please describe what happened in detail. Include dates, times, and specific actions if relevant..."
+            rows="6"
+            maxlength="1000"
+          ></ion-textarea>
+        </ion-item>
+        <div class="text-right text-xs text-gray-500 mt-1">
+          {{ reportForm.description.length }}/1000 characters
+        </div>
+        <div
+          *ngIf="reportForm.description.length < 20"
+          class="text-xs text-red-500 mt-1"
+        >
+          Please provide at least 20 characters for a detailed description
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Add Evidence (Optional) -->
+  <div *ngIf="currentStep === 3" class="step-container">
+    <div class="text-center mb-6">
+      <ion-icon name="camera" class="text-4xl text-red-500 mb-2"></ion-icon>
+      <h2 class="text-xl font-bold text-gray-800">Add Evidence (Optional)</h2>
+      <p class="text-gray-600 text-sm">
+        Upload photos or screenshots to support your report
+      </p>
+    </div>
+
+    <div class="space-y-6">
+      <!-- Photo Upload -->
+      <div class="upload-section">
+        <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
+          <ion-icon name="images" class="mr-2 text-blue-600"></ion-icon>
+          Photos of the Issue
+        </h3>
+
+        <div
+          class="upload-area border-2 border-dashed border-gray-300 rounded-lg p-4 text-center"
+        >
+          <input
+            type="file"
+            id="photos"
+            multiple
+            accept="image/*"
+            (change)="onFileSelected($event, 'photos')"
+            class="hidden"
+          />
+          <label for="photos" class="cursor-pointer">
+            <ion-icon
+              name="cloud-upload"
+              class="text-2xl text-gray-400 mb-2"
+            ></ion-icon>
+            <p class="text-sm text-gray-600">Tap to select photos</p>
+          </label>
+        </div>
+
+        <!-- Photo Preview -->
+        <div *ngIf="reportForm.evidence.photos.length > 0" class="mt-3">
+          <div class="grid grid-cols-3 gap-2">
+            <div
+              *ngFor="let photo of reportForm.evidence.photos; let i = index"
+              class="relative aspect-square bg-gray-100 rounded-lg overflow-hidden"
+            >
+              <img
+                [src]="photo"
+                alt="Evidence photo"
+                class="w-full h-full object-cover"
+              />
+              <button
+                (click)="removeEvidence(i, 'photos')"
+                class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screenshot Upload -->
+      <div class="upload-section">
+        <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
+          <ion-icon
+            name="phone-portrait"
+            class="mr-2 text-green-600"
+          ></ion-icon>
+          Screenshots (Messages, etc.)
+        </h3>
+
+        <div
+          class="upload-area border-2 border-dashed border-gray-300 rounded-lg p-4 text-center"
+        >
+          <input
+            type="file"
+            id="screenshots"
+            multiple
+            accept="image/*"
+            (change)="onFileSelected($event, 'screenshots')"
+            class="hidden"
+          />
+          <label for="screenshots" class="cursor-pointer">
+            <ion-icon
+              name="cloud-upload"
+              class="text-2xl text-gray-400 mb-2"
+            ></ion-icon>
+            <p class="text-sm text-gray-600">Tap to select screenshots</p>
+          </label>
+        </div>
+
+        <!-- Screenshot Preview -->
+        <div *ngIf="reportForm.evidence.screenshots.length > 0" class="mt-3">
+          <div class="grid grid-cols-3 gap-2">
+            <div
+              *ngFor="
+                let screenshot of reportForm.evidence.screenshots;
+                let i = index
+              "
+              class="relative aspect-square bg-gray-100 rounded-lg overflow-hidden"
+            >
+              <img
+                [src]="screenshot"
+                alt="Screenshot"
+                class="w-full h-full object-cover"
+              />
+              <button
+                (click)="removeEvidence(i, 'screenshots')"
+                class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy Notice -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div class="flex items-start space-x-2">
+          <ion-icon
+            name="information-circle"
+            class="text-blue-600 mt-0.5 flex-shrink-0"
+          ></ion-icon>
+          <div class="text-xs text-blue-800">
+            <p class="font-medium mb-1">Privacy Notice</p>
+            <p>
+              Your report will be reviewed by our team. Evidence may be shared
+              with relevant parties for investigation purposes.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Buttons -->
+  <div class="mt-8 flex space-x-3">
+    <!-- Back Button -->
+    <ion-button
+      *ngIf="currentStep > 1"
+      fill="outline"
+      color="medium"
+      expand="block"
+      class="flex-1"
+      (click)="previousStep()"
+    >
+      <ion-icon name="chevron-back" slot="start"></ion-icon>
+      Back
+    </ion-button>
+
+    <!-- Next/Submit Button -->
+    <ion-button
+      expand="block"
+      class="flex-1"
+      [color]="currentStep === maxSteps ? 'danger' : 'primary'"
+      [disabled]="!canProceed() || isSubmitting"
+      (click)="currentStep === maxSteps ? submitReport() : nextStep()"
+    >
+      <ion-spinner
+        *ngIf="isSubmitting"
+        name="crescent"
+        slot="start"
+      ></ion-spinner>
+      <span *ngIf="!isSubmitting">
+        {{ currentStep === maxSteps ? "Submit Report" : "Next" }}
+      </span>
+      <span *ngIf="isSubmitting">Submitting...</span>
+      <ion-icon
+        *ngIf="!isSubmitting && currentStep < maxSteps"
+        name="chevron-forward"
+        slot="end"
+      ></ion-icon>
+    </ion-button>
+  </div>
+</ion-content>

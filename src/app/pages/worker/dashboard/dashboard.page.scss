@@ -216,3 +216,80 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
+
+// Notification Modal Animations
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Notification item hover effects
+.notification-item {
+  transition: all 0.2s ease-in-out;
+}
+
+.notification-item:hover {
+  transform: translateX(2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+// Unread notification pulse animation
+.notification-badge {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+// Modal backdrop animation
+.modal-backdrop {
+  animation: backdropFadeIn 0.2s ease-out;
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Notification action buttons
+.notification-action-btn {
+  transition: all 0.2s ease-in-out;
+}
+
+.notification-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+// Mobile optimizations for modal
+@media (max-width: 640px) {
+  .notification-modal {
+    margin: 0.5rem;
+    max-height: 90vh;
+  }
+
+  .notification-item {
+    padding: 0.75rem;
+  }
+}

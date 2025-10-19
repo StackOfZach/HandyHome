@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { ClientDashboardPageRoutingModule } from './dashboard-routing.module';
 import { ClientDashboardPage } from './dashboard.page';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 @NgModule({
   imports: [
@@ -13,5 +14,6 @@ import { ClientDashboardPage } from './dashboard.page';
     ClientDashboardPageRoutingModule,
   ],
   declarations: [ClientDashboardPage],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ClientDashboardPageModule {}

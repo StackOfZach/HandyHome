@@ -5,14 +5,16 @@ import { IonicModule } from '@ionic/angular';
 
 import { WorkerDetailPageRoutingModule } from './worker-detail-routing.module';
 import { WorkerDetailPage } from './worker-detail.page';
+import { SharedComponentsModule } from '../../../modules/shared-components.module';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    WorkerDetailPageRoutingModule
+    WorkerDetailPageRoutingModule,
+    SharedComponentsModule,
   ],
-  declarations: [WorkerDetailPage]
+  declarations: [WorkerDetailPage],
 })
 export class WorkerDetailPageModule {}

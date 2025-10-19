@@ -2,7 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { WorkerService, WorkerProfile } from '../../../services/worker.service';
 import { AuthService, UserProfile } from '../../../services/auth.service';
-import { LoadingController, ModalController, ToastController } from '@ionic/angular';
+import { ReportService } from '../../../services/report.service';
+import {
+  LoadingController,
+  ModalController,
+  ToastController,
+} from '@ionic/angular';
+import { ReportWorkerModalComponent } from '../../../components/report-worker-modal/report-worker-modal.component';
 
 interface WorkerReview {
   id: string;
@@ -50,6 +56,7 @@ export class WorkerDetailPage implements OnInit {
     private route: ActivatedRoute,
     private workerService: WorkerService,
     private authService: AuthService,
+    private reportService: ReportService,
     private loadingController: LoadingController,
     private modalController: ModalController,
     private toastController: ToastController
@@ -58,7 +65,7 @@ export class WorkerDetailPage implements OnInit {
   async ngOnInit() {
     // Get worker ID from route params
     this.workerId = this.route.snapshot.queryParamMap.get('workerId') || '';
-    
+
     if (!this.workerId) {
       this.showToast('Worker not found', 'danger');
       this.router.navigate(['/client/browse-workers']);
@@ -72,27 +79,28 @@ export class WorkerDetailPage implements OnInit {
   private async loadWorkerDetails() {
     const loading = await this.loadingController.create({
       message: 'Loading worker details...',
-      spinner: 'crescent'
+      spinner: 'crescent',
     });
     await loading.present();
 
     try {
       // Load complete worker profile (includes user data and profile picture)
-      this.worker = await this.workerService.getCompleteWorkerProfile(this.workerId);
-      
+      this.worker = await this.workerService.getCompleteWorkerProfile(
+        this.workerId
+      );
+
       if (!this.worker) {
         throw new Error('Worker not found');
       }
 
       // Load reviews
       await this.loadWorkerReviews();
-      
+
       // Load certificates
       await this.loadWorkerCertificates();
-      
+
       // Load gallery images
       this.loadGalleryImages();
-
     } catch (error) {
       console.error('Error loading worker details:', error);
       this.showToast('Failed to load worker details', 'danger');
@@ -111,19 +119,21 @@ export class WorkerDetailPage implements OnInit {
           id: '1',
           clientName: 'John Doe',
           rating: 5,
-          comment: 'Excellent work! Very professional and completed the job on time.',
+          comment:
+            'Excellent work! Very professional and completed the job on time.',
           serviceType: 'Plumbing',
           date: new Date(2024, 9, 1),
-          verified: true
+          verified: true,
         },
         {
           id: '2',
           clientName: 'Jane Smith',
           rating: 4,
-          comment: 'Good service, but arrived a bit late. Overall satisfied with the work quality.',
+          comment:
+            'Good service, but arrived a bit late. Overall satisfied with the work quality.',
           serviceType: 'Electrical',
           date: new Date(2024, 8, 15),
-          verified: true
+          verified: true,
         },
         {
           id: '3',
@@ -132,8 +142,8 @@ export class WorkerDetailPage implements OnInit {
           comment: 'Outstanding service! Will definitely hire again.',
           serviceType: 'Carpentry',
           date: new Date(2024, 8, 5),
-          verified: false
-        }
+          verified: false,
+        },
       ];
     } catch (error) {
       console.error('Error loading reviews:', error);
@@ -150,7 +160,7 @@ export class WorkerDetailPage implements OnInit {
           issuer: 'Department of Labor',
           dateObtained: new Date(2020, 5, 15),
           expiryDate: new Date(2025, 5, 15),
-          verified: true
+          verified: true,
         },
         {
           id: '2',
@@ -158,15 +168,15 @@ export class WorkerDetailPage implements OnInit {
           issuer: 'OSHA',
           dateObtained: new Date(2023, 2, 10),
           expiryDate: new Date(2026, 2, 10),
-          verified: true
+          verified: true,
         },
         {
           id: '3',
           name: 'Advanced Plumbing Techniques',
           issuer: 'Technical Institute',
           dateObtained: new Date(2021, 8, 20),
-          verified: false
-        }
+          verified: false,
+        },
       ];
     } catch (error) {
       console.error('Error loading certificates:', error);
@@ -178,21 +188,23 @@ export class WorkerDetailPage implements OnInit {
     this.galleryImages = [
       'assets/portfolio/worker1-1.jpg',
       'assets/portfolio/worker1-2.jpg',
-      'assets/portfolio/worker1-3.jpg'
+      'assets/portfolio/worker1-3.jpg',
     ];
   }
 
   private async getCurrentUser() {
     const user = await this.authService.getCurrentUser();
     // Convert User to UserProfile format if needed
-    this.currentUser = user ? {
-      uid: user.uid,
-      email: user.email || '',
-      fullName: user.displayName || '',
-      phone: '',
-      role: 'client',
-      createdAt: new Date()
-    } : null;
+    this.currentUser = user
+      ? {
+          uid: user.uid,
+          email: user.email || '',
+          fullName: user.displayName || '',
+          phone: '',
+          role: 'client',
+          createdAt: new Date(),
+        }
+      : null;
   }
 
   // Helper methods
@@ -210,11 +222,15 @@ export class WorkerDetailPage implements OnInit {
 
   getDisplayedSkills(): string[] {
     if (!this.worker?.skills) return [];
-    return this.showAllSkills ? this.worker.skills : this.worker.skills.slice(0, 6);
+    return this.showAllSkills
+      ? this.worker.skills
+      : this.worker.skills.slice(0, 6);
   }
 
   getDisplayedCertificates(): WorkerCertificate[] {
-    return this.showAllCertificates ? this.certificates : this.certificates.slice(0, 3);
+    return this.showAllCertificates
+      ? this.certificates
+      : this.certificates.slice(0, 3);
   }
 
   toggleReviews() {
@@ -241,10 +257,10 @@ export class WorkerDetailPage implements OnInit {
     }
 
     this.router.navigate(['/client/schedule-booking'], {
-      queryParams: { 
+      queryParams: {
         workerId: this.worker.uid,
-        workerName: this.worker.fullName
-      }
+        workerName: this.worker.fullName,
+      },
     });
   }
 
@@ -260,7 +276,7 @@ export class WorkerDetailPage implements OnInit {
         await navigator.share({
           title: `${this.worker.fullName} - HandyHome Worker`,
           text: `Check out ${this.worker.fullName}'s profile on HandyHome`,
-          url: window.location.href
+          url: window.location.href,
         });
       } catch (error) {
         console.log('Error sharing:', error);
@@ -287,14 +303,15 @@ export class WorkerDetailPage implements OnInit {
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     }).format(date);
   }
 
   getExperienceYears(): number {
     // Calculate experience based on createdAt date or return default
     if (!this.worker?.createdAt) return 1;
-    const years = (new Date().getFullYear() - this.worker.createdAt.getFullYear());
+    const years =
+      new Date().getFullYear() - this.worker.createdAt.getFullYear();
     return Math.max(1, years);
   }
 
@@ -302,6 +319,28 @@ export class WorkerDetailPage implements OnInit {
     // For now, return a default high completion rate
     // In a real app, this would be calculated from actual job data
     return 95;
+  }
+
+  async reportWorker() {
+    if (!this.worker || !this.currentUser) {
+      await this.showToast('Unable to report worker at this time', 'warning');
+      return;
+    }
+
+    const modal = await this.modalController.create({
+      component: ReportWorkerModalComponent,
+      componentProps: {
+        workerId: this.worker.uid,
+        workerName: this.worker.fullName,
+      },
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss();
+    if (data?.success) {
+      await this.showToast('Report submitted successfully', 'success');
+    }
   }
 
   private async showToast(message: string, color: string) {

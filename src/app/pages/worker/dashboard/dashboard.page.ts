@@ -91,7 +91,8 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   // Notification data
   notifications: WorkerNotification[] = [];
   unreadCount: number = 0;
-  showNotifications: boolean = false;
+  showNotifications: boolean = false; // Keep for backward compatibility
+  showNotificationModal: boolean = false;
 
   // Quick booking notification system
   quickBookingNotification: QuickBookingNotification | null = null;
@@ -170,6 +171,12 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     // Clear slide interval
     if (this.slideInterval) {
       clearInterval(this.slideInterval);
+    }
+
+    // Clean up modal event listeners and restore body scroll
+    if (this.showNotificationModal) {
+      document.removeEventListener('keydown', this.handleModalKeydown);
+      document.body.style.overflow = '';
     }
 
     // Unsubscribe from all subscriptions
@@ -530,6 +537,171 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     this.showNotifications = !this.showNotifications;
   }
 
+  openNotificationModal() {
+    this.showNotificationModal = true;
+
+    // Add keyboard event listener for escape key
+    document.addEventListener('keydown', this.handleModalKeydown);
+
+    // Prevent body scrolling when modal is open
+    document.body.style.overflow = 'hidden';
+
+    // Auto-mark notifications as read when modal opens (delayed to allow user to see them first)
+    setTimeout(() => {
+      if (this.unreadCount > 0) {
+        this.markAllNotificationsRead();
+      }
+    }, 2000);
+  }
+
+  closeNotificationModal(event?: Event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.showNotificationModal = false;
+
+    // Remove keyboard event listener
+    document.removeEventListener('keydown', this.handleModalKeydown);
+
+    // Restore body scrolling
+    document.body.style.overflow = '';
+  }
+
+  private handleModalKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      this.closeNotificationModal();
+    }
+  };
+
+  async clearAllNotifications() {
+    const alert = await this.alertController.create({
+      header: 'Clear All Notifications',
+      message:
+        'Are you sure you want to clear all notifications? This action cannot be undone.',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Clear All',
+          role: 'destructive',
+          handler: async () => {
+            try {
+              // Mark all notifications as read first
+              await this.notificationService.markAllAsRead();
+
+              // Clear local arrays
+              this.notifications = [];
+              this.unreadCount = 0;
+
+              this.showToast('All notifications cleared', 'success');
+            } catch (error) {
+              console.error('Error clearing notifications:', error);
+              this.showToast('Error clearing notifications', 'danger');
+            }
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  getNotificationIcon(type: string): string {
+    switch (type) {
+      case 'job_request':
+        return 'briefcase';
+      case 'job_completed':
+        return 'checkmark-circle';
+      case 'payment':
+        return 'card';
+      case 'rating':
+        return 'star';
+      case 'system':
+        return 'information-circle';
+      default:
+        return 'notifications';
+    }
+  }
+
+  getNotificationIconClass(type: string): string {
+    switch (type) {
+      case 'job_request':
+        return 'bg-orange-100';
+      case 'job_completed':
+        return 'bg-green-100';
+      case 'payment':
+        return 'bg-blue-100';
+      case 'rating':
+        return 'bg-yellow-100';
+      case 'system':
+        return 'bg-purple-100';
+      default:
+        return 'bg-gray-100';
+    }
+  }
+
+  getNotificationIconColor(type: string): string {
+    switch (type) {
+      case 'job_request':
+        return 'text-orange-600';
+      case 'job_completed':
+        return 'text-green-600';
+      case 'payment':
+        return 'text-blue-600';
+      case 'rating':
+        return 'text-yellow-600';
+      case 'system':
+        return 'text-purple-600';
+      default:
+        return 'text-gray-600';
+    }
+  }
+
+  getTimeAgo(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) {
+      return 'Just now';
+    } else if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays}d ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  }
+
+  trackByNotificationId(
+    index: number,
+    notification: WorkerNotification
+  ): string {
+    return notification.id || index.toString();
+  }
+
+  async acceptNotificationJob(notification: WorkerNotification, event: Event) {
+    event.stopPropagation();
+    if (notification.bookingId) {
+      await this.openJobDetailsModal(notification.bookingId, notification.id!);
+    }
+  }
+
+  async declineNotificationJob(notification: WorkerNotification, event: Event) {
+    event.stopPropagation();
+    if (notification.id) {
+      await this.handleJobDeclined(notification.id);
+    }
+  }
+
   async openJobDetailsModal(bookingId: string, notificationId: string) {
     const modal = await this.modalController.create({
       component: JobDetailsModalComponent,
@@ -859,6 +1031,10 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     this.router.navigate(['/pages/worker/job-listings']);
   }
 
+  navigateToBookingRequests() {
+    this.router.navigate(['/worker-booking-requests']);
+  }
+
   navigateToJobHistory() {
     this.router.navigate(['/pages/worker/job-history']);
   }
@@ -1006,9 +1182,27 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     }
   }
 
+  // Navigate to active bookings page
+  viewActiveBookings() {
+    console.log('Navigating to active bookings');
+    this.router.navigate(['/pages/worker/active-bookings']);
+  }
+
+  // Navigate to booking requests page  
+  goToBookingRequests() {
+    console.log('Navigating to booking requests');
+    this.router.navigate(['/pages/worker-booking-requests']);
+  }
+
   // Refresh available bookings
   async refreshAvailableBookings() {
     await this.loadAvailableBookings();
     this.showToast('Available bookings refreshed', 'success');
+  }
+
+  // Navigate to update profile page
+  updateProfile() {
+    console.log('Navigating to update profile');
+    this.router.navigate(['/pages/worker/update-profile']);
   }
 }

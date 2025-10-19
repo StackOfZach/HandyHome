@@ -1,0 +1,269 @@
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+>
+  <!-- Custom Header matching Dashboard -->
+  <div
+    class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6"
+  >
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <h1 class="text-white text-2xl font-bold">My Bookings</h1>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button
+          (click)="createNewBooking()"
+          class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-105"
+        >
+          <ion-icon name="add-circle-outline" class="text-white text-xl"></ion-icon>
+        </button>
+      </div>
+    </div>
+    <!-- Subtitle -->
+    <p class="text-white/90 text-sm mt-2">Track and manage all your service bookings</p>
+  </div>
+  <!-- Pull to Refresh -->
+  <ion-refresher slot="fixed" (ionRefresh)="refreshBookings($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="px-6 pb-24">
+    <!-- Enhanced Search Bar -->
+    <div class="mb-6">
+      <div class="bg-white rounded-3xl shadow-lg p-6 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card">
+        <!-- Decorative gradient overlay -->
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"></div>
+        
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 rounded-2xl flex items-center justify-center shadow-lg float-animation">
+            <ion-icon name="search-outline" class="text-white text-xl"></ion-icon>
+          </div>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (input)="onSearchChange()"
+            placeholder="Search your bookings..."
+            class="flex-1 bg-transparent text-handy-navy-800 font-semibold outline-none text-lg placeholder-gray-500"
+          />
+          <button
+            *ngIf="searchQuery"
+            (click)="clearSearch()"
+            class="text-gray-400 hover:text-handy-blue-600 transition-colors duration-300 p-2 rounded-full hover:bg-gray-100"
+          >
+            <ion-icon name="close-circle" class="text-xl"></ion-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Filter Tabs -->
+    <div class="mb-8">
+      <div class="bg-white rounded-3xl shadow-lg p-3 backdrop-blur-sm border border-white/20 enhanced-card">
+        <ion-segment
+          [(ngModel)]="selectedFilter"
+          (ionChange)="onFilterChange()"
+          scrollable="true"
+          class="w-full"
+        >
+          <ion-segment-button
+            *ngFor="let option of filterOptions"
+            [value]="option.value"
+            class="flex-1 px-6 py-4 rounded-2xl font-bold text-sm transition-all duration-300 mx-1"
+            [ngClass]="{
+              'bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 text-white shadow-lg transform scale-105': selectedFilter === option.value,
+              'text-gray-600 hover:text-handy-blue-600 hover:bg-handy-blue-50': selectedFilter !== option.value
+            }"
+          >
+            <ion-label class="font-bold">{{ option.label }}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      </div>
+    </div>
+
+    <!-- Enhanced Loading State -->
+    <div
+      *ngIf="isLoading"
+      class="flex justify-center items-center py-16"
+    >
+      <div class="bg-white rounded-3xl shadow-2xl p-12 backdrop-blur-sm border border-white/20 enhanced-card">
+        <div class="flex flex-col items-center space-y-6">
+          <div
+            class="w-16 h-16 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 rounded-full flex items-center justify-center shadow-lg"
+          >
+            <ion-spinner name="crescent" class="w-8 h-8 text-white"></ion-spinner>
+          </div>
+          <span class="text-handy-navy-800 font-bold text-xl"
+            >Loading your bookings...</span
+          >
+          <p class="text-gray-600 text-center">Please wait while we fetch your booking history</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Empty State -->
+    <div
+      *ngIf="!isLoading && filteredBookings.length === 0"
+      class="text-center py-16"
+    >
+      <div class="bg-white rounded-3xl shadow-2xl p-12 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card">
+        <!-- Decorative gradient overlay -->
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"></div>
+        
+        <div
+          class="w-32 h-32 bg-gradient-to-br from-handy-blue-100 to-handy-blue-200 rounded-full flex items-center justify-center mx-auto mb-8 float-animation"
+        >
+          <ion-icon name="calendar-outline" class="text-handy-blue-500 text-6xl"></ion-icon>
+        </div>
+        <h3 class="text-3xl font-bold text-handy-navy-800 mb-6">
+          {{ selectedFilter === 'all' ? 'No bookings yet' : 'No ' +
+          selectedFilter + ' bookings' }}
+        </h3>
+        <p
+          class="text-gray-600 mb-10 max-w-md mx-auto leading-relaxed text-lg"
+          *ngIf="selectedFilter === 'all'"
+        >
+          Start your HandyHome journey by creating your first booking with a
+          skilled worker.
+        </p>
+        <p
+          class="text-gray-600 mb-10 max-w-md mx-auto leading-relaxed text-lg"
+          *ngIf="selectedFilter !== 'all'"
+        >
+          You don't have any {{ selectedFilter }} bookings at the moment.
+        </p>
+        <button
+          *ngIf="selectedFilter === 'all'"
+          (click)="createNewBooking()"
+          class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white px-12 py-5 rounded-3xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center mx-auto space-x-4 pulse-button"
+        >
+          <ion-icon name="add-circle-outline" class="text-white text-xl"></ion-icon>
+          <span>Book a Service</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Compact Bookings List -->
+    <div
+      *ngIf="!isLoading && filteredBookings.length > 0"
+      class="space-y-3"
+    >
+      <div
+        *ngFor="let booking of filteredBookings; trackBy: trackByBookingId"
+        class="bg-white rounded-2xl shadow-lg p-5 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card hover:shadow-xl hover:scale-[1.01] transition-all duration-300 cursor-pointer"
+        (click)="viewBookingDetails(booking)"
+      >
+        <!-- Decorative gradient overlay -->
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"></div>
+        
+        <!-- Compact Header -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex-1">
+            <h3 class="font-bold text-handy-navy-800 text-lg leading-tight mb-2">
+              {{ booking.neededService }}
+            </h3>
+            <div class="flex items-center text-handy-blue-600 text-xs font-medium">
+              <ion-icon name="receipt-outline" class="text-sm mr-1"></ion-icon>
+              <span>#{{ booking.id.substring(0, 8).toUpperCase() }}</span>
+            </div>
+          </div>
+
+          <!-- Compact Status Badge -->
+          <div
+            class="px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm"
+            [ngClass]="{
+                 'bg-gradient-to-r from-handy-yellow-500 to-handy-yellow-600 text-white': booking.status === 'pending',
+                 'bg-gradient-to-r from-emerald-500 to-green-600 text-white': booking.status === 'accepted',
+                 'bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 text-white': booking.status === 'completed',
+                 'bg-gradient-to-r from-red-500 to-red-600 text-white': booking.status === 'cancelled'
+               }"
+          >
+            <div class="flex items-center space-x-1">
+              <ion-icon
+                [name]="getStatusIcon(booking.status)"
+                class="text-sm"
+              ></ion-icon>
+              <span class="capitalize">{{ booking.status }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Details Grid -->
+        <div class="grid grid-cols-1 gap-3 mb-4">
+          <!-- Date and Budget in one row -->
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Scheduled Date -->
+            <div class="flex items-center space-x-2 p-3 bg-purple-50/50 rounded-xl border border-purple-200/30">
+              <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <ion-icon name="calendar-outline" class="text-white text-sm"></ion-icon>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-gray-600 text-xs font-medium">Date</p>
+                <p class="font-bold text-handy-navy-800 text-sm truncate">
+                  {{ getFormattedDate(booking.scheduleDate, 'short') }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Budget Range -->
+            <div class="flex items-center space-x-2 p-3 bg-emerald-50/50 rounded-xl border border-emerald-200/30">
+              <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+                <ion-icon name="wallet-outline" class="text-white text-sm"></ion-icon>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-gray-600 text-xs font-medium">Budget</p>
+                <p class="font-bold text-handy-navy-800 text-sm">
+                  <span *ngIf="booking.minBudget && booking.maxBudget; else fallbackBudget">
+                    ₱{{ booking.minBudget | number:'1.0-0' }} - ₱{{ booking.maxBudget | number:'1.0-0' }}
+                  </span>
+                  <ng-template #fallbackBudget>
+                    ₱{{ booking.priceRange | number:'1.0-0' }}
+                  </ng-template>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Worker (if assigned) -->
+          <div
+            *ngIf="booking.workerName"
+            class="flex items-center space-x-2 p-3 bg-handy-blue-50/50 rounded-xl border border-handy-blue-200/30"
+          >
+            <div class="w-8 h-8 bg-gradient-to-br from-handy-blue-500 to-handy-blue-600 rounded-lg flex items-center justify-center">
+              <ion-icon name="person-outline" class="text-white text-sm"></ion-icon>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-gray-600 text-xs font-medium">Assigned Worker</p>
+              <p class="font-bold text-handy-navy-800 text-sm truncate">
+                {{ booking.workerName }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Action Footer -->
+        <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+          <span class="text-gray-500 text-xs font-medium">
+            {{ getFormattedDate(booking.createdAt, 'short') }}
+          </span>
+          <div class="flex items-center space-x-2 text-handy-blue-600">
+            <span class="font-bold text-xs">
+              {{ booking.status === 'pending' || booking.status === 'accepted' ?
+              'View Progress' : 'View Details' }}
+            </span>
+            <ion-icon name="chevron-forward" class="text-sm"></ion-icon>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compact Floating Action Button -->
+    <div class="fixed bottom-6 right-6 z-50">
+      <button
+        (click)="createNewBooking()"
+        class="w-16 h-16 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 rounded-full shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center"
+      >
+        <ion-icon name="add" class="text-white text-2xl"></ion-icon>
+      </button>
+    </div>
+  </div>
+</ion-content>

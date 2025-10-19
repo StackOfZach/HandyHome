@@ -1,0 +1,302 @@
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+>
+  <!-- Custom Header matching Dashboard -->
+  <div
+    class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6"
+  >
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <button
+          (click)="goBack()"
+          class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-105"
+        >
+          <ion-icon name="chevron-back" class="text-white text-xl"></ion-icon>
+        </button>
+        <h1 class="text-white text-2xl font-bold">Booking Progress</h1>
+      </div>
+      <div class="flex items-center space-x-3">
+        <div class="p-2 rounded-full bg-white/20">
+          <ion-icon name="time-outline" class="text-white text-xl"></ion-icon>
+        </div>
+      </div>
+    </div>
+    <!-- Subtitle -->
+    <p class="text-white/90 text-sm mt-2 ml-14">Track your service booking status</p>
+  </div>
+  <div class="px-6 pb-24">
+    <!-- Progress Tracker -->
+    <div
+      class="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card mb-6"
+    >
+      <!-- Decorative gradient overlay -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"></div>
+      
+      <div class="flex items-center justify-center mb-6">
+        <div class="w-12 h-12 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 rounded-2xl flex items-center justify-center shadow-lg float-animation mr-3">
+          <ion-icon name="analytics-outline" class="text-white text-xl"></ion-icon>
+        </div>
+        <h3 class="font-bold text-handy-navy-800 text-2xl">
+          Booking Status
+        </h3>
+      </div>
+
+      <!-- Horizontal Progress Steps -->
+      <div class="flex items-center justify-between mb-8">
+        <div class="flex flex-col items-center">
+          <div
+            class="w-12 h-12 rounded-full flex items-center justify-center mb-3 bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg pulse-button"
+          >
+            <ion-icon name="checkmark-circle" class="text-white text-xl"></ion-icon>
+          </div>
+          <span class="text-sm font-bold text-emerald-600">Booked</span>
+        </div>
+
+        <div
+          class="flex-1 h-2 mx-4 bg-gradient-to-r from-emerald-500 to-handy-blue-500 rounded-full shadow-sm"
+        ></div>
+
+        <div class="flex flex-col items-center">
+          <div
+            class="w-12 h-12 rounded-full flex items-center justify-center mb-3 shadow-lg"
+            [ngClass]="{
+                 'bg-gradient-to-br from-handy-blue-500 to-handy-blue-600 text-white pulse-button': booking?.status === 'accepted' || booking?.status === 'completed',
+                 'bg-gray-300 text-gray-600': booking?.status === 'pending'
+               }"
+          >
+            <ion-icon
+              [name]="booking?.status === 'accepted' || booking?.status === 'completed' ? 'checkmark-circle' : 'time-outline'"
+              class="text-xl"
+            ></ion-icon>
+          </div>
+          <span
+            class="text-sm font-bold"
+            [ngClass]="{
+                  'text-handy-blue-600': booking?.status === 'accepted' || booking?.status === 'completed',
+                  'text-gray-600': booking?.status === 'pending'
+                }"
+            >Accepted</span
+          >
+        </div>
+
+        <div
+          class="flex-1 h-2 mx-4 rounded-full shadow-sm"
+          [ngClass]="{
+               'bg-gradient-to-r from-handy-blue-500 to-purple-500': booking?.status === 'completed',
+               'bg-gray-300': booking?.status !== 'completed'
+             }"
+        ></div>
+
+        <div class="flex flex-col items-center">
+          <div
+            class="w-12 h-12 rounded-full flex items-center justify-center mb-3 shadow-lg"
+            [ngClass]="{
+                 'bg-gradient-to-br from-purple-500 to-purple-600 text-white pulse-button': booking?.status === 'completed',
+                 'bg-gray-300 text-gray-600': booking?.status !== 'completed'
+               }"
+          >
+            <ion-icon
+              [name]="booking?.status === 'completed' ? 'checkmark-circle' : 'time-outline'"
+              class="text-xl"
+            ></ion-icon>
+          </div>
+          <span
+            class="text-sm font-bold"
+            [ngClass]="{
+                  'text-purple-600': booking?.status === 'completed',
+                  'text-gray-600': booking?.status !== 'completed'
+                }"
+            >Completed</span
+          >
+        </div>
+      </div>
+
+      <!-- Current Status Message -->
+      <div class="text-center bg-gradient-to-br from-handy-blue-50/50 to-handy-yellow-50/50 rounded-2xl p-6 backdrop-blur-sm">
+        <h4
+          class="font-bold text-xl mb-3"
+          [ngClass]="{
+          'text-handy-yellow-600': booking?.status === 'pending',
+          'text-handy-blue-600': booking?.status === 'accepted',
+          'text-emerald-600': booking?.status === 'completed'
+        }"
+        >
+          {{ getStatusMessage() }}
+        </h4>
+        <p class="text-gray-600 text-sm leading-relaxed">{{ getStatusDescription() }}</p>
+      </div>
+    </div>
+
+    <!-- Service Details Card -->
+    <div
+      *ngIf="booking"
+      class="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card mb-6"
+    >
+      <!-- Decorative gradient overlay -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-yellow-500 via-handy-blue-500 to-handy-yellow-500"></div>
+      
+      <div class="flex items-center justify-center mb-6">
+        <div class="w-12 h-12 bg-gradient-to-r from-handy-yellow-500 to-handy-yellow-600 rounded-2xl flex items-center justify-center shadow-lg float-animation mr-3">
+          <ion-icon name="clipboard-outline" class="text-white text-xl"></ion-icon>
+        </div>
+        <h3 class="font-bold text-handy-navy-800 text-2xl">Service Details</h3>
+      </div>
+
+      <div class="space-y-6">
+        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-handy-blue-50/50 to-handy-blue-100/50 rounded-2xl backdrop-blur-sm border border-handy-blue-200/30">
+          <div
+            class="w-14 h-14 bg-gradient-to-br from-handy-blue-500 to-handy-blue-600 rounded-2xl flex items-center justify-center shadow-lg float-animation"
+          >
+            <ion-icon name="construct-outline" class="text-white text-xl"></ion-icon>
+          </div>
+          <div>
+            <p class="font-bold text-handy-navy-800 text-lg">
+              {{ booking.neededService }}
+            </p>
+            <p class="text-sm text-handy-blue-600 font-medium">Requested service</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-purple-50/50 to-purple-100/50 rounded-2xl backdrop-blur-sm border border-purple-200/30">
+          <div
+            class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg float-animation"
+            style="animation-delay: 0.5s;"
+          >
+            <ion-icon name="calendar-outline" class="text-white text-xl"></ion-icon>
+          </div>
+          <div>
+            <p class="font-bold text-handy-navy-800 text-lg">
+              {{ getFormattedDate(booking.scheduleDate) }}
+            </p>
+            <p class="text-sm text-purple-600 font-medium">Scheduled date</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-emerald-50/50 to-emerald-100/50 rounded-2xl backdrop-blur-sm border border-emerald-200/30">
+          <div
+            class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg float-animation"
+            style="animation-delay: 1s;"
+          >
+            <ion-icon name="wallet-outline" class="text-white text-xl"></ion-icon>
+          </div>
+          <div>
+            <p class="font-bold text-handy-navy-800 text-lg">
+              <span *ngIf="booking.minBudget && booking.maxBudget; else fallbackBudgetProgress">
+                ₱{{ booking.minBudget | number:'1.0-0' }} - ₱{{ booking.maxBudget | number:'1.0-0' }}
+              </span>
+              <ng-template #fallbackBudgetProgress>
+                ₱{{ booking.priceRange | number:'1.0-0' }}
+              </ng-template>
+            </p>
+            <p class="text-sm text-emerald-600 font-medium">Budget range</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Worker Profile Card -->
+    <div
+      *ngIf="worker && booking?.status !== 'pending'"
+      class="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card mb-6"
+    >
+      <!-- Decorative gradient overlay -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-handy-blue-500 to-emerald-500"></div>
+      
+      <div class="flex items-center justify-center mb-6">
+        <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg float-animation mr-3">
+          <ion-icon name="person-outline" class="text-white text-xl"></ion-icon>
+        </div>
+        <h3 class="font-bold text-handy-navy-800 text-2xl">Your Worker</h3>
+      </div>
+
+      <div class="flex items-start space-x-6">
+        <div class="flex-shrink-0">
+          <div class="relative">
+            <img
+              [src]="worker.photoUrl"
+              [alt]="worker.fullName"
+              class="w-24 h-24 rounded-3xl border-4 border-white object-cover shadow-xl"
+              onerror="this.src='/assets/icon/default-avatar.jpg'"
+            />
+            <div
+              class="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-600 border-4 border-white rounded-full flex items-center justify-center shadow-lg pulse-button"
+            >
+              <ion-icon name="checkmark" class="text-white text-sm"></ion-icon>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1">
+          <h4 class="font-bold text-handy-navy-800 text-xl mb-3">
+            {{ worker.fullName }}
+          </h4>
+
+          <!-- Rating -->
+          <div
+            class="flex items-center mb-4"
+            *ngIf="worker.rating > 0; else noRating"
+          >
+            <div class="flex items-center space-x-1 mr-3">
+              <ion-icon
+                [name]="star === 'star' ? 'star' : 'star-outline'"
+                [class]="star === 'star' ? 'text-handy-yellow-500' : 'text-gray-300'"
+                class="text-lg"
+                *ngFor="let star of getStarRating(worker.rating)"
+              ></ion-icon>
+            </div>
+            <span class="text-gray-600 text-sm font-medium"
+              >({{ worker.reviewCount }} reviews)</span
+            >
+          </div>
+          <ng-template #noRating>
+            <div class="bg-gradient-to-r from-handy-blue-50 to-handy-blue-100 px-4 py-2 rounded-2xl mb-4 border border-handy-blue-200">
+              <span class="text-handy-blue-700 text-sm font-bold"
+                >New to HandyHome!</span
+              >
+            </div>
+          </ng-template>
+
+          <!-- Skills -->
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span
+              *ngFor="let skill of worker.skills.slice(0, 3)"
+              class="bg-gradient-to-r from-handy-blue-50 to-handy-blue-100 text-handy-blue-700 text-sm font-bold px-4 py-2 rounded-2xl border border-handy-blue-200"
+            >
+              {{ skill }}
+            </span>
+          </div>
+
+          <!-- Contact Info -->
+          <div class="flex items-center bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 rounded-2xl border border-gray-200">
+            <ion-icon name="call-outline" class="text-handy-blue-600 text-lg mr-3"></ion-icon>
+            <span class="text-handy-navy-800 font-bold text-sm"
+              >{{ worker.phoneNumber }}</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Action Buttons -->
+    <div *ngIf="booking?.status === 'accepted'" class="space-y-4 mb-6">
+      <div class="grid grid-cols-2 gap-4">
+        <button
+          (click)="callWorker()"
+          class="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white px-6 py-5 rounded-3xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3 pulse-button"
+        >
+          <ion-icon name="call-outline" class="text-white text-xl"></ion-icon>
+          <span>Call Worker</span>
+        </button>
+
+        <button
+          (click)="sendSMS()"
+          class="w-full bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white px-6 py-5 rounded-3xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3 pulse-button"
+        >
+          <ion-icon name="chatbubble-outline" class="text-white text-xl"></ion-icon>
+          <span>Send Message</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</ion-content>

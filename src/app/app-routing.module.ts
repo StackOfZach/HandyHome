@@ -5,7 +5,8 @@ import { AuthGuard } from './guards/auth.guard';
 const routes: Routes = [
   {
     path: '',
-    redirectTo: '/pages/auth/login',
+    loadChildren: () =>
+      import('./home/home.module').then((m) => m.HomePageModule),
     pathMatch: 'full',
   },
   {
@@ -56,6 +57,16 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { role: 'worker' },
   },
+  // Worker Update Profile - Protected Route
+  {
+    path: 'pages/worker/update-profile',
+    loadChildren: () =>
+      import('./pages/worker/update-profile/update-profile.module').then(
+        (m) => m.UpdateProfilePageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'worker' },
+  },
   // Worker Job Listings - Protected Route
   {
     path: 'pages/worker/job-listings',
@@ -63,6 +74,16 @@ const routes: Routes = [
       import('./pages/worker/job-listings/job-listings.module').then(
         (m) => m.JobListingsPageModule
       ),
+    canActivate: [AuthGuard],
+    data: { role: 'worker' },
+  },
+  // Worker Booking Requests - Protected Route
+  {
+    path: 'worker-booking-requests',
+    loadChildren: () =>
+      import(
+        './pages/worker-booking-requests/worker-booking-requests.module'
+      ).then((m) => m.WorkerBookingRequestsPageModule),
     canActivate: [AuthGuard],
     data: { role: 'worker' },
   },
@@ -82,6 +103,25 @@ const routes: Routes = [
     loadChildren: () =>
       import('./pages/worker/booking-details/booking-details.module').then(
         (m) => m.BookingDetailsPageModule
+      ),
+    data: { role: 'worker' },
+  },
+  {
+    path: 'pages/worker/booking-details/:id',
+    canActivate: [AuthGuard],
+    loadChildren: () =>
+      import('./pages/worker/booking-details/booking-details.module').then(
+        (m) => m.BookingDetailsPageModule
+      ),
+    data: { role: 'worker' },
+  },
+  // Worker Active Bookings - Protected Route
+  {
+    path: 'pages/worker/active-bookings',
+    canActivate: [AuthGuard],
+    loadChildren: () =>
+      import('./pages/worker/active-bookings/active-bookings.module').then(
+        (m) => m.ActiveBookingsPageModule
       ),
     data: { role: 'worker' },
   },
@@ -201,6 +241,52 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { role: 'client' },
   },
+  // New Modern Booking Flow - Protected Routes
+  {
+    path: 'client/book-service',
+    loadChildren: () =>
+      import('./pages/client/book-service/book-service.module').then(
+        (m) => m.BookServicePageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  {
+    path: 'client/worker-lookup',
+    loadChildren: () =>
+      import('./pages/client/worker-lookup/worker-lookup.module').then(
+        (m) => m.WorkerLookupPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  {
+    path: 'client/worker-results',
+    loadChildren: () =>
+      import('./pages/client/worker-results/worker-results.module').then(
+        (m) => m.WorkerResultsPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  {
+    path: 'client/booking-progress/:bookingId',
+    loadChildren: () =>
+      import('./pages/client/booking-progress/booking-progress.module').then(
+        (m) => m.BookingProgressPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
+  {
+    path: 'client/booking-history',
+    loadChildren: () =>
+      import('./pages/client/booking-history/booking-history.module').then(
+        (m) => m.BookingHistoryPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
   // Profile - Protected Route
   {
     path: 'pages/profile',
@@ -230,9 +316,12 @@ const routes: Routes = [
   },
   {
     path: 'pages/worker/job-request-details/:id',
-    loadChildren: () => import('./pages/worker/job-request-details/job-request-details.module').then( m => m.JobRequestDetailsPageModule),
+    loadChildren: () =>
+      import(
+        './pages/worker/job-request-details/job-request-details.module'
+      ).then((m) => m.JobRequestDetailsPageModule),
     canActivate: [AuthGuard],
-    data: { role: 'worker' }
+    data: { role: 'worker' },
   },
   // Wildcard route - redirect to login (MUST BE LAST)
   {

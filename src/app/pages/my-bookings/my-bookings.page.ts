@@ -196,7 +196,7 @@ export class MyBookingsPage implements OnInit {
     if (this.isNewBooking(booking)) {
       return booking.serviceName;
     }
-    return booking.title;
+    return booking.title || booking.neededService || 'Service Request';
   }
 
   getBookingWorkerName(booking: BookingData | NewBookingData): string | null {
@@ -241,7 +241,7 @@ export class MyBookingsPage implements OnInit {
     if (this.isNewBooking(booking)) {
       return booking.notes || null;
     }
-    return booking.description;
+    return booking.description || booking.additionalDetails || null;
   }
 
   getBookingId(booking: BookingData | NewBookingData): string | undefined {

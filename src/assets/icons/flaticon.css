@@ -1,0 +1,118 @@
+/* Flaticon CSS for HandyHome App */
+/* Basic icon font setup - this is a placeholder until actual Flaticon fonts are added */
+
+[class^="flaticon-"],
+[class*=" flaticon-"] {
+  font-family: "Flaticon", sans-serif;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Temporary fallback icons using Unicode symbols */
+.flaticon-arrow-left:before {
+  content: "←";
+}
+.flaticon-arrow-right:before {
+  content: "→";
+}
+.flaticon-search:before {
+  content: "🔍";
+}
+.flaticon-location-pin:before {
+  content: "📍";
+}
+.flaticon-calendar:before {
+  content: "📅";
+}
+.flaticon-calendar-empty:before {
+  content: "📅";
+}
+.flaticon-tools:before {
+  content: "🔧";
+}
+.flaticon-warning:before {
+  content: "⚠️";
+}
+.flaticon-info:before {
+  content: "ℹ️";
+}
+.flaticon-wallet:before {
+  content: "💰";
+}
+.flaticon-peso:before {
+  content: "₱";
+}
+.flaticon-document:before {
+  content: "📄";
+}
+.flaticon-shield:before {
+  content: "🛡️";
+}
+.flaticon-clock:before {
+  content: "🕐";
+}
+.flaticon-filter:before {
+  content: "⚙️";
+}
+.flaticon-close:before {
+  content: "✖️";
+}
+.flaticon-check:before {
+  content: "✓";
+}
+.flaticon-check-circle:before {
+  content: "✅";
+}
+.flaticon-star:before {
+  content: "⭐";
+}
+.flaticon-star-filled:before {
+  content: "⭐";
+}
+.flaticon-star-outline:before {
+  content: "☆";
+}
+.flaticon-verified:before {
+  content: "✓";
+}
+.flaticon-booking:before {
+  content: "📝";
+}
+.flaticon-loading:before {
+  content: "⏳";
+}
+.flaticon-no-results:before {
+  content: "❌";
+}
+.flaticon-add:before {
+  content: "+";
+}
+.flaticon-id:before {
+  content: "#";
+}
+.flaticon-worker:before {
+  content: "👷";
+}
+.flaticon-phone:before {
+  content: "📞";
+}
+.flaticon-phone-call:before {
+  content: "📞";
+}
+.flaticon-sms:before {
+  content: "💬";
+}
+.flaticon-completed:before {
+  content: "✅";
+}
+.flaticon-close-circle:before {
+  content: "⛔";
+}
+.flaticon-help-circle:before {
+  content: "❓";
+}

@@ -12,6 +12,12 @@ import {
   DocumentData,
 } from '@angular/fire/firestore';
 
+export interface ServicePrice {
+  name: string;
+  minPrice: number;
+  maxPrice: number;
+}
+
 export interface WorkerProfile {
   uid: string;
   fullName: string;
@@ -23,16 +29,20 @@ export interface WorkerProfile {
     lng: number;
   };
   skills?: string[];
+  servicePrices?: ServicePrice[]; // New field for service pricing
   workRadius?: number;
   availableDays?: string[];
   idPhotoUrl?: string;
   profilePhotoUrl?: string;
   idPhotoData?: string; // Base64 image data for temporary storage
   profilePhotoData?: string; // Base64 image data for temporary storage
+  certificates?: { [skillName: string]: string }; // Base64 certificate data for each skill
+  certificateUrls?: { [skillName: string]: string }; // URLs for uploaded certificates
   status?: 'pending_verification' | 'verified' | 'rejected';
   rating?: number; // Worker's average rating
   jobsCompleted?: number; // Total completed jobs
   totalEarnings?: number; // Total earnings
+  bio?: string; // New field for worker biography
   createdAt: Date;
   currentStep?: number;
   emergencyContact?: string;
@@ -75,12 +85,14 @@ export class WorkerService {
     try {
       // Get worker data from workers collection
       const workerDoc = await getDoc(doc(this.firestore, 'workers', uid));
-      // Get user data from users collection  
+      // Get user data from users collection
       const userDoc = await getDoc(doc(this.firestore, 'users', uid));
 
       if (workerDoc.exists()) {
         const workerData = workerDoc.data() as DocumentData;
-        const userData = userDoc.exists() ? userDoc.data() as DocumentData : {};
+        const userData = userDoc.exists()
+          ? (userDoc.data() as DocumentData)
+          : {};
 
         // Combine both data sources, prioritizing workers collection for worker-specific fields
         return {
@@ -88,7 +100,11 @@ export class WorkerService {
           // User basic info from users collection
           fullName: userData['fullName'] || workerData['fullName'] || '',
           email: userData['email'] || workerData['email'] || '',
-          phone: userData['phoneNumber'] || userData['phone'] || workerData['phone'] || '',
+          phone:
+            userData['phoneNumber'] ||
+            userData['phone'] ||
+            workerData['phone'] ||
+            '',
           // Worker-specific data from workers collection
           fullAddress: workerData['fullAddress'] || userData['address'] || '',
           location: workerData['location'],
@@ -192,7 +208,12 @@ export class WorkerService {
   async hasCompletedInterview(uid: string): Promise<boolean> {
     try {
       const profile = await this.getWorkerProfile(uid);
-      return profile?.currentStep === 4 || false;
+      // Check if interview is completed (step 5) or if interviewCompletedAt is set
+      return (
+        profile?.currentStep === 5 ||
+        profile?.interviewCompletedAt != null ||
+        false
+      );
     } catch (error) {
       console.error('Error checking interview completion:', error);
       return false;
@@ -205,7 +226,10 @@ export class WorkerService {
   async isWorkerVerified(uid: string): Promise<boolean> {
     try {
       const profile = await this.getWorkerProfile(uid);
-      return profile?.status === 'verified' || false;
+      // Check both status and verifiedAt field for verification
+      return (
+        (profile?.status === 'verified' && profile?.verifiedAt != null) || false
+      );
     } catch (error) {
       console.error('Error checking worker verification:', error);
       return false;
@@ -281,13 +305,17 @@ export class WorkerService {
       // Use the complete worker profile method for consistency
       const workersWithUserData = await Promise.all(
         querySnapshot.docs.map(async (workerDoc) => {
-          const completeProfile = await this.getCompleteWorkerProfile(workerDoc.id);
+          const completeProfile = await this.getCompleteWorkerProfile(
+            workerDoc.id
+          );
           return completeProfile;
         })
       );
 
       // Filter out null values and return only valid worker profiles
-      return workersWithUserData.filter((worker): worker is WorkerProfile => worker !== null);
+      return workersWithUserData.filter(
+        (worker): worker is WorkerProfile => worker !== null
+      );
     } catch (error) {
       console.error('Error getting verified workers:', error);
       throw error;

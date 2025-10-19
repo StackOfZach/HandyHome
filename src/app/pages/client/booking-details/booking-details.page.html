@@ -1,12 +1,20 @@
-<ion-content [fullscreen]="true" class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50">
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+>
   <!-- Custom Header -->
-  <div class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 pt-12 pb-4 px-4 rounded-bl-2xl rounded-br-2xl shadow-lg mb-3">
+  <div
+    class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 pt-12 pb-4 px-4 rounded-bl-2xl rounded-br-2xl shadow-lg mb-3"
+  >
     <div class="flex items-center">
       <button
         (click)="goBack()"
         class="mr-3 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200"
       >
-        <ion-icon name="arrow-back-outline" class="text-white text-lg"></ion-icon>
+        <ion-icon
+          name="arrow-back-outline"
+          class="text-white text-lg"
+        ></ion-icon>
       </button>
       <h1 class="text-white text-xl font-bold">Booking Details</h1>
     </div>
@@ -14,13 +22,20 @@
 
   <!-- Loading Spinner -->
   <div *ngIf="isLoading" class="flex justify-center items-center h-64">
-    <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-handy-blue-500"></div>
+    <div
+      class="animate-spin rounded-full h-16 w-16 border-b-2 border-handy-blue-500"
+    ></div>
   </div>
 
   <!-- Error State -->
   <div *ngIf="error && !isLoading" class="text-center py-16 px-4">
-    <div class="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
-      <ion-icon name="alert-circle-outline" class="text-4xl text-white"></ion-icon>
+    <div
+      class="w-24 h-24 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl"
+    >
+      <ion-icon
+        name="alert-circle-outline"
+        class="text-4xl text-white"
+      ></ion-icon>
     </div>
     <h3 class="text-xl font-bold text-handy-navy-800 mb-2">{{ error }}</h3>
     <button
@@ -33,38 +48,56 @@
 
   <!-- Booking Details Content -->
   <div *ngIf="booking && !isLoading" class="px-3 pb-20 space-y-4">
-    
     <!-- Booking Overview Card -->
-    <div class="bg-white/90 backdrop-blur-md rounded-xl shadow-lg p-4 border border-white/20">
+    <div
+      class="bg-white/90 backdrop-blur-md rounded-xl shadow-lg p-4 border border-white/20"
+    >
       <!-- Service Info with Worker -->
       <div class="flex items-start space-x-3 mb-4">
         <!-- Worker Avatar -->
-        <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-handy-blue-200 flex-shrink-0">
-          <img 
-            *ngIf="worker?.profilePhotoData" 
-            [src]="worker?.profilePhotoData?.startsWith('data:') ? worker?.profilePhotoData : 'data:image/jpeg;base64,' + worker?.profilePhotoData" 
+        <div
+          class="w-12 h-12 rounded-full overflow-hidden border-2 border-handy-blue-200 flex-shrink-0"
+        >
+          <img
+            *ngIf="worker?.profilePhotoData"
+            [src]="worker?.profilePhotoData?.startsWith('data:') ? worker?.profilePhotoData : 'data:image/jpeg;base64,' + worker?.profilePhotoData"
             alt="Worker"
             class="w-full h-full object-cover"
           />
-          <div 
-            *ngIf="!worker?.profilePhotoData" 
+          <div
+            *ngIf="!worker?.profilePhotoData"
             class="w-full h-full bg-gradient-to-br from-handy-blue-400 to-handy-blue-500 flex items-center justify-center"
           >
             <ion-icon name="person" class="text-white text-lg"></ion-icon>
           </div>
         </div>
-        
+
         <!-- Service & Worker Details -->
         <div class="flex-1 min-w-0">
-          <h2 class="font-bold text-handy-navy-800 text-lg leading-tight">{{ getBookingTitle() }}</h2>
-          <p *ngIf="worker" class="text-handy-blue-600 text-sm font-medium">{{ worker.fullName }}</p>
-          <p *ngIf="!worker && booking.status === 'pending'" class="text-gray-500 text-sm">Awaiting worker assignment</p>
-          
+          <h2 class="font-bold text-handy-navy-800 text-lg leading-tight">
+            {{ getBookingTitle() }}
+          </h2>
+          <p *ngIf="worker" class="text-handy-blue-600 text-sm font-medium">
+            {{ worker.fullName }}
+          </p>
+          <p
+            *ngIf="!worker && booking.status === 'pending'"
+            class="text-gray-500 text-sm"
+          >
+            Awaiting worker assignment
+          </p>
+
           <!-- Quick Stats -->
           <div class="flex items-center space-x-4 mt-2 text-xs text-gray-600">
-            <div *ngIf="getBookingDate() && getBookingTime()" class="flex items-center">
+            <div
+              *ngIf="getBookingDate() && getBookingTime()"
+              class="flex items-center"
+            >
               <ion-icon name="calendar-outline" class="mr-1"></ion-icon>
-              <span>{{ getBookingDate() | date:'MMM d' }} at {{ getBookingTime() }}</span>
+              <span
+                >{{ getBookingDate() | date:'MMM d' }} at {{ getBookingTime()
+                }}</span
+              >
             </div>
             <div class="flex items-center">
               <ion-icon name="cash-outline" class="mr-1"></ion-icon>
@@ -76,10 +109,10 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Status Badge -->
         <div class="flex-shrink-0">
-          <span 
+          <span
             class="inline-block px-2 py-1 rounded-full text-xs font-medium"
             [ngClass]="{
               'bg-yellow-100 text-yellow-800': booking.status === 'pending',
@@ -94,35 +127,47 @@
           </span>
         </div>
       </div>
-      
+
       <!-- Contact Actions (if worker assigned) -->
-      <div *ngIf="worker && booking.status !== 'pending'" class="flex space-x-2 pt-3 border-t border-gray-100">
-        <button class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
+      <div
+        *ngIf="worker && booking.status !== 'pending'"
+        class="flex space-x-2 pt-3 border-t border-gray-100"
+      >
+        <button
+          class="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center"
+        >
           <ion-icon name="call-outline" class="mr-1 text-sm"></ion-icon>
           Call
         </button>
-        <button class="flex-1 bg-handy-blue-50 hover:bg-handy-blue-100 text-handy-blue-600 py-2 px-3 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center">
+        <button
+          class="flex-1 bg-handy-blue-50 hover:bg-handy-blue-100 text-handy-blue-600 py-2 px-3 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center"
+        >
           <ion-icon name="chatbubbles-outline" class="mr-1 text-sm"></ion-icon>
           Message
         </button>
       </div>
     </div>
-    
+
     <!-- Progress Tracking -->
-    <div class="bg-white/90 backdrop-blur-md rounded-xl shadow-lg p-4 border border-white/20">
+    <div
+      class="bg-white/90 backdrop-blur-md rounded-xl shadow-lg p-4 border border-white/20"
+    >
       <h3 class="text-lg font-bold text-handy-navy-800 mb-4 flex items-center">
-        <ion-icon name="pulse-outline" class="mr-2 text-handy-blue-500"></ion-icon>
+        <ion-icon
+          name="pulse-outline"
+          class="mr-2 text-handy-blue-500"
+        ></ion-icon>
         Progress Tracking
       </h3>
-      
+
       <div class="space-y-3">
-        <div 
-          *ngFor="let stage of progressStages; let i = index" 
+        <div
+          *ngFor="let stage of progressStages; let i = index"
           class="flex items-center relative"
           [class]="i === progressStages.length - 1 ? '' : 'pb-3'"
         >
           <!-- Stage Icon -->
-          <div 
+          <div
             class="w-8 h-8 rounded-full flex items-center justify-center mr-3 transition-all duration-300 flex-shrink-0"
             [ngClass]="{
               'bg-handy-blue-500 text-white': isStageActive(i),
@@ -132,10 +177,10 @@
           >
             <ion-icon [name]="stage.icon" class="text-sm"></ion-icon>
           </div>
-          
+
           <!-- Stage Info -->
           <div class="flex-1 min-w-0">
-            <h4 
+            <h4
               class="font-medium text-sm"
               [ngClass]="{
                 'text-handy-blue-600': isStageActive(i),
@@ -145,7 +190,7 @@
             >
               {{ stage.label }}
             </h4>
-            <p 
+            <p
               class="text-xs"
               [ngClass]="{
                 'text-handy-blue-500': isStageActive(i),
@@ -158,9 +203,9 @@
               <span *ngIf="!isStageCompleted(i)">Pending</span>
             </p>
           </div>
-          
+
           <!-- Progress Line -->
-          <div 
+          <div
             *ngIf="i < progressStages.length - 1"
             class="absolute left-4 top-8 w-0.5 h-6 transition-colors duration-300"
             [ngClass]="{
@@ -173,20 +218,31 @@
     </div>
 
     <!-- Service Details & Worker Location -->
-    <div class="bg-white/90 backdrop-blur-md rounded-xl shadow-lg p-4 border border-white/20">
+    <div
+      class="bg-white/90 backdrop-blur-md rounded-xl shadow-lg p-4 border border-white/20"
+    >
       <h3 class="text-lg font-bold text-handy-navy-800 mb-3 flex items-center">
-        <ion-icon name="information-circle-outline" class="mr-2 text-handy-blue-500"></ion-icon>
+        <ion-icon
+          name="information-circle-outline"
+          class="mr-2 text-handy-blue-500"
+        ></ion-icon>
         Details
       </h3>
-      
+
       <div class="grid grid-cols-2 gap-3 text-sm">
         <!-- Date & Time -->
         <div *ngIf="getBookingDate() && getBookingTime()" class="col-span-2">
           <div class="flex items-center">
-            <ion-icon name="calendar-outline" class="mr-2 text-handy-blue-500 text-base"></ion-icon>
+            <ion-icon
+              name="calendar-outline"
+              class="mr-2 text-handy-blue-500 text-base"
+            ></ion-icon>
             <div>
               <p class="text-xs text-gray-500">Scheduled</p>
-              <p class="font-medium text-handy-navy-800">{{ getBookingDate() | date:'MMM d, y' }} at {{ getBookingTime() }}</p>
+              <p class="font-medium text-handy-navy-800">
+                {{ getBookingDate() | date:'MMM d, y' }} at {{ getBookingTime()
+                }}
+              </p>
             </div>
           </div>
         </div>
@@ -194,10 +250,15 @@
         <!-- Duration -->
         <div *ngIf="getBookingDuration()">
           <div class="flex items-center">
-            <ion-icon name="time-outline" class="mr-2 text-handy-blue-500"></ion-icon>
+            <ion-icon
+              name="time-outline"
+              class="mr-2 text-handy-blue-500"
+            ></ion-icon>
             <div>
               <p class="text-xs text-gray-500">Duration</p>
-              <p class="font-medium text-handy-navy-800">{{ getBookingDuration() }}min</p>
+              <p class="font-medium text-handy-navy-800">
+                {{ getBookingDuration() }}min
+              </p>
             </div>
           </div>
         </div>
@@ -205,36 +266,55 @@
         <!-- Price -->
         <div>
           <div class="flex items-center">
-            <ion-icon name="cash-outline" class="mr-2 text-handy-blue-500"></ion-icon>
+            <ion-icon
+              name="cash-outline"
+              class="mr-2 text-handy-blue-500"
+            ></ion-icon>
             <div>
               <p class="text-xs text-gray-500">Total</p>
-              <p class="font-medium text-handy-navy-800">₱{{ getBookingPrice() | number:'1.2-2' }}</p>
+              <p class="font-medium text-handy-navy-800">
+                ₱{{ getBookingPrice() | number:'1.2-2' }}
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Worker Location -->
-        <div *ngIf="getWorkerLocation()" class="col-span-2 pt-2 border-t border-gray-100">
+        <div
+          *ngIf="getWorkerLocation()"
+          class="col-span-2 pt-2 border-t border-gray-100"
+        >
           <div class="flex items-center">
-            <ion-icon name="navigate-outline" class="mr-2 text-handy-blue-500 text-base"></ion-icon>
+            <ion-icon
+              name="navigate-outline"
+              class="mr-2 text-handy-blue-500 text-base"
+            ></ion-icon>
             <div>
               <p class="text-xs text-gray-500">Worker Location</p>
-              <p class="font-medium text-handy-blue-600">{{ getWorkerLocation() }}</p>
+              <p class="font-medium text-handy-blue-600">
+                {{ getWorkerLocation() }}
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Worker Skills (if available) -->
-        <div *ngIf="hasWorkerSkills()" class="col-span-2 pt-2 border-t border-gray-100">
+        <div
+          *ngIf="hasWorkerSkills()"
+          class="col-span-2 pt-2 border-t border-gray-100"
+        >
           <p class="text-xs text-gray-500 mb-2">Skills</p>
           <div class="flex flex-wrap gap-1">
-            <span 
-              *ngFor="let skill of getDisplayedSkills()" 
+            <span
+              *ngFor="let skill of getDisplayedSkills()"
               class="px-2 py-1 bg-handy-blue-50 text-handy-blue-700 rounded-md text-xs"
             >
               {{ skill }}
             </span>
-            <span *ngIf="getRemainingSkillsCount() > 0" class="px-2 py-1 bg-gray-50 text-gray-600 rounded-md text-xs">
+            <span
+              *ngIf="getRemainingSkillsCount() > 0"
+              class="px-2 py-1 bg-gray-50 text-gray-600 rounded-md text-xs"
+            >
               +{{ getRemainingSkillsCount() }} more
             </span>
           </div>
@@ -245,55 +325,120 @@
     <!-- Location & Notes -->
     <div class="space-y-3">
       <!-- Service Location -->
-      <div 
-        *ngIf="getBookingAddress()" 
+      <div
+        *ngIf="getBookingAddress()"
         class="bg-white/90 backdrop-blur-md rounded-xl shadow-lg p-4 border border-white/20"
       >
-        <h3 class="text-base font-bold text-handy-navy-800 mb-2 flex items-center">
-          <ion-icon name="location-outline" class="mr-2 text-handy-blue-500"></ion-icon>
+        <h3
+          class="text-base font-bold text-handy-navy-800 mb-2 flex items-center"
+        >
+          <ion-icon
+            name="location-outline"
+            class="mr-2 text-handy-blue-500"
+          ></ion-icon>
           Service Location
         </h3>
-        
+
         <div class="bg-gray-50 rounded-lg p-3">
-          <p class="text-sm text-handy-navy-800 leading-relaxed">{{ getBookingAddress() }}</p>
+          <p class="text-sm text-handy-navy-800 leading-relaxed">
+            {{ getBookingAddress() }}
+          </p>
         </div>
       </div>
 
       <!-- Additional Notes -->
-      <div 
-        *ngIf="getBookingDescription()" 
+      <div
+        *ngIf="getBookingDescription()"
         class="bg-white/90 backdrop-blur-md rounded-xl shadow-lg p-4 border border-white/20"
       >
-        <h3 class="text-base font-bold text-handy-navy-800 mb-2 flex items-center">
-          <ion-icon name="document-text-outline" class="mr-2 text-handy-blue-500"></ion-icon>
+        <h3
+          class="text-base font-bold text-handy-navy-800 mb-2 flex items-center"
+        >
+          <ion-icon
+            name="document-text-outline"
+            class="mr-2 text-handy-blue-500"
+          ></ion-icon>
           Notes
         </h3>
-        
+
         <div class="bg-gray-50 rounded-lg p-3">
-          <p class="text-sm text-handy-navy-800 leading-relaxed">{{ getBookingDescription() }}</p>
+          <p class="text-sm text-handy-navy-800 leading-relaxed">
+            {{ getBookingDescription() }}
+          </p>
         </div>
       </div>
     </div>
 
     <!-- Action Buttons -->
-    <div class="flex gap-2 pt-2">
-      <!-- Cancel Button (for pending/accepted bookings) -->
-      <button
-        *ngIf="booking.status === 'pending' || booking.status === 'accepted'"
-        (click)="cancelBooking()"
-        class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center"
-      >
-        <ion-icon name="close-outline" class="mr-1.5 text-base"></ion-icon>
-        Cancel
-      </button>
+    <div class="space-y-2 pt-2">
+      <!-- Primary Actions Row -->
+      <div class="flex gap-2">
+        <!-- Cancel Button (based on cancellation policy) -->
+        <button
+          *ngIf="canShowCancelButton()"
+          (click)="cancelBooking()"
+          class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center"
+        >
+          <ion-icon name="close-outline" class="mr-1.5 text-base"></ion-icon>
+          Cancel
+        </button>
 
-      <!-- Contact Support -->
-      <button
-        class="flex-1 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center"
+        <!-- Contact Support -->
+        <button
+          class="flex-1 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center"
+        >
+          <ion-icon name="call-outline" class="mr-1.5 text-base"></ion-icon>
+          Support
+        </button>
+      </div>
+
+      <!-- Report Worker Button (show if worker is assigned and booking is not completed) -->
+      <div
+        *ngIf="worker && (booking.status === 'accepted' || booking.status === 'on-the-way' || booking.status === 'in-progress' || booking.status === 'completed')"
+        class="flex"
       >
-        <ion-icon name="call-outline" class="mr-1.5 text-base"></ion-icon>
-        Support
-      </button>
+        <button
+          (click)="reportWorker()"
+          class="w-full bg-orange-50 hover:bg-orange-100 text-orange-600 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-200 flex items-center justify-center border border-orange-200"
+        >
+          <ion-icon name="flag-outline" class="mr-1.5 text-base"></ion-icon>
+          Report Worker
+        </button>
+      </div>
+
+      <!-- Payment Button (show when service is completed and payment not processed) -->
+      <div
+        *ngIf="booking.status === 'completed' && !booking.paymentDetails?.status"
+        class="flex mt-4"
+      >
+        <button
+          (click)="processPayment()"
+          class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 px-4 rounded-lg font-semibold text-lg transition-all duration-200 flex items-center justify-center shadow-lg transform hover:scale-105"
+        >
+          <ion-icon name="card-outline" class="mr-2 text-xl"></ion-icon>
+          Pay Now - ₱{{ 'total' in booking ? booking.total : booking.price |
+          number:'1.2-2' }}
+        </button>
+      </div>
+
+      <!-- Payment Completed Status -->
+      <div
+        *ngIf="booking.paymentDetails?.status === 'completed'"
+        class="mt-4 p-3 bg-green-50 rounded-lg border border-green-200"
+      >
+        <div
+          class="flex items-center justify-center text-green-700 font-semibold mb-2"
+        >
+          <ion-icon
+            name="checkmark-circle-outline"
+            class="mr-2 text-lg"
+          ></ion-icon>
+          Payment Completed
+        </div>
+        <p class="text-xs text-green-600 text-center">
+          Receipt ID: {{ booking.paymentDetails?.receiptId }}
+        </p>
+      </div>
     </div>
   </div>
 </ion-content>

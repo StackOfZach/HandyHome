@@ -12,6 +12,14 @@
 /* Leaflet CSS */
 @import "leaflet/dist/leaflet.css";
 
+/* Swiper CSS */
+@import "swiper/css";
+@import "swiper/css/pagination";
+@import "swiper/css/autoplay";
+
+/* Flaticon CSS */
+@import "assets/icons/flaticon.css";
+
 /* Tailwind CSS directives */
 @tailwind base;
 @tailwind components;

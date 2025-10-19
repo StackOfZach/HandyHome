@@ -1,0 +1,178 @@
+// HandyHome Worker Booking Requests - Enhanced Styling
+
+ion-content {
+  --background: #f8fafc;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+
+// HandyHome Brand Colors (matching global variables)
+:root {
+  --handy-blue-50: #eff6ff;
+  --handy-blue-100: #dbeafe;
+  --handy-blue-200: #bfdbfe;
+  --handy-blue-400: #60a5fa;
+  --handy-blue-500: #3b82f6;
+  --handy-blue-600: #2563eb;
+  --handy-yellow-100: #fef3c7;
+  --handy-yellow-400: #fbbf24;
+  --handy-yellow-500: #f59e0b;
+  --handy-yellow-600: #d97706;
+  --handy-navy-600: #1e293b;
+  --handy-navy-700: #0f172a;
+  --handy-navy-800: #020617;
+}
+
+// Floating Animation for Icons
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.floating-animation {
+  animation: floating 3s ease-in-out infinite;
+}
+
+// Enhanced Card Hover Effects
+.bg-white:hover {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+// Professional Border Styles
+.border-handy-blue-100 {
+  border-color: var(--handy-blue-100) !important;
+}
+
+.border-handy-blue-200 {
+  border-color: var(--handy-blue-200) !important;
+}
+
+.border-3 {
+  border-width: 3px !important;
+}
+
+// HandyHome Button Enhancements
+button {
+  &:active {
+    transform: scale(0.98) !important;
+  }
+}
+
+// Custom Gradient Backgrounds
+.bg-gradient-to-r.from-handy-blue-600 {
+  background: linear-gradient(90deg, var(--handy-blue-600) 0%, var(--handy-blue-500) 50%, var(--handy-navy-800) 100%);
+}
+
+.bg-gradient-to-r.from-handy-blue-50 {
+  background: linear-gradient(90deg, var(--handy-blue-50) 0%, var(--handy-yellow-100) 100%);
+}
+
+// Enhanced Spinner Animation
+ion-spinner {
+  --color: var(--handy-blue-500);
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+// Pulse Animation for Real-time Updates
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+.animate-pulse {
+  animation: gentle-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+// Professional Badge Styles
+ion-badge {
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --padding-top: 4px;
+  --padding-bottom: 4px;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  
+  &.bg-handy-yellow-500 {
+    --background: var(--handy-yellow-500);
+    --color: var(--handy-navy-800);
+    box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
+  }
+}
+
+// Enhanced Status Indicators
+.status-indicator {
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    border-radius: inherit;
+    animation: gentle-pulse 2s ease-in-out infinite;
+    z-index: -1;
+  }
+}
+
+// Professional Card Shadows
+.shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  
+  &:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+}
+
+// Smooth Transitions
+* {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Professional Typography
+.font-bold {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.font-semibold {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+// Enhanced Background Patterns
+.relative.overflow-hidden::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  animation: subtle-move 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes subtle-move {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  100% {
+    transform: translateX(-20px) translateY(-20px);
+  }
+}

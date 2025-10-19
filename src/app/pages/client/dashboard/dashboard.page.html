@@ -181,6 +181,56 @@
       </div>
     </div>
 
+    <!-- Promotional Ads Section -->
+    <div class="mb-6" *ngIf="ads.length > 0">
+      <h3 class="text-xl font-bold text-handy-navy-800 mb-4 px-2">
+        Special Offers
+      </h3>
+      <div class="relative">
+        <swiper-container
+          slides-per-view="1.2"
+          space-between="16"
+          centered-slides="false"
+          pagination="true"
+          pagination-clickable="true"
+          autoplay-delay="4000"
+          autoplay-disable-on-interaction="false"
+          loop="true"
+          class="ads-swiper"
+        >
+          <swiper-slide *ngFor="let ad of ads" class="!h-auto">
+            <div
+              class="relative overflow-hidden rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105"
+              (click)="onAdClick(ad)"
+            >
+              <!-- Ad Image -->
+              <img
+                [src]="ad.imageUrl"
+                [alt]="ad.altText"
+                class="w-full h-48 object-cover"
+                (error)="onImageError($event, ad)"
+              />
+
+              <!-- Overlay for better interaction feedback -->
+              <div
+                class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-300 rounded-2xl"
+              ></div>
+
+              <!-- Loading placeholder (shown while image loads) -->
+              <div
+                class="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center"
+                [class.hidden]="!ad.isLoading"
+              >
+                <div
+                  class="animate-spin rounded-full h-8 w-8 border-b-2 border-handy-blue-500"
+                ></div>
+              </div>
+            </div>
+          </swiper-slide>
+        </swiper-container>
+      </div>
+    </div>
+
     <!-- Service Categories -->
     <!-- <div class="mb-6">
       <h3 class="text-xl font-bold text-handy-navy-800 mb-4 px-2">

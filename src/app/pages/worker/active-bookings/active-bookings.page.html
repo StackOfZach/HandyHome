@@ -1,0 +1,162 @@
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+>
+  <!-- Custom Header matching HandyHome branding -->
+  <div
+    class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6"
+  >
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <button
+          (click)="goBack()"
+          class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-105"
+        >
+          <ion-icon name="chevron-back" class="text-white text-xl"></ion-icon>
+        </button>
+        <h1 class="text-white text-2xl font-bold">Active Bookings</h1>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button
+          (click)="refresh()"
+          class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-105"
+        >
+          <ion-icon name="refresh" class="text-white text-xl"></ion-icon>
+        </button>
+      </div>
+    </div>
+    <!-- Subtitle -->
+    <p class="text-white/90 text-sm mt-2 ml-14">Manage your ongoing jobs</p>
+  </div>
+
+  <div class="px-6 pb-24">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="text-center py-12">
+      <ion-spinner name="crescent" class="w-8 h-8 text-handy-blue-500"></ion-spinner>
+      <p class="text-gray-600 mt-4">Loading active bookings...</p>
+    </div>
+
+    <!-- Active Bookings List -->
+    <div *ngIf="!isLoading && activeBookings.length > 0" class="space-y-6">
+      <div
+        *ngFor="let booking of activeBookings"
+        class="bg-white rounded-3xl shadow-2xl p-6 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card"
+      >
+        <!-- Decorative gradient overlay -->
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"></div>
+        
+        <!-- Booking Header -->
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex-1">
+            <div class="flex items-center mb-2">
+              <div class="w-10 h-10 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3">
+                <ion-icon name="briefcase" class="text-white text-lg"></ion-icon>
+              </div>
+              <div>
+                <h3 class="font-bold text-handy-navy-800 text-lg">
+                  {{ booking.neededService || booking.categoryName || 'Service Request' }}
+                </h3>
+                <p class="text-sm text-gray-600">{{ booking.subService }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Status Badge -->
+          <div class="flex flex-col items-end space-y-2">
+            <span
+              class="px-4 py-2 rounded-2xl text-sm font-bold flex items-center space-x-2"
+              [ngClass]="{
+                'bg-gradient-to-r from-handy-blue-100 to-handy-blue-200 text-handy-blue-700': booking.status === 'accepted',
+                'bg-gradient-to-r from-orange-100 to-orange-200 text-orange-700': booking.status === 'in-progress'
+              }"
+            >
+              <ion-icon [name]="getStatusIcon(booking.status)" class="text-sm"></ion-icon>
+              <span>{{ getStatusText(booking.status) }}</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Booking Details -->
+        <div class="space-y-4 mb-6">
+          <!-- Client Information -->
+          <div class="flex items-center space-x-3 p-3 bg-gradient-to-r from-gray-50/50 to-gray-100/50 rounded-2xl backdrop-blur-sm border border-gray-200/30">
+            <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+              <ion-icon name="person" class="text-white text-sm"></ion-icon>
+            </div>
+            <div>
+              <p class="font-bold text-handy-navy-800">{{ booking.clientName || 'Client' }}</p>
+              <p class="text-sm text-gray-600">Client information</p>
+            </div>
+          </div>
+
+          <!-- Schedule Information -->
+          <div class="flex items-center space-x-3 p-3 bg-gradient-to-r from-purple-50/50 to-purple-100/50 rounded-2xl backdrop-blur-sm border border-purple-200/30">
+            <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <ion-icon name="calendar" class="text-white text-sm"></ion-icon>
+            </div>
+            <div>
+              <p class="font-bold text-handy-navy-800">{{ getFormattedDate(booking.scheduleDate) }}</p>
+              <p class="text-sm text-purple-600">Scheduled date</p>
+            </div>
+          </div>
+
+          <!-- Location Information -->
+          <div *ngIf="booking.location?.address" class="flex items-center space-x-3 p-3 bg-gradient-to-r from-blue-50/50 to-blue-100/50 rounded-2xl backdrop-blur-sm border border-blue-200/30">
+            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <ion-icon name="location" class="text-white text-sm"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <p class="font-bold text-handy-navy-800 text-sm">{{ booking.location?.address }}</p>
+              <p class="text-sm text-blue-600">Service location</p>
+            </div>
+          </div>
+
+          <!-- Budget Information -->
+          <div class="flex items-center space-x-3 p-3 bg-gradient-to-r from-emerald-50/50 to-emerald-100/50 rounded-2xl backdrop-blur-sm border border-emerald-200/30">
+            <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+              <ion-icon name="wallet" class="text-white text-sm"></ion-icon>
+            </div>
+            <div>
+              <p class="font-bold text-handy-navy-800">{{ getBudgetDisplay(booking) }}</p>
+              <p class="text-sm text-emerald-600">Budget range</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="flex space-x-3">
+          <button
+            (click)="viewBookingDetails(booking)"
+            class="flex-1 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white px-6 py-4 rounded-2xl font-bold text-sm shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
+          >
+            <ion-icon name="eye" class="text-lg"></ion-icon>
+            <span>View Booking Details</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && activeBookings.length === 0" class="text-center py-16">
+      <div
+        class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center mx-auto mb-6"
+      >
+        <ion-icon
+          name="briefcase-outline"
+          class="text-4xl text-gray-400"
+        ></ion-icon>
+      </div>
+      <h3 class="text-2xl font-bold text-handy-navy-800 mb-3">No Active Bookings</h3>
+      <p class="text-gray-600 text-lg mb-6 max-w-md mx-auto leading-relaxed">
+        You don't have any active bookings at the moment. Check back later or browse available booking requests.
+      </p>
+      <button
+        (click)="goBack()"
+        class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center space-x-2 mx-auto"
+      >
+        <ion-icon name="home" class="text-lg"></ion-icon>
+        <span>Back to Dashboard</span>
+      </button>
+    </div>
+  </div>
+</ion-content>

@@ -507,23 +507,22 @@ export class DashboardService {
     totalRevenue: number;
   }> {
     try {
-      // Get all users and separate clients and workers
+      // Get client count from users collection
       const usersRef = collection(this.firestore, 'users');
-      const usersSnapshot = await getDocs(usersRef);
+      const clientsQuery = query(usersRef, where('role', '==', 'client'));
+      const clientsSnapshot = await getDocs(clientsQuery);
+      const totalClients = clientsSnapshot.size;
 
-      let totalClients = 0;
-      let totalWorkers = 0;
+      // Get worker statistics from workers collection
+      const workersRef = collection(this.firestore, 'workers');
+      const workersSnapshot = await getDocs(workersRef);
+      const totalWorkers = workersSnapshot.size;
+
       let pendingVerifications = 0;
-
-      usersSnapshot.forEach((doc) => {
-        const user = doc.data();
-        if (user['role'] === 'client') {
-          totalClients++;
-        } else if (user['role'] === 'worker') {
-          totalWorkers++;
-          if (user['status'] === 'pending_verification') {
-            pendingVerifications++;
-          }
+      workersSnapshot.forEach((doc) => {
+        const worker = doc.data();
+        if (worker['status'] === 'pending_verification') {
+          pendingVerifications++;
         }
       });
 
@@ -551,6 +550,15 @@ export class DashboardService {
         }
       });
 
+      console.log('Analytics Data:', {
+        totalClients,
+        totalWorkers,
+        pendingVerifications,
+        activeBookings,
+        completedBookings,
+        totalRevenue,
+      });
+
       return {
         totalClients,
         totalWorkers,
@@ -563,12 +571,12 @@ export class DashboardService {
       console.error('Error getting admin analytics:', error);
       // Return mock data as fallback
       return {
-        totalClients: 245,
-        totalWorkers: 89,
-        pendingVerifications: 12,
-        activeBookings: 34,
-        completedBookings: 567,
-        totalRevenue: 125430.5,
+        totalClients: 0,
+        totalWorkers: 0,
+        pendingVerifications: 0,
+        activeBookings: 0,
+        completedBookings: 0,
+        totalRevenue: 0,
       };
     }
   }

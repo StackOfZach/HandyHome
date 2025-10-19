@@ -1,0 +1,433 @@
+<ion-header>
+  <ion-toolbar color="success">
+    <ion-title>Complete Payment</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()" fill="clear">
+        <ion-icon name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Progress Indicator -->
+  <div class="progress-container mb-6">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-sm font-medium"
+        >Step {{ currentStep }} of {{ maxSteps }}</span
+      >
+      <span class="text-sm text-gray-500"
+        >{{ Math.round((currentStep / maxSteps) * 100) }}%</span
+      >
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-2">
+      <div
+        class="bg-green-500 h-2 rounded-full transition-all duration-300"
+        [style.width.%]="(currentStep / maxSteps) * 100"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Step 1: Payment Details -->
+  <div *ngIf="currentStep === 1" class="step-container">
+    <div class="text-center mb-6">
+      <ion-icon name="card" class="text-4xl text-green-500 mb-2"></ion-icon>
+      <h2 class="text-xl font-bold text-gray-800">Payment Summary</h2>
+      <p class="text-gray-600 text-sm">Review your payment details</p>
+    </div>
+
+    <!-- Payment Breakdown Card -->
+    <div class="bg-gray-50 rounded-xl p-4 mb-4">
+      <h3 class="font-semibold text-gray-800 mb-3">Service Charges</h3>
+
+      <div class="space-y-2">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600">Base Service Price</span>
+          <span class="font-medium"
+            >₱{{ breakdown.basePrice | number : "1.2-2" }}</span
+          >
+        </div>
+
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-600">Service Charge</span>
+          <span class="font-medium"
+            >₱{{ breakdown.serviceCharge | number : "1.2-2" }}</span
+          >
+        </div>
+
+        <div
+          *ngIf="breakdown.transportFee"
+          class="flex justify-between text-sm"
+        >
+          <span class="text-gray-600">Transport Fee</span>
+          <span class="font-medium"
+            >₱{{ breakdown.transportFee | number : "1.2-2" }}</span
+          >
+        </div>
+
+        <div class="border-t border-gray-300 pt-2 mt-3">
+          <div class="flex justify-between font-semibold">
+            <span>Subtotal</span>
+            <span
+              >₱{{
+                breakdown.basePrice +
+                  breakdown.serviceCharge +
+                  (breakdown.transportFee || 0) | number : "1.2-2"
+              }}</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Optional Tip Section -->
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-gray-800">Add Tip (Optional)</h3>
+        <ion-toggle
+          [(ngModel)]="paymentForm.addTip"
+          color="success"
+        ></ion-toggle>
+      </div>
+
+      <div *ngIf="paymentForm.addTip" class="space-y-3">
+        <p class="text-sm text-gray-600">
+          Show your appreciation for excellent service
+        </p>
+
+        <!-- Tip Amount Buttons -->
+        <div class="grid grid-cols-4 gap-2">
+          <button
+            *ngFor="let tip of [20, 50, 100, 150]"
+            (click)="paymentForm.tipAmount = tip"
+            [class.bg-green-500]="paymentForm.tipAmount === tip"
+            [class.text-white]="paymentForm.tipAmount === tip"
+            [class.bg-gray-200]="paymentForm.tipAmount !== tip"
+            class="py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+          >
+            ₱{{ tip }}
+          </button>
+        </div>
+
+        <!-- Custom Tip Amount -->
+        <div>
+          <ion-item lines="none" class="custom-input">
+            <ion-label position="stacked">Custom Amount</ion-label>
+            <ion-input
+              type="number"
+              [(ngModel)]="paymentForm.tipAmount"
+              min="0"
+              max="1000"
+              placeholder="Enter custom tip amount"
+            ></ion-input>
+          </ion-item>
+        </div>
+      </div>
+    </div>
+
+    <!-- Final Total -->
+    <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+      <div class="flex justify-between items-center">
+        <span class="text-lg font-semibold text-gray-800">Total Amount</span>
+        <span class="text-2xl font-bold text-green-600"
+          >₱{{ totalAmount | number : "1.2-2" }}</span
+        >
+      </div>
+
+      <div class="mt-2 text-center">
+        <span
+          class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium"
+        >
+          Cash on Service (COS)
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Payment Verification -->
+  <div *ngIf="currentStep === 2" class="step-container">
+    <div class="text-center mb-6">
+      <ion-icon
+        name="shield-checkmark"
+        class="text-4xl text-green-500 mb-2"
+      ></ion-icon>
+      <h2 class="text-xl font-bold text-gray-800">Payment Verification</h2>
+      <p class="text-gray-600 text-sm">
+        Verify your payment to {{ workerName }}
+      </p>
+    </div>
+
+    <!-- Verification Method Selection -->
+    <div class="space-y-3 mb-6">
+      <h3 class="font-semibold text-gray-700">Choose Verification Method</h3>
+
+      <ion-radio-group [(ngModel)]="verificationMethod">
+        <!-- Photo Verification -->
+        <div
+          class="verification-option border-2 rounded-xl p-4 cursor-pointer transition-all"
+          [class.border-green-500]="verificationMethod === 'photo'"
+          [class.bg-green-50]="verificationMethod === 'photo'"
+          [class.border-gray-200]="verificationMethod !== 'photo'"
+        >
+          <ion-item lines="none">
+            <ion-icon
+              name="camera"
+              slot="start"
+              class="text-xl text-green-600"
+            ></ion-icon>
+            <ion-label>
+              <h4 class="font-medium text-gray-800">Photo Verification</h4>
+              <p class="text-sm text-gray-600">Take a photo as payment proof</p>
+            </ion-label>
+            <ion-radio slot="end" value="photo" color="success"></ion-radio>
+          </ion-item>
+        </div>
+
+        <!-- OTP Verification -->
+        <div
+          class="verification-option border-2 rounded-xl p-4 cursor-pointer transition-all mt-3"
+          [class.border-green-500]="verificationMethod === 'otp'"
+          [class.bg-green-50]="verificationMethod === 'otp'"
+          [class.border-gray-200]="verificationMethod !== 'otp'"
+        >
+          <ion-item lines="none">
+            <ion-icon
+              name="key"
+              slot="start"
+              class="text-xl text-green-600"
+            ></ion-icon>
+            <ion-label>
+              <h4 class="font-medium text-gray-800">Confirmation Code</h4>
+              <p class="text-sm text-gray-600">Generate a confirmation code</p>
+            </ion-label>
+            <ion-radio slot="end" value="otp" color="success"></ion-radio>
+          </ion-item>
+        </div>
+      </ion-radio-group>
+    </div>
+
+    <!-- Verification Content -->
+    <div class="verification-content">
+      <!-- Photo Verification -->
+      <div *ngIf="verificationMethod === 'photo'" class="space-y-4">
+        <div *ngIf="!verificationData.photoUrl" class="text-center">
+          <div class="border-2 border-dashed border-gray-300 rounded-xl p-8">
+            <ion-icon
+              name="camera"
+              class="text-4xl text-gray-400 mb-3"
+            ></ion-icon>
+            <p class="text-gray-600 text-sm mb-4">
+              Take a photo as payment proof
+            </p>
+
+            <div class="flex space-x-2 justify-center">
+              <button
+                (click)="capturePaymentProof()"
+                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
+              >
+                <ion-icon name="camera" class="mr-2"></ion-icon>
+                Take Photo
+              </button>
+
+              <button
+                (click)="selectFromGallery()"
+                class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
+              >
+                <ion-icon name="images" class="mr-2"></ion-icon>
+                From Gallery
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="verificationData.photoUrl" class="text-center">
+          <div class="relative inline-block">
+            <img
+              [src]="verificationData.photoUrl"
+              alt="Payment proof"
+              class="w-48 h-48 object-cover rounded-xl border-2 border-green-200"
+            />
+            <button
+              (click)="removePhoto()"
+              class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm"
+            >
+              ×
+            </button>
+          </div>
+          <p class="text-sm text-green-600 mt-2 font-medium">
+            Photo captured successfully!
+          </p>
+        </div>
+      </div>
+
+      <!-- OTP Verification -->
+      <div *ngIf="verificationMethod === 'otp'" class="space-y-4">
+        <div class="text-center">
+          <button
+            *ngIf="!verificationData.otpCode"
+            (click)="generateOTP()"
+            class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center mx-auto"
+          >
+            <ion-icon name="refresh" class="mr-2"></ion-icon>
+            Generate Confirmation Code
+          </button>
+
+          <div
+            *ngIf="verificationData.otpCode"
+            class="bg-green-50 border border-green-200 rounded-xl p-6"
+          >
+            <p class="text-sm text-gray-600 mb-2">Your confirmation code:</p>
+            <div class="text-3xl font-bold text-green-600 tracking-wider">
+              {{ verificationData.otpCode }}
+            </div>
+            <p class="text-xs text-gray-500 mt-2">
+              Share this code with the worker for verification
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Final Confirmation -->
+  <div *ngIf="currentStep === 3" class="step-container">
+    <div class="text-center mb-6">
+      <ion-icon
+        name="checkmark-circle"
+        class="text-4xl text-green-500 mb-2"
+      ></ion-icon>
+      <h2 class="text-xl font-bold text-gray-800">Confirm Payment</h2>
+      <p class="text-gray-600 text-sm">Review and complete your payment</p>
+    </div>
+
+    <!-- Final Summary -->
+    <div class="space-y-4">
+      <!-- Worker Info -->
+      <div class="bg-gray-50 rounded-xl p-4">
+        <h3 class="font-semibold text-gray-800 mb-2">Service Provider</h3>
+        <div class="flex items-center space-x-3">
+          <div
+            class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center"
+          >
+            <span class="text-white font-bold">{{
+              workerName.charAt(0).toUpperCase()
+            }}</span>
+          </div>
+          <div>
+            <p class="font-medium text-gray-800">{{ workerName }}</p>
+            <p class="text-sm text-gray-600">HandyHome Professional</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Amount Summary -->
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-2">
+          <span class="font-medium text-gray-800">Total Amount</span>
+          <span class="text-xl font-bold text-green-600"
+            >₱{{ totalAmount | number : "1.2-2" }}</span
+          >
+        </div>
+        <div class="flex justify-between items-center text-sm text-gray-600">
+          <span>Payment Method</span>
+          <span
+            class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium"
+          >
+            Cash on Service
+          </span>
+        </div>
+      </div>
+
+      <!-- Verification Summary -->
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <h3 class="font-semibold text-gray-800 mb-2">Verification</h3>
+        <div class="flex items-center space-x-2">
+          <ion-icon
+            [name]="verificationMethod === 'photo' ? 'camera' : 'key'"
+            class="text-blue-600"
+          ></ion-icon>
+          <span class="text-sm text-gray-700">
+            {{
+              verificationMethod === "photo"
+                ? "Photo verification"
+                : "Confirmation code"
+            }}
+            ready
+          </span>
+        </div>
+      </div>
+
+      <!-- Optional Notes -->
+      <div>
+        <ion-item lines="none" class="custom-input">
+          <ion-label position="stacked">Additional Notes (Optional)</ion-label>
+          <ion-textarea
+            [(ngModel)]="paymentForm.notes"
+            placeholder="Any additional notes about the payment..."
+            rows="3"
+            maxlength="200"
+          ></ion-textarea>
+        </ion-item>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Buttons -->
+  <div class="mt-8 flex space-x-3">
+    <!-- Back Button -->
+    <ion-button
+      *ngIf="currentStep > 1"
+      fill="outline"
+      color="medium"
+      expand="block"
+      class="flex-1"
+      (click)="previousStep()"
+    >
+      <ion-icon name="chevron-back" slot="start"></ion-icon>
+      Back
+    </ion-button>
+
+    <!-- Next/Complete Button -->
+    <ion-button
+      expand="block"
+      class="flex-1"
+      [color]="currentStep === maxSteps ? 'success' : 'primary'"
+      [disabled]="!canProceed() || isProcessing"
+      (click)="
+        currentStep === maxSteps ? showPaymentConfirmation() : nextStep()
+      "
+    >
+      <ion-spinner
+        *ngIf="isProcessing"
+        name="crescent"
+        slot="start"
+      ></ion-spinner>
+      <span *ngIf="!isProcessing">
+        {{ currentStep === maxSteps ? "Complete Payment" : "Next" }}
+      </span>
+      <span *ngIf="isProcessing">Processing...</span>
+      <ion-icon
+        *ngIf="!isProcessing && currentStep < maxSteps"
+        name="chevron-forward"
+        slot="end"
+      ></ion-icon>
+    </ion-button>
+  </div>
+
+  <!-- Payment Info Footer -->
+  <div class="mt-6 p-3 bg-gray-50 rounded-lg">
+    <div class="flex items-start space-x-2">
+      <ion-icon
+        name="information-circle"
+        class="text-blue-500 mt-0.5 flex-shrink-0"
+      ></ion-icon>
+      <div class="text-xs text-gray-700">
+        <p class="font-medium mb-1">Cash on Service (COS)</p>
+        <p>
+          Payment will be processed after service completion. You can verify
+          payment using photo or confirmation code.
+        </p>
+      </div>
+    </div>
+  </div>
+</ion-content>

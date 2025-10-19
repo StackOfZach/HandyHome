@@ -103,9 +103,29 @@
       <div *ngIf="activeSection === 'dashboard'">
         <!-- Analytics Cards -->
         <div class="mb-8">
-          <h2 class="text-xl font-semibold text-gray-800 mb-6">
-            Analytics Overview
-          </h2>
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-semibold text-gray-800">
+                Analytics Overview
+              </h2>
+              <p class="text-gray-500 text-sm" *ngIf="lastAnalyticsUpdate">
+                Last updated: {{ lastAnalyticsUpdate | date:'short' }}
+              </p>
+            </div>
+            <button
+              (click)="refreshAnalytics()"
+              [disabled]="isRefreshingAnalytics"
+              class="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ion-icon
+                [name]="isRefreshingAnalytics ? 'sync' : 'refresh'"
+                [class]="isRefreshingAnalytics ? 'animate-spin' : ''"
+              ></ion-icon>
+              <span
+                >{{ isRefreshingAnalytics ? 'Refreshing...' : 'Refresh' }}</span
+              >
+            </button>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Total Clients Card -->
             <div
@@ -141,7 +161,14 @@
                 <ion-icon name="hourglass" class="text-4xl"></ion-icon>
               </div>
               <h3 class="text-3xl font-bold mb-2">
-                {{ analytics.pendingVerifications || 0 }}
+                <span *ngIf="!isRefreshingAnalytics"
+                  >{{ analytics.pendingVerifications || 0 }}</span
+                >
+                <ion-spinner
+                  *ngIf="isRefreshingAnalytics"
+                  name="crescent"
+                  class="w-8 h-8"
+                ></ion-spinner>
               </h3>
               <p class="text-yellow-100">Pending Verifications</p>
             </div>
@@ -167,7 +194,14 @@
                 <ion-icon name="checkmark-circle" class="text-4xl"></ion-icon>
               </div>
               <h3 class="text-3xl font-bold mb-2">
-                {{ analytics.completedBookings || 0 }}
+                <span *ngIf="!isRefreshingAnalytics"
+                  >{{ analytics.completedBookings || 0 }}</span
+                >
+                <ion-spinner
+                  *ngIf="isRefreshingAnalytics"
+                  name="crescent"
+                  class="w-8 h-8"
+                ></ion-spinner>
               </h3>
               <p class="text-teal-100">Completed Bookings</p>
             </div>
@@ -878,8 +912,6 @@
                 {{ service.description }}
               </p>
 
-
-
               <!-- Sub-services Preview -->
               <div
                 *ngIf="service.services && service.services.length > 0"
@@ -1508,14 +1540,22 @@
               <label class="text-sm font-medium text-gray-500 block mb-3"
                 >Valid ID</label
               >
-              <div class="relative">
+              <div class="relative group">
                 <img
                   *ngIf="selectedWorker.idPhotoData"
                   [src]="selectedWorker.idPhotoData"
-                  class="w-full h-40 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
-                  (click)="openPhotoModal(selectedWorker.idPhotoData, 'Valid ID')"
+                  class="w-full h-40 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-all duration-200 hover:scale-105"
+                  (click)="openImageInNewTab(selectedWorker.idPhotoData, 'Valid ID - ' + selectedWorker.fullName)"
                   alt="Worker ID"
+                  title="Click to view in new tab"
                 />
+                <!-- New Tab Indicator -->
+                <div
+                  class="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  *ngIf="selectedWorker.idPhotoData"
+                >
+                  <ion-icon name="open-outline" class="text-xs"></ion-icon>
+                </div>
                 <div
                   *ngIf="!selectedWorker.idPhotoData"
                   class="w-full h-40 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center"
@@ -1536,14 +1576,22 @@
               <label class="text-sm font-medium text-gray-500 block mb-3"
                 >Profile Photo</label
               >
-              <div class="relative">
+              <div class="relative group">
                 <img
                   *ngIf="selectedWorker.profilePhotoData"
                   [src]="selectedWorker.profilePhotoData"
-                  class="w-full h-40 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
-                  (click)="openPhotoModal(selectedWorker.profilePhotoData, 'Profile Photo')"
+                  class="w-full h-40 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-all duration-200 hover:scale-105"
+                  (click)="openImageInNewTab(selectedWorker.profilePhotoData, 'Profile Photo - ' + selectedWorker.fullName)"
                   alt="Worker Profile"
+                  title="Click to view in new tab"
                 />
+                <!-- New Tab Indicator -->
+                <div
+                  class="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  *ngIf="selectedWorker.profilePhotoData"
+                >
+                  <ion-icon name="open-outline" class="text-xs"></ion-icon>
+                </div>
                 <div
                   *ngIf="!selectedWorker.profilePhotoData"
                   class="w-full h-40 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center"
@@ -1560,6 +1608,126 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Professional Certificates -->
+        <div
+          class="bg-white rounded-lg border p-4"
+          *ngIf="selectedWorker.certificates && getWorkerCertificateKeys(selectedWorker.certificates).length > 0"
+        >
+          <h3
+            class="text-lg font-semibold text-gray-800 mb-4 flex items-center"
+          >
+            <ion-icon name="ribbon" class="mr-2 text-indigo-500"></ion-icon>
+            Professional Certificates
+          </h3>
+          <div class="space-y-4">
+            <div
+              *ngFor="let skill of getWorkerCertificateKeys(selectedWorker.certificates)"
+              class="border border-gray-200 rounded-lg p-4"
+            >
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center space-x-3">
+                  <div class="bg-indigo-100 p-2 rounded-lg">
+                    <ion-icon
+                      name="document-text"
+                      class="text-indigo-600"
+                    ></ion-icon>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-gray-800">{{ skill }}</h4>
+                    <p class="text-sm text-gray-500">
+                      Professional Certificate
+                    </p>
+                  </div>
+                </div>
+                <span
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                >
+                  <ion-icon
+                    name="checkmark-circle"
+                    class="mr-1 text-xs"
+                  ></ion-icon>
+                  Uploaded
+                </span>
+              </div>
+
+              <!-- Certificate Preview -->
+              <div class="relative">
+                <div
+                  class="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 p-4 text-center"
+                >
+                  <div
+                    *ngIf="isCertificateImage(selectedWorker.certificates![skill]); else pdfCertificate"
+                    class="relative group"
+                  >
+                    <img
+                      [src]="selectedWorker.certificates![skill]"
+                      class="max-w-full h-40 object-contain mx-auto rounded cursor-pointer hover:opacity-80 transition-all duration-200 hover:scale-105"
+                      (click)="openImageInNewTab(selectedWorker.certificates![skill], skill + ' Certificate - ' + selectedWorker.fullName)"
+                      [alt]="skill + ' Certificate'"
+                      title="Click to view in new tab"
+                    />
+                    <!-- New Tab Indicator -->
+                    <div
+                      class="absolute top-2 right-2 bg-blue-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    >
+                      <ion-icon name="open-outline" class="text-xs"></ion-icon>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">
+                      Click to view in new tab
+                    </p>
+                  </div>
+                  <ng-template #pdfCertificate>
+                    <div class="flex items-center justify-center py-8">
+                      <div class="text-center">
+                        <ion-icon
+                          name="document"
+                          class="text-red-500 text-4xl mb-2"
+                        ></ion-icon>
+                        <p class="text-gray-700 font-medium">PDF Certificate</p>
+                        <p class="text-sm text-gray-500 mb-3">
+                          {{ skill }} Certification Document
+                        </p>
+                        <button
+                          (click)="downloadCertificate(selectedWorker.certificates![skill], skill)"
+                          class="inline-flex items-center px-3 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          <ion-icon name="download" class="mr-2"></ion-icon>
+                          Download PDF
+                        </button>
+                      </div>
+                    </div>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Certificates Message -->
+        <div
+          class="bg-white rounded-lg border p-4"
+          *ngIf="!selectedWorker.certificates || getWorkerCertificateKeys(selectedWorker.certificates).length === 0"
+        >
+          <h3
+            class="text-lg font-semibold text-gray-800 mb-4 flex items-center"
+          >
+            <ion-icon name="ribbon" class="mr-2 text-indigo-500"></ion-icon>
+            Professional Certificates
+          </h3>
+          <div class="text-center py-8">
+            <ion-icon
+              name="document-text-outline"
+              class="text-gray-400 text-4xl mb-3"
+            ></ion-icon>
+            <h4 class="text-gray-600 font-medium mb-2">
+              No Certificates Uploaded
+            </h4>
+            <p class="text-gray-500 text-sm">
+              This worker has not uploaded any professional certificates yet.
+            </p>
           </div>
         </div>
 
@@ -1755,8 +1923,6 @@
                   </div>
                 </div>
               </div>
-
-
             </div>
 
             <!-- Right Column -->

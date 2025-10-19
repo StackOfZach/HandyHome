@@ -1,0 +1,111 @@
+ion-content {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --background: linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%);
+}
+
+.enhanced-card {
+  transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.floating-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+// Custom Tailwind classes for HandyHome branding
+.bg-handy-blue-50 {
+  background-color: #eff6ff;
+}
+
+.bg-handy-blue-500 {
+  background-color: #3b82f6;
+}
+
+.bg-handy-blue-600 {
+  background-color: #2563eb;
+}
+
+.bg-handy-yellow-50 {
+  background-color: #fefce8;
+}
+
+.bg-handy-yellow-500 {
+  background-color: #eab308;
+}
+
+.bg-handy-yellow-600 {
+  background-color: #ca8a04;
+}
+
+.text-handy-navy-800 {
+  color: #1e293b;
+}
+
+.text-handy-navy-600 {
+  color: #475569;
+}
+
+.text-handy-blue-500 {
+  color: #3b82f6;
+}
+
+.text-handy-blue-600 {
+  color: #2563eb;
+}
+
+.text-handy-blue-700 {
+  color: #1d4ed8;
+}
+
+.border-handy-blue-200 {
+  border-color: #bfdbfe;
+}
+
+.from-handy-blue-500 {
+  --tw-gradient-from: #3b82f6;
+}
+
+.to-handy-blue-600 {
+  --tw-gradient-to: #2563eb;
+}
+
+.from-handy-yellow-500 {
+  --tw-gradient-from: #eab308;
+}
+
+.to-handy-yellow-600 {
+  --tw-gradient-to: #ca8a04;
+}
+
+.from-handy-blue-100 {
+  --tw-gradient-from: #dbeafe;
+}
+
+.to-handy-blue-200 {
+  --tw-gradient-to: #bfdbfe;
+}
+
+// Mobile responsive adjustments
+@media (max-width: 768px) {
+  .enhanced-card {
+    margin-bottom: 16px;
+  }
+  
+  .floating-animation {
+    animation-duration: 4s;
+  }
+}

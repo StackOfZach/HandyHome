@@ -1,0 +1,249 @@
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+>
+  <!-- Custom Header matching Dashboard -->
+  <div
+    class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6"
+  >
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <button
+          (click)="goBack()"
+          class="p-2 rounded-full bg-transparent"
+        >
+          <ion-icon name="chevron-back" class="text-white text-xl"></ion-icon>
+        </button>
+        <h1 class="text-white text-2xl font-bold">Book a Service</h1>
+      </div>
+      <div class="flex items-center space-x-3">
+        <div class="p-2 rounded-full bg-white/20">
+          <ion-icon name="calendar-outline" class="text-white text-xl"></ion-icon>
+        </div>
+      </div>
+    </div>
+    <!-- Subtitle -->
+    <p class="text-white/90 text-sm mt-2 ml-14">Find the perfect worker for your needs</p>
+  </div>
+  <div class="px-6 pb-24">
+    <!-- Main Form Card -->
+    <div class="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card">
+      <!-- Decorative gradient overlay -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"></div>
+      
+      <!-- Service Selection -->
+      <div class="mb-8">
+        <label class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg">
+          <div class="w-10 h-10 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation">
+            <ion-icon name="construct-outline" class="text-white text-lg"></ion-icon>
+          </div>
+          What service do you need?
+        </label>
+        <div class="relative">
+          <select
+            [(ngModel)]="selectedService"
+            class="w-full border-2 border-gray-200 rounded-2xl p-5 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 bg-white shadow-sm text-gray-700 font-medium appearance-none"
+            [class.border-red-400]="!selectedService && showValidation"
+            [class.bg-red-50]="!selectedService && showValidation"
+          >
+            <option value="" disabled>Choose your service</option>
+            <option *ngFor="let service of services" [value]="service.name">
+              {{ service.name }}
+            </option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+            <ion-icon name="chevron-down" class="text-gray-400 text-lg"></ion-icon>
+          </div>
+        </div>
+        <div
+          *ngIf="!selectedService && showValidation"
+          class="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center animate-pulse"
+        >
+          <ion-icon name="alert-circle" class="text-red-500 mr-2 text-lg"></ion-icon>
+          <p class="text-red-600 text-sm font-medium">Please select a service to continue</p>
+        </div>
+      </div>
+
+      <!-- Modern Calendar Section -->
+      <div class="mb-8">
+        <label class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg">
+          <div class="w-10 h-10 bg-gradient-to-r from-handy-yellow-500 to-handy-yellow-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation" style="animation-delay: 0.5s;">
+            <ion-icon name="calendar-outline" class="text-white text-lg"></ion-icon>
+          </div>
+          When do you need it?
+        </label>
+        <div
+          class="border-2 border-gray-200 rounded-2xl p-6 bg-gradient-to-br from-handy-blue-50/50 to-handy-yellow-50/50 hover:shadow-lg transition-all duration-300 backdrop-blur-sm"
+          [class.border-red-400]="!selectedDateTime && showValidation"
+          [class.bg-red-50]="!selectedDateTime && showValidation"
+        >
+          <ion-datetime
+            presentation="date-time"
+            [(ngModel)]="selectedDateTime"
+            [min]="minDate"
+            [max]="maxDate"
+            class="custom-datetime w-full"
+            style="--color: #1e293b; --background: transparent;"
+          ></ion-datetime>
+        </div>
+        <div
+          *ngIf="!selectedDateTime && showValidation"
+          class="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center animate-pulse"
+        >
+          <ion-icon name="alert-circle" class="text-red-500 mr-2 text-lg"></ion-icon>
+          <p class="text-red-600 text-sm font-medium">Please select your preferred date and time</p>
+        </div>
+      </div>
+
+      <!-- Budget Range -->
+      <div class="mb-8">
+        <label class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg">
+          <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation" style="animation-delay: 1s;">
+            <ion-icon name="wallet-outline" class="text-white text-lg"></ion-icon>
+          </div>
+          What's your budget range?
+        </label>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+              <span class="text-gray-500 font-semibold">₱</span>
+            </div>
+            <input
+              type="number"
+              [(ngModel)]="minBudget"
+              placeholder="Min amount"
+              class="w-full border-2 border-gray-200 rounded-2xl pl-10 pr-4 py-5 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 shadow-sm font-medium"
+              [class.border-red-400]="!minBudget && showValidation"
+              [class.bg-red-50]="!minBudget && showValidation"
+            />
+          </div>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+              <span class="text-gray-500 font-semibold">₱</span>
+            </div>
+            <input
+              type="number"
+              [(ngModel)]="maxBudget"
+              placeholder="Max amount"
+              class="w-full border-2 border-gray-200 rounded-2xl pl-10 pr-4 py-5 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 shadow-sm font-medium"
+              [class.border-red-400]="!maxBudget && showValidation"
+              [class.bg-red-50]="!maxBudget && showValidation"
+            />
+          </div>
+        </div>
+        <div
+          *ngIf="(!minBudget || !maxBudget) && showValidation"
+          class="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center animate-pulse"
+        >
+          <ion-icon name="alert-circle" class="text-red-500 mr-2 text-lg"></ion-icon>
+          <p class="text-red-600 text-sm font-medium">Please enter both minimum and maximum budget</p>
+        </div>
+      </div>
+
+      <!-- Additional Details -->
+      <div class="mb-8">
+        <label class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg">
+          <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation" style="animation-delay: 1.5s;">
+            <ion-icon name="document-text-outline" class="text-white text-lg"></ion-icon>
+          </div>
+          Additional details
+          <span class="text-gray-500 text-sm font-normal ml-2">(optional)</span>
+        </label>
+        <div class="relative">
+          <textarea
+            [(ngModel)]="additionalDetails"
+            placeholder="Describe any specific requirements, preferred time, location details, or special instructions..."
+            rows="4"
+            class="w-full border-2 border-gray-200 rounded-2xl p-5 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 resize-none shadow-sm font-medium"
+          ></textarea>
+          <div class="absolute bottom-3 right-3">
+            <ion-icon name="create-outline" class="text-gray-300 text-lg"></ion-icon>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button
+        (click)="findWorkers()"
+        [disabled]="isLoading"
+        class="w-full bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white py-6 rounded-2xl mt-6 shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 font-bold text-lg flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-xl relative overflow-hidden pulse-button"
+      >
+        <!-- Button gradient overlay -->
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 animate-pulse"></div>
+        
+        <div class="flex items-center space-x-3 relative z-10">
+          <div class="w-6 h-6 flex items-center justify-center">
+            <ion-icon
+              *ngIf="!isLoading"
+              name="search-outline"
+              class="text-white text-xl"
+            ></ion-icon>
+            <ion-spinner
+              *ngIf="isLoading"
+              name="crescent"
+              class="w-6 h-6"
+            ></ion-spinner>
+          </div>
+          <span>{{ isLoading ? 'Finding Perfect Workers...' : 'Find Available Workers' }}</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Enhanced Info Cards -->
+    <div class="mt-8 space-y-4">
+      <!-- Verified Workers Card -->
+      <div
+        class="bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-3xl p-6 flex items-center space-x-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+      >
+        <div class="w-14 h-14 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <ion-icon name="shield-checkmark" class="text-white text-2xl"></ion-icon>
+        </div>
+        <div class="flex-1">
+          <h3 class="font-bold text-emerald-800 text-lg">Verified Workers</h3>
+          <p class="text-emerald-600 text-sm mt-1">
+            All our workers are background-checked and verified
+          </p>
+        </div>
+        <div class="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center">
+          <ion-icon name="checkmark" class="text-emerald-600 text-lg"></ion-icon>
+        </div>
+      </div>
+
+      <!-- Quick Response Card -->
+      <div
+        class="bg-gradient-to-r from-handy-blue-50 to-cyan-50 border-2 border-handy-blue-200 rounded-3xl p-6 flex items-center space-x-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+      >
+        <div class="w-14 h-14 bg-gradient-to-r from-handy-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <ion-icon name="time-outline" class="text-white text-2xl"></ion-icon>
+        </div>
+        <div class="flex-1">
+          <h3 class="font-bold text-handy-blue-800 text-lg">Quick Response</h3>
+          <p class="text-handy-blue-600 text-sm mt-1">
+            Get responses from qualified workers within 30 minutes
+          </p>
+        </div>
+        <div class="w-8 h-8 bg-handy-blue-500/20 rounded-full flex items-center justify-center">
+          <ion-icon name="flash" class="text-handy-blue-600 text-lg"></ion-icon>
+        </div>
+      </div>
+
+      <!-- Quality Guarantee Card -->
+      <div
+        class="bg-gradient-to-r from-handy-yellow-50 to-orange-50 border-2 border-handy-yellow-200 rounded-3xl p-6 flex items-center space-x-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+      >
+        <div class="w-14 h-14 bg-gradient-to-r from-handy-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+          <ion-icon name="star" class="text-white text-2xl"></ion-icon>
+        </div>
+        <div class="flex-1">
+          <h3 class="font-bold text-handy-yellow-800 text-lg">Quality Guarantee</h3>
+          <p class="text-handy-yellow-700 text-sm mt-1">
+            100% satisfaction guaranteed or your money back
+          </p>
+        </div>
+        <div class="w-8 h-8 bg-handy-yellow-500/20 rounded-full flex items-center justify-center">
+          <ion-icon name="thumbs-up" class="text-handy-yellow-600 text-lg"></ion-icon>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>

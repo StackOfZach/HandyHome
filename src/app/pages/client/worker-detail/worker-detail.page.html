@@ -1,6 +1,11 @@
-<ion-content [fullscreen]="true" class="bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-blue-50 via-white to-indigo-50"
+>
   <!-- Header -->
-  <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 pt-12 pb-6 px-6 shadow-xl">
+  <div
+    class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 pt-12 pb-6 px-6 shadow-xl"
+  >
     <div class="flex items-center justify-between mb-4">
       <button
         (click)="goBack()"
@@ -8,7 +13,7 @@
       >
         <ion-icon name="chevron-back" class="text-white text-xl"></ion-icon>
       </button>
-      
+
       <div class="flex space-x-2">
         <button
           (click)="shareWorker()"
@@ -23,7 +28,10 @@
   <!-- Loading State -->
   <div *ngIf="isLoading" class="flex justify-center items-center py-20">
     <div class="text-center">
-      <ion-spinner name="crescent" class="w-12 h-12 text-indigo-600 mb-4"></ion-spinner>
+      <ion-spinner
+        name="crescent"
+        class="w-12 h-12 text-indigo-600 mb-4"
+      ></ion-spinner>
       <p class="text-gray-500">Loading worker details...</p>
     </div>
   </div>
@@ -35,20 +43,22 @@
       <!-- Profile Header -->
       <div class="flex items-start space-x-4 mb-6">
         <!-- Avatar -->
-        <div class="w-20 h-20 rounded-full overflow-hidden shadow-lg border-2 border-indigo-200 flex-shrink-0 aspect-square">
-          <img 
-            *ngIf="worker.profilePhotoData" 
-            [src]="worker.profilePhotoData.startsWith('data:') ? worker.profilePhotoData : 'data:image/jpeg;base64,' + worker.profilePhotoData" 
+        <div
+          class="w-20 h-20 rounded-full overflow-hidden shadow-lg border-2 border-indigo-200 flex-shrink-0 aspect-square"
+        >
+          <img
+            *ngIf="worker.profilePhotoData"
+            [src]="worker.profilePhotoData.startsWith('data:') ? worker.profilePhotoData : 'data:image/jpeg;base64,' + worker.profilePhotoData"
             [alt]="worker.fullName"
             class="w-full h-full object-cover rounded-full"
           />
-          <img 
-            *ngIf="!worker.profilePhotoData && worker.profilePhotoUrl" 
-            [src]="worker.profilePhotoUrl" 
+          <img
+            *ngIf="!worker.profilePhotoData && worker.profilePhotoUrl"
+            [src]="worker.profilePhotoUrl"
             [alt]="worker.fullName"
             class="w-full h-full object-cover rounded-full"
           />
-          <div 
+          <div
             *ngIf="!worker.profilePhotoData && !worker.profilePhotoUrl"
             class="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center rounded-full"
           >
@@ -61,8 +71,12 @@
         <!-- Worker Info -->
         <div class="flex-1 min-w-0">
           <div class="flex items-start justify-between mb-2 gap-2">
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800 leading-tight break-words flex-1">{{ worker.fullName }}</h1>
-            <div 
+            <h1
+              class="text-xl sm:text-2xl font-bold text-gray-800 leading-tight break-words flex-1"
+            >
+              {{ worker.fullName }}
+            </h1>
+            <div
               *ngIf="worker.status === 'verified'"
               class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold flex items-center flex-shrink-0"
             >
@@ -74,29 +88,42 @@
           <!-- Rating -->
           <div class="flex items-center space-x-2 mb-3">
             <div class="flex items-center space-x-1">
-              <ion-icon 
+              <ion-icon
                 *ngFor="let filled of getStarArray(worker.rating || 0)"
                 [name]="filled ? 'star' : 'star-outline'"
                 [class]="filled ? 'text-yellow-400' : 'text-gray-300'"
                 class="text-lg"
               ></ion-icon>
             </div>
-            <span class="text-lg font-semibold text-gray-700">{{ worker.rating || 0 }}</span>
-            <span class="text-sm text-gray-500">({{ reviews.length }} reviews)</span>
+            <span class="text-lg font-semibold text-gray-700"
+              >{{ worker.rating || 0 }}</span
+            >
+            <span class="text-sm text-gray-500"
+              >({{ reviews.length }} reviews)</span
+            >
           </div>
 
           <!-- Stats -->
           <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600">
             <div class="flex items-center">
-              <ion-icon name="briefcase" class="mr-1 text-green-600 flex-shrink-0"></ion-icon>
+              <ion-icon
+                name="briefcase"
+                class="mr-1 text-green-600 flex-shrink-0"
+              ></ion-icon>
               <span>{{ worker.jobsCompleted || 0 }} jobs</span>
             </div>
             <div class="flex items-center">
-              <ion-icon name="location" class="mr-1 text-red-600 flex-shrink-0"></ion-icon>
+              <ion-icon
+                name="location"
+                class="mr-1 text-red-600 flex-shrink-0"
+              ></ion-icon>
               <span>{{ worker.workRadius || 5 }}km</span>
             </div>
             <div class="flex items-center">
-              <ion-icon name="time" class="mr-1 text-blue-600 flex-shrink-0"></ion-icon>
+              <ion-icon
+                name="time"
+                class="mr-1 text-blue-600 flex-shrink-0"
+              ></ion-icon>
               <span>{{ getExperienceYears() }}y exp</span>
             </div>
           </div>
@@ -108,16 +135,18 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="min-w-0">
             <p class="text-xs text-gray-500 mb-1">Email</p>
-            <p class="text-sm font-medium text-gray-800 break-all">{{ worker.email }}</p>
+            <p class="text-sm font-medium text-gray-800 break-all">
+              {{ worker.email }}
+            </p>
           </div>
           <div class="min-w-0">
             <p class="text-xs text-gray-500 mb-1">Phone</p>
-            <p class="text-sm font-medium text-gray-800 break-all">{{ worker.phone || 'Not provided' }}</p>
+            <p class="text-sm font-medium text-gray-800 break-all">
+              {{ worker.phone || 'Not provided' }}
+            </p>
           </div>
         </div>
       </div>
-
-
     </div>
 
     <!-- Skills Section -->
@@ -126,7 +155,7 @@
         <ion-icon name="construct" class="text-indigo-600 mr-2"></ion-icon>
         Skills & Services
       </h2>
-      
+
       <div class="flex flex-wrap gap-2 mb-4">
         <span
           *ngFor="let skill of getDisplayedSkills()"
@@ -135,13 +164,14 @@
           {{ skill }}
         </span>
       </div>
-      
+
       <button
         *ngIf="worker.skills && worker.skills.length > 6"
         (click)="toggleSkills()"
         class="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors duration-200"
       >
-        {{ showAllSkills ? 'Show Less' : `Show ${worker.skills.length - 6} More` }}
+        {{ showAllSkills ? 'Show Less' : `Show ${worker.skills.length - 6} More`
+        }}
       </button>
     </div>
 
@@ -151,26 +181,33 @@
         <ion-icon name="trending-up" class="text-green-600 mr-2"></ion-icon>
         Performance
       </h2>
-      
+
       <div class="grid grid-cols-2 gap-4">
         <div class="text-center p-4 bg-green-50 rounded-xl">
-          <div class="text-2xl font-bold text-green-600">{{ getCompletionRate() }}%</div>
+          <div class="text-2xl font-bold text-green-600">
+            {{ getCompletionRate() }}%
+          </div>
           <div class="text-sm text-green-700">Completion Rate</div>
         </div>
         <div class="text-center p-4 bg-blue-50 rounded-xl">
-          <div class="text-2xl font-bold text-blue-600">{{ worker.rating || 0 }}</div>
+          <div class="text-2xl font-bold text-blue-600">
+            {{ worker.rating || 0 }}
+          </div>
           <div class="text-sm text-blue-700">Average Rating</div>
         </div>
       </div>
     </div>
 
     <!-- Certificates Section -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100" *ngIf="certificates.length > 0">
+    <div
+      class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100"
+      *ngIf="certificates.length > 0"
+    >
       <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
         <ion-icon name="ribbon" class="text-yellow-600 mr-2"></ion-icon>
         Certificates & Licenses
       </h2>
-      
+
       <div class="space-y-3">
         <div
           *ngFor="let cert of getDisplayedCertificates()"
@@ -182,7 +219,9 @@
               <p class="text-sm text-gray-600 mb-2">{{ cert.issuer }}</p>
               <div class="flex items-center space-x-4 text-xs text-gray-500">
                 <span>Obtained: {{ formatDate(cert.dateObtained) }}</span>
-                <span *ngIf="cert.expiryDate">Expires: {{ formatDate(cert.expiryDate) }}</span>
+                <span *ngIf="cert.expiryDate"
+                  >Expires: {{ formatDate(cert.expiryDate) }}</span
+                >
               </div>
             </div>
             <div
@@ -195,23 +234,27 @@
           </div>
         </div>
       </div>
-      
+
       <button
         *ngIf="certificates.length > 3"
         (click)="toggleCertificates()"
         class="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors duration-200 mt-3"
       >
-        {{ showAllCertificates ? 'Show Less' : `Show ${certificates.length - 3} More` }}
+        {{ showAllCertificates ? 'Show Less' : `Show ${certificates.length - 3}
+        More` }}
       </button>
     </div>
 
     <!-- Reviews Section -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100" *ngIf="reviews.length > 0">
+    <div
+      class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100"
+      *ngIf="reviews.length > 0"
+    >
       <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
         <ion-icon name="chatbubbles" class="text-blue-600 mr-2"></ion-icon>
         Reviews ({{ reviews.length }})
       </h2>
-      
+
       <div class="space-y-4">
         <div
           *ngFor="let review of getDisplayedReviews()"
@@ -219,28 +262,36 @@
         >
           <div class="flex items-start justify-between mb-3">
             <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
+              <div
+                class="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center"
+              >
                 <span class="text-white text-sm font-bold">
                   {{ review.clientName.charAt(0).toUpperCase() }}
                 </span>
               </div>
               <div>
-                <h4 class="font-semibold text-gray-800">{{ review.clientName }}</h4>
+                <h4 class="font-semibold text-gray-800">
+                  {{ review.clientName }}
+                </h4>
                 <div class="flex items-center space-x-2">
                   <div class="flex items-center space-x-1">
-                    <ion-icon 
+                    <ion-icon
                       *ngFor="let filled of getStarArray(review.rating)"
                       [name]="filled ? 'star' : 'star-outline'"
                       [class]="filled ? 'text-yellow-400' : 'text-gray-300'"
                       class="text-sm"
                     ></ion-icon>
                   </div>
-                  <span class="text-sm text-gray-500">{{ formatDate(review.date) }}</span>
+                  <span class="text-sm text-gray-500"
+                    >{{ formatDate(review.date) }}</span
+                  >
                 </div>
               </div>
             </div>
             <div class="text-right">
-              <div class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
+              <div
+                class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium"
+              >
                 {{ review.serviceType }}
               </div>
               <div
@@ -252,30 +303,53 @@
               </div>
             </div>
           </div>
-          <p class="text-gray-700 text-sm leading-relaxed">{{ review.comment }}</p>
+          <p class="text-gray-700 text-sm leading-relaxed">
+            {{ review.comment }}
+          </p>
         </div>
       </div>
-      
+
       <button
         *ngIf="reviews.length > 3"
         (click)="toggleReviews()"
         class="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors duration-200 mt-4"
       >
-        {{ showAllReviews ? 'Show Less' : `Show ${reviews.length - 3} More Reviews` }}
+        {{ showAllReviews ? 'Show Less' : `Show ${reviews.length - 3} More
+        Reviews` }}
       </button>
     </div>
 
     <!-- Empty Reviews State -->
-    <div *ngIf="reviews.length === 0" class="bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-100">
-      <ion-icon name="chatbubbles-outline" class="text-4xl text-gray-300 mb-3"></ion-icon>
+    <div
+      *ngIf="reviews.length === 0"
+      class="bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-100"
+    >
+      <ion-icon
+        name="chatbubbles-outline"
+        class="text-4xl text-gray-300 mb-3"
+      ></ion-icon>
       <h3 class="text-lg font-semibold text-gray-800 mb-2">No Reviews Yet</h3>
-      <p class="text-gray-600 text-sm">Be the first to book and review this worker!</p>
+      <p class="text-gray-600 text-sm">
+        Be the first to book and review this worker!
+      </p>
     </div>
   </div>
 
   <!-- Fixed Bottom Action Bar -->
-  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-10">
-    <div class="flex space-x-3 max-w-lg mx-auto">
+  <div
+    class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-10"
+  >
+    <div class="flex space-x-2 max-w-lg mx-auto">
+      <!-- Report Button -->
+      <button
+        (click)="reportWorker()"
+        class="bg-red-100 hover:bg-red-200 text-red-700 py-3 px-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center"
+        title="Report Worker"
+      >
+        <ion-icon name="flag" class="flex-shrink-0"></ion-icon>
+      </button>
+
+      <!-- Contact Button -->
       <button
         (click)="contactWorker()"
         class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center min-w-0"
@@ -283,6 +357,8 @@
         <ion-icon name="chatbubbles" class="mr-1 flex-shrink-0"></ion-icon>
         <span class="truncate">Message</span>
       </button>
+
+      <!-- Schedule Booking Button -->
       <button
         (click)="scheduleBooking()"
         class="flex-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center shadow-lg min-w-0"

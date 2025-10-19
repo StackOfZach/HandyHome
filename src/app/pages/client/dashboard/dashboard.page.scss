@@ -211,3 +211,140 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
+
+// Swiper Ads Styles
+.ads-swiper {
+  padding-bottom: 30px !important;
+  margin-left: 16px;
+  margin-right: 16px;
+
+  swiper-slide {
+    height: auto;
+
+    // Ensure all image cards have the same dimensions
+    > div {
+      height: 192px; // Fixed height for all ad cards (h-48 = 192px)
+      min-height: 192px;
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+
+    // Image styling
+    img {
+      transition: transform 0.3s ease;
+      object-fit: cover;
+      width: 100%;
+      height: 100%;
+    }
+
+    // Hover effects for images
+    &:hover img {
+      transform: scale(1.05);
+    }
+  }
+
+  // Custom pagination styles
+  ::ng-deep {
+    .swiper-pagination {
+      bottom: 8px !important;
+
+      .swiper-pagination-bullet {
+        width: 10px;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.7);
+        opacity: 0.6;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+        &.swiper-pagination-bullet-active {
+          background: white;
+          opacity: 1;
+          transform: scale(1.3);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+      }
+    }
+
+    // Override swiper container styles
+    .swiper {
+      overflow: visible;
+    }
+  }
+}
+
+// Image-based ad card styles
+.ads-swiper swiper-slide > div {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15),
+      0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px) scale(1.02);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  // Loading state styles
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+}
+
+// Image loading animation
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Overlay hover effect
+.ads-swiper .absolute.inset-0 {
+  transition: background-color 0.3s ease;
+  pointer-events: none;
+}
+
+// Text truncation utilities
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Discount badge animation
+@keyframes badge-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.ads-swiper [class*="bg-red-500"] {
+  animation: badge-pulse 2s ease-in-out infinite;
+}

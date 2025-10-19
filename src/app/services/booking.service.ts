@@ -30,14 +30,21 @@ export interface BookingLocation {
 export interface BookingData {
   id?: string;
   clientId: string;
-  title: string;
-  description: string;
-  category: string;
-  schedule: {
+  clientName?: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  neededService?: string;
+  schedule?: {
     date: string;
     time: string;
   };
-  locations: BookingLocation[];
+  scheduleDate?: Date;
+  locations?: BookingLocation[];
+  minBudget?: number;
+  maxBudget?: number;
+  priceRange?: number;
+  additionalDetails?: string;
   priceType: 'per-hour' | 'per-day' | 'fixed-price';
   price: number;
   serviceCharge: number;
@@ -54,6 +61,7 @@ export interface BookingData {
   createdAt: Date;
   updatedAt?: Date;
   // Worker information (populated when accepted)
+  assignedWorker?: string;
   workerId?: string;
   workerName?: string;
   workerPhone?: string;
@@ -65,6 +73,14 @@ export interface BookingData {
   // Cancellation information
   cancellationReason?: string;
   cancelledAt?: Date;
+  cancellationFee?: number;
+  // Payment information
+  paymentDetails?: {
+    status: 'pending' | 'completed' | 'failed';
+    receiptId?: string;
+    amount?: number;
+    completedAt?: Date;
+  };
 }
 
 // New interface for simplified booking structure from schedule-booking
@@ -82,6 +98,13 @@ export interface NewBookingData {
   notes: string;
   status: string;
   createdAt: Date;
+  // Payment information
+  paymentDetails?: {
+    status: 'pending' | 'completed' | 'failed';
+    receiptId?: string;
+    amount?: number;
+    completedAt?: Date;
+  };
 }
 
 @Injectable({
@@ -102,7 +125,7 @@ export class BookingService {
       const docRef = await addDoc(this.bookingsCollection, {
         ...bookingData,
         createdAt: Timestamp.fromDate(bookingData.createdAt),
-        date: Timestamp.fromDate(bookingData.date)
+        date: Timestamp.fromDate(bookingData.date),
       });
       return docRef.id;
     } catch (error) {
@@ -114,25 +137,31 @@ export class BookingService {
   /**
    * Fetch all bookings for a specific user (including new format)
    */
-  async getAllUserBookings(userId: string): Promise<(BookingData | NewBookingData)[]> {
+  async getAllUserBookings(
+    userId: string
+  ): Promise<(BookingData | NewBookingData)[]> {
     try {
       const q = query(
         this.bookingsCollection,
         where('clientId', '==', userId),
         orderBy('createdAt', 'desc')
       );
-      
+
       const querySnapshot = await getDocs(q);
       const bookings: (BookingData | NewBookingData)[] = [];
-      
+
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         const booking = {
           id: doc.id,
           ...data,
-          createdAt: data['createdAt']?.toDate ? data['createdAt'].toDate() : new Date(),
+          createdAt: data['createdAt']?.toDate
+            ? data['createdAt'].toDate()
+            : new Date(),
           date: data['date']?.toDate ? data['date'].toDate() : data['date'],
-          updatedAt: data['updatedAt']?.toDate ? data['updatedAt'].toDate() : undefined,
+          updatedAt: data['updatedAt']?.toDate
+            ? data['updatedAt'].toDate()
+            : undefined,
         } as any;
         bookings.push(booking);
       });
@@ -232,13 +261,160 @@ export class BookingService {
   }
 
   /**
-   * Cancel a booking
+   * Check if a booking can be cancelled based on cancellation policy
+   */
+  async canCancelBooking(
+    bookingId: string
+  ): Promise<{ canCancel: boolean; reason?: string; feeApplies?: boolean }> {
+    try {
+      const bookingDoc = await getDoc(
+        doc(this.firestore, 'bookings', bookingId)
+      );
+
+      if (!bookingDoc.exists()) {
+        return { canCancel: false, reason: 'Booking not found' };
+      }
+
+      const booking = bookingDoc.data();
+      const currentTime = new Date();
+
+      // Cannot cancel completed or already cancelled bookings
+      if (
+        booking['status'] === 'completed' ||
+        booking['status'] === 'cancelled'
+      ) {
+        return {
+          canCancel: false,
+          reason: `Cannot cancel ${booking['status']} booking`,
+        };
+      }
+
+      // Free cancellation for pending bookings (within 1 hour of creation)
+      if (booking['status'] === 'pending') {
+        const createdAt = booking['createdAt']?.toDate();
+        if (createdAt) {
+          const timeDiff =
+            (currentTime.getTime() - createdAt.getTime()) / (1000 * 60 * 60); // hours
+
+          if (timeDiff <= 1) {
+            return { canCancel: true, feeApplies: false };
+          } else {
+            return {
+              canCancel: true,
+              feeApplies: true,
+              reason:
+                'Cancellation fee may apply (booking created more than 1 hour ago)',
+            };
+          }
+        }
+      }
+
+      // Accepted bookings - check time before service
+      if (booking['status'] === 'accepted') {
+        const schedule = booking['schedule'];
+        if (schedule && schedule.date && schedule.time) {
+          const scheduledDate = new Date(schedule.date + ' ' + schedule.time);
+          const hoursUntilService =
+            (scheduledDate.getTime() - currentTime.getTime()) /
+            (1000 * 60 * 60);
+
+          if (hoursUntilService >= 2) {
+            return {
+              canCancel: true,
+              feeApplies: true,
+              reason: 'Cancellation fee applies for accepted bookings',
+            };
+          } else if (hoursUntilService >= 0) {
+            return {
+              canCancel: true,
+              feeApplies: true,
+              reason:
+                'Late cancellation fee applies (less than 2 hours before service)',
+            };
+          } else {
+            return {
+              canCancel: false,
+              reason: 'Cannot cancel booking after scheduled service time',
+            };
+          }
+        }
+      }
+
+      // Cannot cancel if worker is on the way or already working
+      if (
+        booking['status'] === 'on-the-way' ||
+        booking['status'] === 'in-progress'
+      ) {
+        return {
+          canCancel: false,
+          reason:
+            'Cannot cancel once worker has started traveling or is working. Please contact support.',
+        };
+      }
+
+      return {
+        canCancel: false,
+        reason: 'Booking cannot be cancelled at this time',
+      };
+    } catch (error) {
+      console.error('Error checking cancellation eligibility:', error);
+      return {
+        canCancel: false,
+        reason: 'Unable to check cancellation policy',
+      };
+    }
+  }
+
+  /**
+   * Cancel a booking with enhanced policy checking
    */
   async cancelBooking(bookingId: string, reason?: string): Promise<void> {
     try {
+      // Check cancellation policy first
+      const canCancel = await this.canCancelBooking(bookingId);
+
+      if (!canCancel.canCancel) {
+        throw new Error(canCancel.reason || 'Booking cannot be cancelled');
+      }
+
+      // Calculate cancellation fee if applicable
+      let cancellationFee = 0;
+      if (canCancel.feeApplies) {
+        // Get booking data to calculate fee
+        const bookingDoc = await getDoc(
+          doc(this.firestore, 'bookings', bookingId)
+        );
+        if (bookingDoc.exists()) {
+          const booking = bookingDoc.data();
+          const total = booking['total'] || booking['price'] || 0;
+
+          // Different fee rates based on timing
+          if (booking['status'] === 'pending') {
+            cancellationFee = total * 0.1; // 10% fee for late pending cancellations
+          } else if (booking['status'] === 'accepted') {
+            const schedule = booking['schedule'];
+            if (schedule && schedule.date && schedule.time) {
+              const scheduledDate = new Date(
+                schedule.date + ' ' + schedule.time
+              );
+              const hoursUntilService =
+                (new Date().getTime() - scheduledDate.getTime()) /
+                (1000 * 60 * 60);
+
+              if (hoursUntilService < 2) {
+                cancellationFee = total * 0.5; // 50% fee for last-minute cancellations
+              } else {
+                cancellationFee = total * 0.2; // 20% fee for standard cancellations
+              }
+            }
+          }
+        }
+      }
+
       await this.updateBookingStatus(bookingId, 'cancelled', {
         cancellationReason: reason,
         cancelledAt: new Date(),
+        cancellationFee: cancellationFee,
       });
     } catch (error) {
       console.error('Error cancelling booking:', error);
@@ -460,10 +636,35 @@ export class BookingService {
       await updateDoc(bookingRef, {
         status: 'accepted',
         workerId: workerId,
-        updatedAt: new Date(),
+        progress: 'Worker accepted your booking!',
+        updatedAt: Timestamp.now(),
+      });
+
+      // Update worker's current job
+      const workerRef = doc(this.firestore, 'workers', workerId);
+      await updateDoc(workerRef, {
+        currentJobId: bookingId,
+        updatedAt: Timestamp.now(),
       });
     } catch (error) {
       console.error('Error accepting booking:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reject a booking (worker declines the job)
+   */
+  async rejectBooking(bookingId: string): Promise<void> {
+    try {
+      const bookingRef = doc(this.firestore, 'bookings', bookingId);
+      await updateDoc(bookingRef, {
+        status: 'rejected',
+        progress: 'Booking rejected by worker.',
+        updatedAt: Timestamp.now(),
+      });
+    } catch (error) {
+      console.error('Error rejecting booking:', error);
       throw error;
     }
   }
@@ -475,11 +676,11 @@ export class BookingService {
     try {
       const bookingRef = doc(this.firestore, 'bookings', bookingId);
       const bookingDoc = await getDoc(bookingRef);
-      
+
       if (bookingDoc.exists()) {
         return {
           id: bookingDoc.id,
-          ...bookingDoc.data()
+          ...bookingDoc.data(),
         } as BookingData;
       } else {
         return null;
@@ -496,18 +697,72 @@ export class BookingService {
   getBookingById$(bookingId: string): Observable<BookingData | null> {
     return new Observable((observer) => {
       const bookingRef = doc(this.firestore, 'bookings', bookingId);
-      const unsubscribe = onSnapshot(bookingRef, (doc) => {
-        if (doc.exists()) {
-          observer.next({
-            id: doc.id,
-            ...doc.data()
-          } as BookingData);
-        } else {
-          observer.next(null);
+      const unsubscribe = onSnapshot(
+        bookingRef,
+        (doc) => {
+          if (doc.exists()) {
+            observer.next({
+              id: doc.id,
+              ...doc.data(),
+            } as BookingData);
+          } else {
+            observer.next(null);
+          }
+        },
+        (error) => {
+          observer.error(error);
         }
-      }, (error) => {
-        observer.error(error);
-      });
+      );
+
+      return () => unsubscribe();
+    });
+  }
+
+  /**
+   * Get pending bookings assigned to a specific worker (real-time)
+   */
+  getPendingBookingsForWorker$(workerId: string): Observable<BookingData[]> {
+    return new Observable((observer) => {
+      console.log('🔍 Querying pending bookings for worker:', workerId);
+      
+      const q = query(
+        this.bookingsCollection,
+        where('assignedWorker', '==', workerId),
+        where('status', '==', 'pending'),
+        orderBy('createdAt', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          console.log('📊 Query snapshot received. Size:', querySnapshot.size);
+          const bookings: BookingData[] = [];
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            console.log('📄 Document found:', doc.id, data);
+            const booking = {
+              id: doc.id,
+              ...data,
+              createdAt: data['createdAt']?.toDate
+                ? data['createdAt'].toDate()
+                : new Date(),
+              updatedAt: data['updatedAt']?.toDate
+                ? data['updatedAt'].toDate()
+                : undefined,
+              completedAt: data['completedAt']?.toDate
+                ? data['completedAt'].toDate()
+                : undefined,
+            } as BookingData;
+            bookings.push(booking);
+          });
+          console.log('📥 Final bookings array:', bookings);
+          observer.next(bookings);
+        },
+        (error) => {
+          console.error('❌ Query error:', error);
+          observer.error(error);
+        }
+      );
 
       return () => unsubscribe();
     });

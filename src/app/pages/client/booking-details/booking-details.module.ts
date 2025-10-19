@@ -5,14 +5,16 @@ import { IonicModule } from '@ionic/angular';
 
 import { BookingDetailsPageRoutingModule } from './booking-details-routing.module';
 import { BookingDetailsPage } from './booking-details.page';
+import { SharedComponentsModule } from '../../../modules/shared-components.module';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    BookingDetailsPageRoutingModule
+    BookingDetailsPageRoutingModule,
+    SharedComponentsModule,
   ],
-  declarations: [BookingDetailsPage]
+  declarations: [BookingDetailsPage],
 })
 export class BookingDetailsPageModule {}

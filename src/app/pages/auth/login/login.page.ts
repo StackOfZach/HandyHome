@@ -77,13 +77,22 @@ export class LoginPage implements OnInit {
       case 'auth/too-many-requests':
         return 'Too many failed attempts. Please try again later.';
       default:
+        // Check for custom worker verification error
+        if (error.message === 'WORKER_NOT_VERIFIED') {
+          return 'Your worker account is pending verification. Please wait for our team to review and approve your application. You will be notified via email once your account is verified.';
+        }
         return 'Login failed. Please try again.';
     }
   }
 
   private async showErrorAlert(message: string) {
+    // Determine header based on message content
+    const header = message.includes('pending verification')
+      ? 'Account Verification Pending'
+      : 'Login Error';
+
     const alert = await this.alertController.create({
-      header: 'Login Error',
+      header,
       message,
       buttons: ['OK'],
     });

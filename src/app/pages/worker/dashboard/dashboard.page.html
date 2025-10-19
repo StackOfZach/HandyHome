@@ -79,7 +79,7 @@
         <div class="flex items-center space-x-2">
           <!-- Notification Bell -->
           <button
-            (click)="toggleNotifications()"
+            (click)="openNotificationModal()"
             class="relative p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm"
           >
             <ion-icon
@@ -88,7 +88,7 @@
             ></ion-icon>
             <div
               *ngIf="unreadCount > 0"
-              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold"
+              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold animate-pulse"
             >
               {{ unreadCount > 9 ? '9+' : unreadCount }}
             </div>
@@ -125,72 +125,154 @@
     </div>
   </div>
 
-  <!-- Notifications Panel -->
+  <!-- Notification Modal -->
   <div
-    *ngIf="showNotifications"
-    class="bg-white shadow-lg border-b border-gray-200 p-4"
+    *ngIf="showNotificationModal"
+    class="fixed inset-0 z-50 flex items-start justify-center pt-4 px-4"
+    (click)="closeNotificationModal($event)"
   >
-    <div class="flex items-center justify-between mb-3">
-      <h3 class="text-lg font-semibold text-gray-800">Notifications</h3>
-      <button
-        (click)="markAllNotificationsRead()"
-        class="text-sm text-blue-600 hover:text-blue-800 font-medium"
-        *ngIf="unreadCount > 0"
-      >
-        Mark all read
-      </button>
-    </div>
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
 
-    <div class="space-y-2 max-h-64 overflow-y-auto">
-      <div
-        *ngFor="let notification of notifications.slice(0, 5)"
-        (click)="onNotificationClick(notification)"
-        class="flex items-start p-3 rounded-xl cursor-pointer transition-all duration-200"
-        [class]="!notification.read ? 'bg-blue-50 border border-blue-200 hover:bg-blue-100' : 'bg-gray-50 hover:bg-gray-100'"
-      >
-        <div class="flex-shrink-0 mr-3">
-          <div
-            class="w-10 h-10 rounded-full flex items-center justify-center"
-            [class]="notification.type === 'job_request' ? 'bg-orange-100' : 'bg-blue-100'"
-          >
-            <ion-icon
-              [name]="notification.type === 'job_request' ? 'briefcase' : 'information-circle'"
-              [class]="notification.type === 'job_request' ? 'text-orange-600' : 'text-blue-600'"
-            ></ion-icon>
-          </div>
-        </div>
-
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between">
-            <p class="text-sm font-semibold text-gray-800 truncate">
-              {{ notification.title }}
-            </p>
-            <div class="flex items-center space-x-2">
-              <span
-                *ngIf="notification.priority === 'urgent'"
-                class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium"
-              >
-                Urgent
-              </span>
-              <div
-                *ngIf="!notification.read"
-                class="w-2 h-2 bg-blue-500 rounded-full"
-              ></div>
+    <!-- Modal Container -->
+    <div
+      class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden transform transition-all duration-300 animate-slide-down"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div
+              class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+            >
+              <ion-icon
+                name="notifications"
+                class="text-white text-xl"
+              ></ion-icon>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white">Notifications</h3>
+              <p class="text-green-100 text-sm">
+                {{ notifications.length }} total, {{ unreadCount }} unread
+              </p>
             </div>
           </div>
-          <p class="text-sm text-gray-600 mt-1">{{ notification.message }}</p>
-          <p class="text-xs text-gray-500 mt-1">
-            {{ notification.createdAt.toDate() | date:'short' }}
-          </p>
+          <button
+            (click)="closeNotificationModal()"
+            class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-200"
+          >
+            <ion-icon name="close" class="text-white text-xl"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div
+          class="flex items-center justify-between mt-4"
+          *ngIf="notifications.length > 0"
+        >
+          <button
+            (click)="markAllNotificationsRead()"
+            class="text-sm text-green-100 hover:text-white font-medium bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg transition-all duration-200"
+            *ngIf="unreadCount > 0"
+          >
+            Mark all read
+          </button>
+          <button
+            (click)="clearAllNotifications()"
+            class="text-sm text-green-100 hover:text-white font-medium bg-red-400/20 hover:bg-red-400/30 px-3 py-1 rounded-lg transition-all duration-200"
+          >
+            Clear all
+          </button>
         </div>
       </div>
 
-      <div *ngIf="notifications.length === 0" class="text-center py-8">
-        <ion-icon
-          name="notifications-off-outline"
-          class="text-4xl text-gray-400 mb-2"
-        ></ion-icon>
-        <p class="text-gray-500">No notifications yet</p>
+      <!-- Modal Content -->
+      <div class="overflow-y-auto max-h-96">
+        <div class="p-4 space-y-3" *ngIf="notifications.length > 0">
+          <div
+            *ngFor="let notification of notifications; trackBy: trackByNotificationId"
+            (click)="onNotificationClick(notification)"
+            class="flex items-start p-4 rounded-xl cursor-pointer transition-all duration-200 border border-transparent hover:border-gray-200 hover:shadow-md"
+            [class]="!notification.read ? 'bg-blue-50 border-blue-200 hover:bg-blue-100' : 'bg-gray-50 hover:bg-gray-100'"
+          >
+            <div class="flex-shrink-0 mr-3">
+              <div
+                class="w-12 h-12 rounded-full flex items-center justify-center relative"
+                [class]="getNotificationIconClass(notification.type)"
+              >
+                <ion-icon
+                  [name]="getNotificationIcon(notification.type)"
+                  [class]="getNotificationIconColor(notification.type)"
+                  class="text-lg"
+                ></ion-icon>
+                <div
+                  *ngIf="!notification.read"
+                  class="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white"
+                ></div>
+              </div>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between mb-1">
+                <p class="text-sm font-semibold text-gray-800 leading-tight">
+                  {{ notification.title }}
+                </p>
+                <div class="flex flex-col items-end space-y-1 ml-2">
+                  <span
+                    *ngIf="notification.priority === 'urgent'"
+                    class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap"
+                  >
+                    🚨 Urgent
+                  </span>
+                  <span class="text-xs text-gray-500 whitespace-nowrap">
+                    {{ getTimeAgo(notification.createdAt.toDate()) }}
+                  </span>
+                </div>
+              </div>
+              <p class="text-sm text-gray-600 leading-relaxed mb-2">
+                {{ notification.message }}
+              </p>
+
+              <!-- Action buttons for job requests -->
+              <div
+                *ngIf="notification.type === 'job_request' && !notification.read"
+                class="flex space-x-2 mt-3"
+              >
+                <button
+                  (click)="acceptNotificationJob(notification, $event)"
+                  class="flex-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-all duration-200"
+                >
+                  Accept Job
+                </button>
+                <button
+                  (click)="declineNotificationJob(notification, $event)"
+                  class="flex-1 bg-gray-500 hover:bg-gray-600 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-all duration-200"
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="notifications.length === 0" class="text-center py-12">
+          <div
+            class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <ion-icon
+              name="notifications-off-outline"
+              class="text-2xl text-gray-400"
+            ></ion-icon>
+          </div>
+          <h4 class="text-lg font-semibold text-gray-800 mb-2">
+            No notifications yet
+          </h4>
+          <p class="text-gray-500 text-sm">
+            New job requests and updates will appear here
+          </p>
+        </div>
       </div>
     </div>
   </div>
@@ -331,7 +413,7 @@
       </div>
 
       <!-- Quick Stats Cards -->
-      <div class="grid grid-cols-3 gap-4">
+      <div class="grid grid-cols-3 gap-4 mb-4">
         <div
           class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center border border-blue-200"
         >
@@ -358,6 +440,42 @@
             {{ (workerProfile?.rating || 0) | number:'1.1-1' }}
           </div>
           <div class="text-xs text-yellow-600 font-medium">Rating</div>
+        </div>
+      </div>
+
+      <!-- Update Profile Button -->
+      <div class="flex justify-center">
+        <button
+          (click)="updateProfile()"
+          class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center space-x-2 shadow-lg"
+        >
+          <ion-icon name="create-outline" class="text-lg"></ion-icon>
+          <span>Update Profile</span>
+        </button>
+      </div>
+
+      <!-- Quick Actions Section -->
+      <div class="mt-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+          <ion-icon name="flash" class="text-green-600 mr-2"></ion-icon>
+          Quick Actions
+        </h3>
+        <div class="grid grid-cols-2 gap-4">
+          <button
+            (click)="viewActiveBookings()"
+            class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white px-6 py-4 rounded-2xl font-bold text-sm shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
+          >
+            <ion-icon name="list-outline" class="text-xl"></ion-icon>
+            <span>Active Bookings</span>
+          </button>
+          
+          <button
+            (click)="goToBookingRequests()"
+            class="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white px-6 py-4 rounded-2xl font-bold text-sm shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
+          >
+            <ion-icon name="mail-outline" class="text-xl"></ion-icon>
+            <span>Booking Requests</span>
+          </button>
         </div>
       </div>
     </div>
@@ -533,7 +651,7 @@
       <div class="grid grid-cols-2 gap-4">
         <!-- Job Requests Button -->
         <button
-          (click)="navigateToJobListings()"
+          (click)="navigateToBookingRequests()"
           class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center text-center"
         >
           <div
@@ -542,7 +660,9 @@
             <ion-icon name="mail-open" class="text-2xl"></ion-icon>
           </div>
           <span class="font-semibold text-sm">Job Requests</span>
-          <span class="text-xs text-blue-100 mt-1">Review customer requests</span>
+          <span class="text-xs text-blue-100 mt-1"
+            >Review customer requests</span
+          >
         </button>
 
         <!-- Job History Button -->

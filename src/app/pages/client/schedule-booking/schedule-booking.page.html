@@ -1,49 +1,150 @@
-<ion-content [fullscreen]="true" class="bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-  <!-- Header -->
-  <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 pt-12 pb-6 px-6 shadow-xl">
-    <div class="flex items-center justify-between mb-4">
-      <button
-        (click)="goBack()"
-        class="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-all duration-200 backdrop-blur-sm"
-      >
-        <ion-icon name="chevron-back" class="text-white text-xl"></ion-icon>
-      </button>
-      
-      <div class="text-center flex-1">
-        <h1 class="text-white text-xl font-bold">{{ getStepTitle() }}</h1>
-        <p class="text-blue-100 text-sm">{{ workerName }}</p>
-      </div>
-      
-      <div class="w-8"></div> <!-- Spacer for centering -->
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/client/browse-workers"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Book Service</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="bg-gray-50">
+  <!-- Compact Progress Header -->
+  <div class="bg-white border-b border-gray-200 px-4 py-3">
+    <div class="flex items-center justify-between mb-2">
+      <h1 class="text-lg font-semibold text-gray-900">Book {{ workerName }}</h1>
+      <span class="text-sm text-gray-500">Step {{ currentStep }} of 4</span>
     </div>
 
-    <!-- Progress Bar -->
-    <div class="bg-white/20 rounded-full h-2 mb-4">
-      <div 
-        class="bg-white rounded-full h-2 transition-all duration-300"
-        [style.width.%]="(currentStep / totalSteps) * 100"
+    <!-- Progress Steps -->
+    <div class="flex items-center space-x-2">
+      <div
+        *ngFor="let step of [1, 2, 3, 4]; let i = index"
+        class="flex-1 h-2 rounded-full"
+        [class]="currentStep > step ? 'bg-green-500' : currentStep === step ? 'bg-indigo-500' : 'bg-gray-200'"
       ></div>
     </div>
-    
-    <div class="flex justify-between text-xs text-blue-100">
-      <span [class]="currentStep >= 1 ? 'font-semibold' : 'opacity-60'">Service</span>
-      <span [class]="currentStep >= 2 ? 'font-semibold' : 'opacity-60'">Date & Time</span>
-      <span [class]="currentStep >= 3 ? 'font-semibold' : 'opacity-60'">Details</span>
-      <span [class]="currentStep >= 4 ? 'font-semibold' : 'opacity-60'">Confirm</span>
+
+    <!-- Step Labels -->
+    <div class="flex justify-between mt-2 text-xs text-gray-600">
+      <span [class]="currentStep >= 1 ? 'font-medium text-indigo-600' : ''"
+        >Service</span
+      >
+      <span [class]="currentStep >= 2 ? 'font-medium text-indigo-600' : ''"
+        >Date & Time</span
+      >
+      <span [class]="currentStep >= 3 ? 'font-medium text-indigo-600' : ''"
+        >Details</span
+      >
+      <span [class]="currentStep >= 4 ? 'font-medium text-indigo-600' : ''"
+        >Confirm</span
+      >
+    </div>
+  </div>
+
+  <!-- Worker Info Card -->
+  <div
+    class="bg-white mx-4 mt-4 rounded-lg border border-gray-200 overflow-hidden"
+  >
+    <div class="p-4">
+      <div class="flex items-center space-x-3">
+        <!-- Worker Photo -->
+        <div class="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+          <img
+            *ngIf="worker?.profilePhotoData"
+            [src]="getWorkerImageSrc(worker?.profilePhotoData)"
+            [alt]="worker?.fullName"
+            class="w-full h-full object-cover"
+          />
+          <div
+            *ngIf="!worker?.profilePhotoData"
+            class="w-full h-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center"
+          >
+            <span class="text-white text-lg font-bold"
+              >{{ worker?.fullName?.charAt(0)?.toUpperCase() }}</span
+            >
+          </div>
+        </div>
+
+        <!-- Worker Details -->
+        <div class="flex-1 min-w-0">
+          <h2 class="font-semibold text-gray-900 truncate">
+            {{ worker?.fullName }}
+          </h2>
+          <div class="flex items-center mt-1">
+            <ion-icon
+              name="star"
+              class="text-yellow-400 mr-1 text-sm"
+            ></ion-icon>
+            <span class="text-sm text-gray-600"
+              >{{ worker?.rating || 4.5 }} • {{ worker?.jobsCompleted || 0 }}
+              jobs</span
+            >
+          </div>
+          <div class="flex items-center mt-1">
+            <ion-icon
+              name="location-outline"
+              class="text-gray-400 mr-1 text-sm"
+            ></ion-icon>
+            <span class="text-sm text-gray-500 truncate"
+              >{{ worker?.location || 'Metro Manila' }}</span
+            >
+          </div>
+        </div>
+
+        <!-- Expand Button -->
+        <button
+          (click)="showWorkerDetails = !showWorkerDetails"
+          class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <ion-icon
+            [name]="showWorkerDetails ? 'chevron-up' : 'chevron-down'"
+            class="text-lg"
+          ></ion-icon>
+        </button>
+      </div>
+
+      <!-- Expandable Worker Details -->
+      <div *ngIf="showWorkerDetails" class="mt-4 pt-4 border-t border-gray-100">
+        <!-- Bio -->
+        <div *ngIf="worker?.bio" class="mb-3">
+          <h4 class="text-sm font-medium text-gray-900 mb-1">About</h4>
+          <p class="text-sm text-gray-600 leading-relaxed">{{ worker?.bio }}</p>
+        </div>
+
+        <!-- Services and Pricing -->
+        <div *ngIf="worker?.servicePrices?.length">
+          <h4 class="text-sm font-medium text-gray-900 mb-2">
+            Services & Pricing
+          </h4>
+          <div class="grid grid-cols-1 gap-2">
+            <div
+              *ngFor="let service of worker?.servicePrices"
+              class="flex justify-between items-center p-2 bg-gray-50 rounded"
+            >
+              <span class="text-sm text-gray-700">{{ service.name }}</span>
+              <span class="text-sm font-semibold text-green-600"
+                >₱{{ service.minPrice }}-{{ service.maxPrice }}</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Loading State -->
   <div *ngIf="isLoading" class="flex justify-center items-center py-20">
     <div class="text-center">
-      <ion-spinner name="crescent" class="w-12 h-12 text-indigo-600 mb-4"></ion-spinner>
+      <ion-spinner
+        name="crescent"
+        class="w-12 h-12 text-indigo-600 mb-4"
+      ></ion-spinner>
       <p class="text-gray-500">Loading booking information...</p>
     </div>
   </div>
 
   <!-- Step Content -->
   <div *ngIf="!isLoading" class="px-4 pb-24 -mt-4">
-    
     <!-- Step 1: Service Selection -->
     <div *ngIf="currentStep === 1" class="space-y-4">
       <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
@@ -51,7 +152,7 @@
           <ion-icon name="construct" class="text-indigo-600 mr-2"></ion-icon>
           Available Services
         </h2>
-        
+
         <div class="space-y-3" *ngIf="availableServices.length > 0">
           <div
             *ngFor="let service of availableServices"
@@ -63,17 +164,23 @@
           >
             <div class="flex items-center justify-between">
               <div class="flex-1">
-                <h3 class="font-semibold text-gray-800 mb-1">{{ service.name }}</h3>
+                <h3 class="font-semibold text-gray-800 mb-1">
+                  {{ service.name }}
+                </h3>
                 <p class="text-sm text-gray-600 mb-2">{{ service.category }}</p>
                 <p class="text-xs text-gray-500">{{ service.description }}</p>
               </div>
               <div class="text-right ml-4">
-                <div class="text-lg font-bold text-indigo-600">₱{{ service.price }}</div>
-                <div class="text-sm text-gray-500">{{ service.duration }} mins</div>
+                <div class="text-lg font-bold text-indigo-600">
+                  ₱{{ service.price }}
+                </div>
+                <div class="text-sm text-gray-500">
+                  {{ service.duration }} mins
+                </div>
               </div>
             </div>
-            
-            <div 
+
+            <div
               *ngIf="selectedService?.id === service.id"
               class="mt-3 flex items-center text-indigo-600"
             >
@@ -82,11 +189,18 @@
             </div>
           </div>
         </div>
-        
+
         <div *ngIf="availableServices.length === 0" class="text-center py-8">
-          <ion-icon name="construct-outline" class="text-4xl text-gray-300 mb-3"></ion-icon>
-          <h3 class="text-lg font-semibold text-gray-800 mb-2">No Services Available</h3>
-          <p class="text-gray-600 text-sm">This worker hasn't set up any services yet.</p>
+          <ion-icon
+            name="construct-outline"
+            class="text-4xl text-gray-300 mb-3"
+          ></ion-icon>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">
+            No Services Available
+          </h3>
+          <p class="text-gray-600 text-sm">
+            This worker hasn't set up any services yet.
+          </p>
         </div>
       </div>
     </div>
@@ -101,7 +215,9 @@
             Select Date
           </h2>
           <div class="flex items-center space-x-4">
-            <h3 class="text-lg font-semibold text-gray-700">{{ getMonthName() }}</h3>
+            <h3 class="text-lg font-semibold text-gray-700">
+              {{ getMonthName() }}
+            </h3>
             <div class="flex space-x-2">
               <button
                 (click)="goToPreviousMonth()"
@@ -113,7 +229,10 @@
                 (click)="goToNextMonth()"
                 class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
               >
-                <ion-icon name="chevron-forward" class="text-gray-600"></ion-icon>
+                <ion-icon
+                  name="chevron-forward"
+                  class="text-gray-600"
+                ></ion-icon>
               </button>
             </div>
           </div>
@@ -141,13 +260,27 @@
 
         <!-- Day Headers -->
         <div class="grid grid-cols-7 gap-1 mb-2">
-          <div class="text-center text-xs font-semibold text-gray-500 py-2">Sun</div>
-          <div class="text-center text-xs font-semibold text-gray-500 py-2">Mon</div>
-          <div class="text-center text-xs font-semibold text-gray-500 py-2">Tue</div>
-          <div class="text-center text-xs font-semibold text-gray-500 py-2">Wed</div>
-          <div class="text-center text-xs font-semibold text-gray-500 py-2">Thu</div>
-          <div class="text-center text-xs font-semibold text-gray-500 py-2">Fri</div>
-          <div class="text-center text-xs font-semibold text-gray-500 py-2">Sat</div>
+          <div class="text-center text-xs font-semibold text-gray-500 py-2">
+            Sun
+          </div>
+          <div class="text-center text-xs font-semibold text-gray-500 py-2">
+            Mon
+          </div>
+          <div class="text-center text-xs font-semibold text-gray-500 py-2">
+            Tue
+          </div>
+          <div class="text-center text-xs font-semibold text-gray-500 py-2">
+            Wed
+          </div>
+          <div class="text-center text-xs font-semibold text-gray-500 py-2">
+            Thu
+          </div>
+          <div class="text-center text-xs font-semibold text-gray-500 py-2">
+            Fri
+          </div>
+          <div class="text-center text-xs font-semibold text-gray-500 py-2">
+            Sat
+          </div>
         </div>
 
         <!-- Calendar Grid -->
@@ -167,10 +300,12 @@
             }"
           >
             <!-- Day Number -->
-            <span class="text-sm font-medium z-10">{{ day.date.getDate() }}</span>
-            
+            <span class="text-sm font-medium z-10"
+              >{{ day.date.getDate() }}</span
+            >
+
             <!-- Availability Indicator -->
-            <div 
+            <div
               *ngIf="day.isCurrentMonth && !day.isPast"
               class="absolute bottom-1 right-1 w-2 h-2 rounded-full"
               [ngClass]="{
@@ -179,24 +314,29 @@
                 'bg-red-500': !day.isAvailable
               }"
             ></div>
-            
+
             <!-- Today Indicator -->
-            <div 
-              *ngIf="day.isToday" 
+            <div
+              *ngIf="day.isToday"
               class="absolute top-1 left-1 w-2 h-2 bg-blue-500 rounded-full"
             ></div>
           </div>
         </div>
 
         <!-- Selected Date Info -->
-        <div *ngIf="selectedDate" class="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+        <div
+          *ngIf="selectedDate"
+          class="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200"
+        >
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm font-semibold text-indigo-800">Selected Date</p>
               <p class="text-indigo-700">{{ formatFullDate(selectedDate) }}</p>
             </div>
             <div class="text-right">
-              <p class="text-xs text-indigo-600">{{ workerName }} is available</p>
+              <p class="text-xs text-indigo-600">
+                {{ workerName }} is available
+              </p>
               <p class="text-xs text-indigo-500">Choose a time slot below</p>
             </div>
           </div>
@@ -204,9 +344,11 @@
 
         <!-- Worker Availability Info -->
         <div *ngIf="workerAvailability" class="mt-4 p-3 bg-blue-50 rounded-lg">
-          <p class="text-sm font-semibold text-blue-800 mb-2">{{ workerName }}'s Schedule</p>
+          <p class="text-sm font-semibold text-blue-800 mb-2">
+            {{ workerName }}'s Schedule
+          </p>
           <div class="flex flex-wrap gap-2">
-            <span 
+            <span
               *ngFor="let day of workerAvailability.availableDays"
               class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full capitalize"
             >
@@ -214,13 +356,17 @@
             </span>
           </div>
           <p class="text-xs text-blue-600 mt-2">
-            Working hours: {{ workerAvailability.workingHours.start }} - {{ workerAvailability.workingHours.end }}
+            Working hours: {{ workerAvailability.workingHours.start }} - {{
+            workerAvailability.workingHours.end }}
           </p>
         </div>
       </div>
 
       <!-- Time Slots -->
-      <div *ngIf="selectedDate" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+      <div
+        *ngIf="selectedDate"
+        class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
+      >
         <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
           <ion-icon name="time" class="text-green-600 mr-2"></ion-icon>
           Available Times
@@ -231,7 +377,10 @@
           <p class="text-gray-500 text-sm mt-2">Loading availability...</p>
         </div>
 
-        <div *ngIf="!isLoadingAvailability" class="grid grid-cols-3 md:grid-cols-4 gap-3">
+        <div
+          *ngIf="!isLoadingAvailability"
+          class="grid grid-cols-3 md:grid-cols-4 gap-3"
+        >
           <button
             *ngFor="let slot of timeSlots"
             (click)="selectTimeSlot(slot)"
@@ -259,7 +408,10 @@
     <div *ngIf="currentStep === 3" class="space-y-4">
       <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
         <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-          <ion-icon name="document-text" class="text-purple-600 mr-2"></ion-icon>
+          <ion-icon
+            name="document-text"
+            class="text-purple-600 mr-2"
+          ></ion-icon>
           Booking Details
         </h2>
 
@@ -269,13 +421,15 @@
             <label class="block text-sm font-medium text-gray-700 mb-3">
               Service Address *
             </label>
-            
+
             <!-- Saved Addresses -->
             <div *ngIf="savedAddresses.length > 0" class="mb-4">
-              <h4 class="text-sm font-medium text-gray-600 mb-2">Your Saved Addresses</h4>
+              <h4 class="text-sm font-medium text-gray-600 mb-2">
+                Your Saved Addresses
+              </h4>
               <div class="space-y-2">
                 <div
-                  *ngFor="let address of savedAddresses" 
+                  *ngFor="let address of savedAddresses"
                   (click)="selectAddress(address)"
                   class="p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md"
                   [class]="bookingForm.selectedAddressId === address.id ? 
@@ -285,22 +439,31 @@
                   <div class="flex items-start justify-between">
                     <div class="flex-1">
                       <div class="flex items-center mb-1">
-                        <span class="font-medium text-gray-800">{{ address.contactPerson }}</span>
-                        <span 
+                        <span class="font-medium text-gray-800"
+                          >{{ address.contactPerson }}</span
+                        >
+                        <span
                           *ngIf="address.isDefault"
                           class="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full"
                         >
                           Default
                         </span>
                       </div>
-                      <p class="text-sm text-gray-600 mb-1">{{ address.fullAddress }}</p>
-                      <p class="text-xs text-gray-500">{{ address.phoneNumber }}</p>
+                      <p class="text-sm text-gray-600 mb-1">
+                        {{ address.fullAddress }}
+                      </p>
+                      <p class="text-xs text-gray-500">
+                        {{ address.phoneNumber }}
+                      </p>
                     </div>
-                    <div 
+                    <div
                       *ngIf="bookingForm.selectedAddressId === address.id"
                       class="ml-3 text-indigo-600"
                     >
-                      <ion-icon name="checkmark-circle" class="text-lg"></ion-icon>
+                      <ion-icon
+                        name="checkmark-circle"
+                        class="text-lg"
+                      ></ion-icon>
                     </div>
                   </div>
                 </div>
@@ -314,11 +477,12 @@
                 (click)="toggleCustomAddress()"
                 class="flex items-center text-sm text-indigo-600 hover:text-indigo-700 font-medium"
               >
-                <ion-icon 
-                  [name]="useCustomAddress ? 'checkmark-circle' : 'add-circle-outline'" 
+                <ion-icon
+                  [name]="useCustomAddress ? 'checkmark-circle' : 'add-circle-outline'"
                   class="mr-2"
                 ></ion-icon>
-                {{ useCustomAddress ? 'Using custom address' : 'Use a different address' }}
+                {{ useCustomAddress ? 'Using custom address' : 'Use a different
+                address' }}
               </button>
             </div>
 
@@ -333,23 +497,43 @@
             </div>
 
             <!-- Selected Address Preview -->
-            <div *ngIf="getCurrentAddress()" class="p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div
+              *ngIf="getCurrentAddress()"
+              class="p-3 bg-green-50 border border-green-200 rounded-lg"
+            >
               <div class="flex items-start">
-                <ion-icon name="location" class="text-green-600 mt-1 mr-2"></ion-icon>
+                <ion-icon
+                  name="location"
+                  class="text-green-600 mt-1 mr-2"
+                ></ion-icon>
                 <div>
-                  <p class="text-sm font-medium text-green-800 mb-1">Selected Address:</p>
-                  <p class="text-sm text-green-700">{{ getCurrentAddress() }}</p>
+                  <p class="text-sm font-medium text-green-800 mb-1">
+                    Selected Address:
+                  </p>
+                  <p class="text-sm text-green-700">
+                    {{ getCurrentAddress() }}
+                  </p>
                 </div>
               </div>
             </div>
 
             <!-- No Address Warning -->
-            <div *ngIf="!getCurrentAddress()" class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div
+              *ngIf="!getCurrentAddress()"
+              class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
+            >
               <div class="flex items-start">
-                <ion-icon name="warning" class="text-yellow-600 mt-1 mr-2"></ion-icon>
+                <ion-icon
+                  name="warning"
+                  class="text-yellow-600 mt-1 mr-2"
+                ></ion-icon>
                 <div>
-                  <p class="text-sm font-medium text-yellow-800">Please select an address</p>
-                  <p class="text-xs text-yellow-700">Choose from your saved addresses or enter a custom address</p>
+                  <p class="text-sm font-medium text-yellow-800">
+                    Please select an address
+                  </p>
+                  <p class="text-xs text-yellow-700">
+                    Choose from your saved addresses or enter a custom address
+                  </p>
                 </div>
               </div>
             </div>
@@ -388,22 +572,27 @@
     <div *ngIf="currentStep === 4" class="space-y-4">
       <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
         <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
-          <ion-icon name="checkmark-circle" class="text-green-600 mr-2"></ion-icon>
+          <ion-icon
+            name="checkmark-circle"
+            class="text-green-600 mr-2"
+          ></ion-icon>
           Booking Summary
         </h2>
 
         <div class="space-y-4">
           <!-- Worker Info -->
           <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
-            <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-200">
-              <img 
-                *ngIf="worker?.profilePhotoData" 
-                [src]="'data:image/jpeg;base64,' + worker?.profilePhotoData" 
+            <div
+              class="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-200"
+            >
+              <img
+                *ngIf="worker?.profilePhotoData"
+                [src]="'data:image/jpeg;base64,' + worker?.profilePhotoData"
                 alt="Worker Profile"
                 class="w-full h-full object-cover"
               />
-              <div 
-                *ngIf="!worker?.profilePhotoData" 
+              <div
+                *ngIf="!worker?.profilePhotoData"
                 class="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center"
               >
                 <span class="text-white text-lg font-bold">
@@ -413,10 +602,17 @@
             </div>
             <div>
               <h3 class="font-semibold text-gray-800">{{ workerName }}</h3>
-              <p class="text-sm text-gray-600">{{ worker?.phone || 'Professional Service Provider' }}</p>
+              <p class="text-sm text-gray-600">
+                {{ worker?.phone || 'Professional Service Provider' }}
+              </p>
               <div *ngIf="worker?.rating" class="flex items-center mt-1">
-                <ion-icon name="star" class="text-yellow-500 mr-1 text-sm"></ion-icon>
-                <span class="text-xs text-gray-600">{{ worker?.rating }}/5</span>
+                <ion-icon
+                  name="star"
+                  class="text-yellow-500 mr-1 text-sm"
+                ></ion-icon>
+                <span class="text-xs text-gray-600"
+                  >{{ worker?.rating }}/5</span
+                >
               </div>
             </div>
           </div>
@@ -426,23 +622,34 @@
             <div class="p-4 border border-gray-200 rounded-xl">
               <h4 class="font-semibold text-gray-800 mb-2">Service</h4>
               <p class="text-gray-600">{{ selectedService?.name }}</p>
-              <p class="text-sm text-gray-500">{{ selectedService?.category }}</p>
+              <p class="text-sm text-gray-500">
+                {{ selectedService?.category }}
+              </p>
             </div>
 
             <div class="p-4 border border-gray-200 rounded-xl">
               <h4 class="font-semibold text-gray-800 mb-2">Price</h4>
-              <p class="text-2xl font-bold text-indigo-600">₱{{ selectedService?.price }}</p>
-              <p class="text-sm text-gray-500">{{ selectedService?.duration }} minutes</p>
+              <p class="text-2xl font-bold text-indigo-600">
+                ₱{{ selectedService?.price }}
+              </p>
+              <p class="text-sm text-gray-500">
+                {{ selectedService?.duration }} minutes
+              </p>
             </div>
 
             <div class="p-4 border border-gray-200 rounded-xl">
               <h4 class="font-semibold text-gray-800 mb-2">Date</h4>
-              <p class="text-gray-600">{{ selectedDate ? formatFullDate(selectedDate) : 'Not selected' }}</p>
+              <p class="text-gray-600">
+                {{ selectedDate ? formatFullDate(selectedDate) : 'Not selected'
+                }}
+              </p>
             </div>
 
             <div class="p-4 border border-gray-200 rounded-xl">
               <h4 class="font-semibold text-gray-800 mb-2">Time</h4>
-              <p class="text-gray-600">{{ selectedTimeSlot?.time || 'Not selected' }}</p>
+              <p class="text-gray-600">
+                {{ selectedTimeSlot?.time || 'Not selected' }}
+              </p>
             </div>
           </div>
 
@@ -453,7 +660,10 @@
           </div>
 
           <!-- Notes -->
-          <div *ngIf="bookingForm.notes" class="p-4 border border-gray-200 rounded-xl">
+          <div
+            *ngIf="bookingForm.notes"
+            class="p-4 border border-gray-200 rounded-xl"
+          >
             <h4 class="font-semibold text-gray-800 mb-2">Additional Notes</h4>
             <p class="text-gray-600">{{ bookingForm.notes }}</p>
           </div>
@@ -461,12 +671,18 @@
           <!-- Important Notice -->
           <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
             <div class="flex items-start">
-              <ion-icon name="information-circle" class="text-yellow-600 mt-1 mr-3"></ion-icon>
+              <ion-icon
+                name="information-circle"
+                class="text-yellow-600 mt-1 mr-3"
+              ></ion-icon>
               <div>
-                <h4 class="font-semibold text-yellow-800 mb-1">Important Notice</h4>
+                <h4 class="font-semibold text-yellow-800 mb-1">
+                  Important Notice
+                </h4>
                 <p class="text-sm text-yellow-700">
-                  Your booking will be sent to {{ workerName }} for confirmation. 
-                  You will receive a notification once the worker accepts or declines your request.
+                  Your booking will be sent to {{ workerName }} for
+                  confirmation. You will receive a notification once the worker
+                  accepts or declines your request.
                 </p>
               </div>
             </div>
@@ -477,7 +693,9 @@
   </div>
 
   <!-- Fixed Bottom Navigation -->
-  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
+  <div
+    class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg"
+  >
     <div class="flex space-x-3 max-w-md mx-auto">
       <button
         *ngIf="currentStep > 1"
@@ -487,7 +705,7 @@
         <ion-icon name="chevron-back" class="mr-2"></ion-icon>
         Previous
       </button>
-      
+
       <button
         *ngIf="currentStep < totalSteps"
         (click)="nextStep()"
@@ -496,7 +714,7 @@
         Next
         <ion-icon name="chevron-forward" class="ml-2"></ion-icon>
       </button>
-      
+
       <button
         *ngIf="currentStep === totalSteps"
         (click)="confirmBooking()"

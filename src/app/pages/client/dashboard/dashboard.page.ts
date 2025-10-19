@@ -11,6 +11,7 @@ import {
 import { QuickBookingService } from '../../../services/quick-booking.service';
 import { Subscription, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { register } from 'swiper/element/bundle';
 
 export interface Booking {
   id: string;
@@ -49,6 +50,14 @@ export interface Worker {
   isOnline: boolean;
 }
 
+export interface Ad {
+  id: string;
+  imageUrl: string;
+  actionUrl?: string;
+  altText: string;
+  isLoading?: boolean;
+}
+
 @Component({
   selector: 'app-client-dashboard',
   templateUrl: './dashboard.page.html',
@@ -61,6 +70,7 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
   recentWorkers: Worker[] = [];
   serviceCategories: ServiceCategory[] = [];
   notifications: any[] = [];
+  ads: Ad[] = [];
   isLoading = true;
 
   private subscriptions: Subscription[] = [];
@@ -70,7 +80,11 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
     private dashboardService: DashboardService,
     private quickBookingService: QuickBookingService,
     private router: Router
-  ) {}
+  ) {
+    // Register Swiper web components
+    register();
+    this.initializeAds();
+  }
 
   ngOnInit() {
     // Subscribe to user profile
@@ -255,9 +269,7 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
 
   // Navigation methods
   bookService(categoryId?: string) {
-    this.router.navigate(['/client/browse-workers'], {
-      queryParams: { category: categoryId },
-    });
+    this.router.navigate(['/client/book-service']);
   }
 
   quickBooking() {
@@ -267,7 +279,7 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
   }
 
   viewBookings() {
-    this.router.navigate(['/pages/my-bookings']);
+    this.router.navigate(['/client/booking-history']);
   }
 
   viewQuickBookingsHistory() {
@@ -328,5 +340,55 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
 
   async logout() {
     await this.authService.logout();
+  }
+
+  private initializeAds() {
+    this.ads = [
+      {
+        id: '1',
+        imageUrl: 'assets/ads/cleaning-special.jpg',
+        actionUrl: '/book-service?category=cleaning',
+        altText: 'Special 20% discount on home cleaning services',
+      },
+      {
+        id: '2',
+        imageUrl: 'assets/ads/gardening-service.jpg',
+        actionUrl: '/book-service?category=gardening',
+        altText: 'New professional gardening service available',
+      },
+      {
+        id: '3',
+        imageUrl: 'assets/ads/premium-membership.jpg',
+        actionUrl: '/premium',
+        altText: 'Premium membership with exclusive benefits',
+      },
+      {
+        id: '4',
+        imageUrl: 'assets/ads/referral-program.jpg',
+        actionUrl: '/referral',
+        altText: 'Refer friends and earn rewards',
+      },
+      {
+        id: '5',
+        imageUrl: 'assets/ads/quick-booking.jpg',
+        actionUrl: '/quick-booking',
+        altText: 'Quick booking for immediate service needs',
+      },
+    ];
+  }
+
+  onAdClick(ad: Ad) {
+    if (ad.actionUrl) {
+      this.router.navigate([ad.actionUrl]);
+    } else {
+      // Default action - navigate to book service
+      this.bookService();
+    }
+  }
+
+  onImageError(event: any, ad: Ad) {
+    // Replace with a fallback image when the original fails to load
+    event.target.src = 'assets/ads/fallback-ad.jpg';
+    console.log(`Failed to load ad image: ${ad.imageUrl}`);
   }
 }

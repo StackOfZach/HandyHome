@@ -73,6 +73,10 @@ export class AdminDashboardPage implements OnInit {
   selectedClient: UserProfile | null = null;
   isClientModalOpen: boolean = false;
 
+  // Analytics refresh
+  isRefreshingAnalytics: boolean = false;
+  lastAnalyticsUpdate: Date | null = null;
+
   // Icon Picker Properties
   showIconPicker: boolean = false;
   iconSearchTerm: string = '';
@@ -407,20 +411,31 @@ export class AdminDashboardPage implements OnInit {
   }
 
   async loadAnalytics() {
+    this.isRefreshingAnalytics = true;
     try {
+      console.log('Loading analytics data...');
       this.analytics = await this.dashboardService.getAnalytics();
+      this.lastAnalyticsUpdate = new Date();
+      console.log('Analytics loaded successfully:', this.analytics);
     } catch (error) {
       console.error('Error loading analytics:', error);
-      // Set mock data for development
+      // Set fallback data for development
       this.analytics = {
-        totalClients: 245,
-        totalWorkers: 89,
-        pendingVerifications: 12,
-        activeBookings: 34,
-        completedBookings: 567,
-        totalRevenue: 125430.5,
+        totalClients: 0,
+        totalWorkers: 0,
+        pendingVerifications: 0,
+        activeBookings: 0,
+        completedBookings: 0,
+        totalRevenue: 0,
       };
+    } finally {
+      this.isRefreshingAnalytics = false;
     }
+  }
+
+  async refreshAnalytics() {
+    await this.loadAnalytics();
+    this.showSuccessToast('Dashboard data refreshed successfully');
   }
 
   async logout() {
@@ -742,6 +757,172 @@ export class AdminDashboardPage implements OnInit {
   async rejectWorkerFromModal(worker: WorkerProfile) {
     await this.processWorkerApproval(worker, false);
     this.closeWorkerModal();
+  }
+
+  // Certificate Helper Methods
+
+  getWorkerCertificateKeys(
+    certificates: { [skillName: string]: string } | undefined
+  ): string[] {
+    return certificates ? Object.keys(certificates) : [];
+  }
+
+  isCertificateImage(certificateData: string): boolean {
+    // Check if the base64 data is an image (starts with data:image)
+    return certificateData?.startsWith('data:image/') || false;
+  }
+
+  downloadCertificate(certificateData: string, skillName: string) {
+    try {
+      // Create a blob from the base64 data
+      const byteCharacters = atob(certificateData.split(',')[1]);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+
+      // Determine the file type from the base64 header
+      let mimeType = 'application/pdf';
+      let fileExtension = 'pdf';
+
+      if (certificateData.startsWith('data:image/')) {
+        const imageType = certificateData.split(';')[0].split('/')[1];
+        mimeType = `image/${imageType}`;
+        fileExtension = imageType;
+      }
+
+      const blob = new Blob([byteArray], { type: mimeType });
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${skillName}_Certificate.${fileExtension}`;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      this.showToast(
+        `Certificate for ${skillName} downloaded successfully`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Error downloading certificate:', error);
+      this.showToast('Failed to download certificate', 'danger');
+    }
+  }
+
+  openImageInNewTab(imageData: string, title: string) {
+    try {
+      // Create a new window/tab
+      const newWindow = window.open('', '_blank');
+
+      if (newWindow) {
+        // Write HTML content to the new window
+        newWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${title} - HandyHome</title>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 20px;
+                  background-color: #f5f5f5;
+                  font-family: Arial, sans-serif;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  min-height: 100vh;
+                }
+                .header {
+                  background-color: #fff;
+                  padding: 15px 30px;
+                  border-radius: 8px;
+                  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                  margin-bottom: 20px;
+                  width: 100%;
+                  max-width: 800px;
+                  box-sizing: border-box;
+                }
+                .header h1 {
+                  margin: 0;
+                  color: #333;
+                  font-size: 24px;
+                  text-align: center;
+                }
+                .image-container {
+                  background-color: #fff;
+                  padding: 20px;
+                  border-radius: 8px;
+                  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                  max-width: 90%;
+                  max-height: 80vh;
+                  overflow: auto;
+                }
+                .image {
+                  max-width: 100%;
+                  height: auto;
+                  border-radius: 8px;
+                  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                }
+                .controls {
+                  margin-top: 20px;
+                  text-align: center;
+                }
+                .btn {
+                  background-color: #3b82f6;
+                  color: white;
+                  border: none;
+                  padding: 10px 20px;
+                  border-radius: 6px;
+                  cursor: pointer;
+                  margin: 0 10px;
+                  font-size: 14px;
+                }
+                .btn:hover {
+                  background-color: #2563eb;
+                }
+                .btn-secondary {
+                  background-color: #6b7280;
+                }
+                .btn-secondary:hover {
+                  background-color: #4b5563;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>${title}</h1>
+              </div>
+              <div class="image-container">
+                <img src="${imageData}" alt="${title}" class="image" />
+                <div class="controls">
+                  <button class="btn" onclick="window.print()">Print</button>
+                  <button class="btn btn-secondary" onclick="window.close()">Close</button>
+                </div>
+              </div>
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+      } else {
+        // Fallback: Show toast if popup was blocked
+        this.showToast(
+          'Please allow popups to view images in new tab',
+          'warning'
+        );
+      }
+    } catch (error) {
+      console.error('Error opening image in new tab:', error);
+      this.showToast('Failed to open image in new tab', 'danger');
+    }
   }
 
   // Service Management Methods

@@ -1,10 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { WorkerService, WorkerProfile } from '../../../services/worker.service';
-import { AuthService, UserProfile, UserLocation } from '../../../services/auth.service';
-import { DashboardService, ServiceCategory } from '../../../services/dashboard.service';
-import { BookingService as FirebaseBookingService, NewBookingData } from '../../../services/booking.service';
-import { LoadingController, ToastController, AlertController, ModalController } from '@ionic/angular';
+import {
+  AuthService,
+  UserProfile,
+  UserLocation,
+} from '../../../services/auth.service';
+import {
+  DashboardService,
+  ServiceCategory,
+} from '../../../services/dashboard.service';
+import {
+  BookingService as FirebaseBookingService,
+  NewBookingData,
+} from '../../../services/booking.service';
+import {
+  LoadingController,
+  ToastController,
+  AlertController,
+  ModalController,
+} from '@ionic/angular';
 // Using native JavaScript Date methods instead of date-fns
 
 interface TimeSlot {
@@ -43,7 +58,7 @@ interface WorkerAvailability {
   unavailableDates: string[]; // Specific dates worker is not available (YYYY-MM-DD format)
   workingHours: {
     start: string; // '08:00'
-    end: string;   // '18:00'
+    end: string; // '18:00'
   };
   bookedSlots: {
     date: string; // YYYY-MM-DD
@@ -62,41 +77,47 @@ export class ScheduleBookingPage implements OnInit {
   workerId: string = '';
   workerName: string = '';
   currentUser: UserProfile | null = null;
-  
+
   // Calendar data
   currentDate: Date = new Date();
   currentMonth: Date = new Date();
   selectedDate: Date | null = null;
   calendarDays: CalendarDay[] = [];
   workerAvailability: WorkerAvailability | null = null;
-  
+
   // Services data
   serviceCategories: ServiceCategory[] = [];
   availableServices: BookingService[] = [];
   selectedService: BookingService | null = null;
-  
+
   // Time slots
   selectedTimeSlot: TimeSlot | null = null;
   timeSlots: TimeSlot[] = [];
-  
+
+  // UI State
+  showWorkerDetails: boolean = false;
+  isSubmitting: boolean = false;
+
   // Booking form data
   bookingForm = {
     selectedAddressId: '',
     customAddress: '',
+    agreeToTerms: false,
     notes: '',
-    contactNumber: ''
+    contactNumber: '',
   };
-  
+
   // Address data
   savedAddresses: UserLocation[] = [];
   showAddressOptions = false;
   useCustomAddress = false;
-  
+
   // UI states
   isLoading = false;
   isLoadingAvailability = false;
   currentStep = 1; // 1: Service, 2: Date/Time, 3: Details, 4: Confirmation
   totalSteps = 4;
+  workerImageLoadError = false;
 
   constructor(
     private router: Router,
@@ -115,7 +136,7 @@ export class ScheduleBookingPage implements OnInit {
     // Get parameters from route
     this.workerId = this.route.snapshot.queryParamMap.get('workerId') || '';
     this.workerName = this.route.snapshot.queryParamMap.get('workerName') || '';
-    
+
     if (!this.workerId) {
       this.showToast('Worker information not found', 'danger');
       this.router.navigate(['/client/browse-workers']);
@@ -128,23 +149,22 @@ export class ScheduleBookingPage implements OnInit {
   private async initializeBooking() {
     const loading = await this.loadingController.create({
       message: 'Loading booking information...',
-      spinner: 'crescent'
+      spinner: 'crescent',
     });
     await loading.present();
 
     try {
       // Load current user
       await this.getCurrentUser();
-      
+
       // Load worker details
       await this.loadWorkerDetails();
-      
+
       // Load service categories and worker services
       await this.loadServices();
-      
+
       // Initialize calendar with current week
       this.initializeCalendar();
-
     } catch (error) {
       console.error('Error initializing booking:', error);
       this.showToast('Failed to load booking information', 'danger');
@@ -156,15 +176,17 @@ export class ScheduleBookingPage implements OnInit {
 
   private async getCurrentUser() {
     const user = await this.authService.getCurrentUser();
-    this.currentUser = user ? {
-      uid: user.uid,
-      email: user.email || '',
-      fullName: user.displayName || '',
-      phone: '',
-      role: 'client',
-      createdAt: new Date()
-    } : null;
-    
+    this.currentUser = user
+      ? {
+          uid: user.uid,
+          email: user.email || '',
+          fullName: user.displayName || '',
+          phone: '',
+          role: 'client',
+          createdAt: new Date(),
+        }
+      : null;
+
     // Load user's saved addresses
     if (this.currentUser) {
       await this.loadSavedAddresses();
@@ -174,14 +196,18 @@ export class ScheduleBookingPage implements OnInit {
   private async loadSavedAddresses() {
     try {
       if (!this.currentUser) return;
-      
+
       // Get user profile with saved locations
-      const userProfile = await this.authService.getUserProfile(this.currentUser.uid);
+      const userProfile = await this.authService.getUserProfile(
+        this.currentUser.uid
+      );
       if (userProfile && userProfile.savedLocations) {
         this.savedAddresses = userProfile.savedLocations;
-        
+
         // Auto-select default address if available
-        const defaultAddress = this.savedAddresses.find(addr => addr.isDefault);
+        const defaultAddress = this.savedAddresses.find(
+          (addr) => addr.isDefault
+        );
         if (defaultAddress) {
           this.bookingForm.selectedAddressId = defaultAddress.id;
         }
@@ -192,9 +218,13 @@ export class ScheduleBookingPage implements OnInit {
   }
 
   private async loadWorkerDetails() {
-    this.worker = await this.workerService.getCompleteWorkerProfile(this.workerId);
+    this.worker = await this.workerService.getCompleteWorkerProfile(
+      this.workerId
+    );
     if (this.worker) {
       this.workerName = this.worker.fullName;
+      // Reset image error flag when loading new worker data
+      this.workerImageLoadError = false;
       await this.loadWorkerAvailability();
     }
   }
@@ -204,13 +234,19 @@ export class ScheduleBookingPage implements OnInit {
 
     // Load worker's availability data
     this.workerAvailability = {
-      availableDays: this.worker.availableDays || ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+      availableDays: this.worker.availableDays || [
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+      ],
       unavailableDates: [], // TODO: Load from database
       workingHours: {
         start: '08:00',
-        end: '18:00'
+        end: '18:00',
       },
-      bookedSlots: [] // TODO: Load existing bookings from database
+      bookedSlots: [], // TODO: Load existing bookings from database
     };
 
     // Generate calendar days with availability
@@ -236,18 +272,20 @@ export class ScheduleBookingPage implements OnInit {
     for (let i = 0; i < 42; i++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
-      
+
       const dayOfWeek = currentDate.getDay();
       const dayName = this.getDayName(dayOfWeek);
-      
+
       const calendarDay: CalendarDay = {
         date: new Date(currentDate),
         isCurrentMonth: currentDate.getMonth() === month,
         isToday: this.isSameDay(currentDate, today),
         isPast: currentDate < today,
         isAvailable: this.isWorkerAvailable(currentDate, dayName),
-        isSelected: this.selectedDate ? this.isSameDay(currentDate, this.selectedDate) : false,
-        hasBookings: this.hasExistingBookings(currentDate)
+        isSelected: this.selectedDate
+          ? this.isSameDay(currentDate, this.selectedDate)
+          : false,
+        hasBookings: this.hasExistingBookings(currentDate),
       };
 
       this.calendarDays.push(calendarDay);
@@ -255,7 +293,15 @@ export class ScheduleBookingPage implements OnInit {
   }
 
   private getDayName(dayOfWeek: number): string {
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const days = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+    ];
     return days[dayOfWeek];
   }
 
@@ -263,12 +309,14 @@ export class ScheduleBookingPage implements OnInit {
     if (!this.workerAvailability) return false;
 
     // Check if the day of week is in worker's available days
-    const isDayAvailable = this.workerAvailability.availableDays.includes(dayName);
-    
+    const isDayAvailable =
+      this.workerAvailability.availableDays.includes(dayName);
+
     // Check if the specific date is in unavailable dates
     const dateString = this.formatDateToString(date);
-    const isSpecificDateUnavailable = this.workerAvailability.unavailableDates.includes(dateString);
-    
+    const isSpecificDateUnavailable =
+      this.workerAvailability.unavailableDates.includes(dateString);
+
     return isDayAvailable && !isSpecificDateUnavailable;
   }
 
@@ -276,7 +324,9 @@ export class ScheduleBookingPage implements OnInit {
     if (!this.workerAvailability) return false;
 
     const dateString = this.formatDateToString(date);
-    return this.workerAvailability.bookedSlots.some(slot => slot.date === dateString);
+    return this.workerAvailability.bookedSlots.some(
+      (slot) => slot.date === dateString
+    );
   }
 
   private formatDateToString(date: Date): string {
@@ -289,13 +339,14 @@ export class ScheduleBookingPage implements OnInit {
   private async loadServices() {
     try {
       // Load service categories
-      this.serviceCategories = await this.dashboardService.getServiceCategories();
-      
+      this.serviceCategories =
+        await this.dashboardService.getServiceCategories();
+
       // Filter services that the worker can provide
       this.availableServices = [];
-      
-      this.serviceCategories.forEach(category => {
-        category.services.forEach(serviceName => {
+
+      this.serviceCategories.forEach((category) => {
+        category.services.forEach((serviceName) => {
           // Check if worker has this skill
           if (this.worker?.skills?.includes(serviceName)) {
             this.availableServices.push({
@@ -304,12 +355,11 @@ export class ScheduleBookingPage implements OnInit {
               category: category.name,
               price: category.averagePrice || 100, // Default price
               duration: category.estimatedDuration || 60, // Default duration in minutes
-              description: `Professional ${serviceName.toLowerCase()} service`
+              description: `Professional ${serviceName.toLowerCase()} service`,
             });
           }
         });
       });
-
     } catch (error) {
       console.error('Error loading services:', error);
       this.showToast('Failed to load services', 'warning');
@@ -323,13 +373,18 @@ export class ScheduleBookingPage implements OnInit {
 
   // Calendar navigation
   goToPreviousMonth() {
-    this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() - 1, 1);
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() - 1,
+      1
+    );
     this.generateCalendarDays();
-    
+
     if (this.selectedDate) {
       // Clear selection if it's not in the current month
-      const isInCurrentMonth = this.selectedDate.getMonth() === this.currentMonth.getMonth() &&
-                               this.selectedDate.getFullYear() === this.currentMonth.getFullYear();
+      const isInCurrentMonth =
+        this.selectedDate.getMonth() === this.currentMonth.getMonth() &&
+        this.selectedDate.getFullYear() === this.currentMonth.getFullYear();
       if (!isInCurrentMonth) {
         this.selectedDate = null;
         this.selectedTimeSlot = null;
@@ -338,13 +393,18 @@ export class ScheduleBookingPage implements OnInit {
   }
 
   goToNextMonth() {
-    this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + 1, 1);
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() + 1,
+      1
+    );
     this.generateCalendarDays();
-    
+
     if (this.selectedDate) {
       // Clear selection if it's not in the current month
-      const isInCurrentMonth = this.selectedDate.getMonth() === this.currentMonth.getMonth() &&
-                               this.selectedDate.getFullYear() === this.currentMonth.getFullYear();
+      const isInCurrentMonth =
+        this.selectedDate.getMonth() === this.currentMonth.getMonth() &&
+        this.selectedDate.getFullYear() === this.currentMonth.getFullYear();
       if (!isInCurrentMonth) {
         this.selectedDate = null;
         this.selectedTimeSlot = null;
@@ -355,15 +415,15 @@ export class ScheduleBookingPage implements OnInit {
   // Date and time selection
   async selectDate(calendarDay: CalendarDay) {
     if (!calendarDay.isAvailable || calendarDay.isPast) return;
-    
+
     this.selectedDate = calendarDay.date;
     this.selectedTimeSlot = null;
-    
+
     // Update calendar days selection
-    this.calendarDays.forEach(day => {
+    this.calendarDays.forEach((day) => {
       day.isSelected = this.isSameDay(day.date, calendarDay.date);
     });
-    
+
     await this.loadAvailabilityForDate(calendarDay.date);
   }
 
@@ -374,16 +434,18 @@ export class ScheduleBookingPage implements OnInit {
       this.timeSlots = [];
       for (let hour = 8; hour <= 18; hour++) {
         for (let minute = 0; minute < 60; minute += 30) {
-          const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-          
+          const timeString = `${hour.toString().padStart(2, '0')}:${minute
+            .toString()
+            .padStart(2, '0')}`;
+
           // Mock availability - in real app, this would check Firestore
           const isAvailable = Math.random() > 0.3; // 70% availability chance
-          
+
           this.timeSlots.push({
             time: timeString,
             available: isAvailable,
             booked: !isAvailable,
-            price: this.selectedService?.price || 100
+            price: this.selectedService?.price || 100,
           });
         }
       }
@@ -421,7 +483,11 @@ export class ScheduleBookingPage implements OnInit {
   }
 
   getSelectedAddress(): UserLocation | null {
-    return this.savedAddresses.find(addr => addr.id === this.bookingForm.selectedAddressId) || null;
+    return (
+      this.savedAddresses.find(
+        (addr) => addr.id === this.bookingForm.selectedAddressId
+      ) || null
+    );
   }
 
   getCurrentAddress(): string {
@@ -437,7 +503,7 @@ export class ScheduleBookingPage implements OnInit {
     if (this.currentStep < this.totalSteps) {
       if (this.validateCurrentStep()) {
         this.currentStep++;
-        
+
         // Load availability when moving to date/time step
         if (this.currentStep === 2 && this.selectedDate) {
           this.loadAvailabilityForDate(this.selectedDate);
@@ -460,7 +526,7 @@ export class ScheduleBookingPage implements OnInit {
           return false;
         }
         return true;
-      
+
       case 2: // Date and time selection
         if (!this.selectedDate) {
           this.showToast('Please select a date', 'warning');
@@ -471,7 +537,7 @@ export class ScheduleBookingPage implements OnInit {
           return false;
         }
         return true;
-      
+
       case 3: // Booking details
         const currentAddress = this.getCurrentAddress();
         if (!currentAddress.trim()) {
@@ -479,7 +545,7 @@ export class ScheduleBookingPage implements OnInit {
           return false;
         }
         return true;
-      
+
       default:
         return true;
     }
@@ -495,13 +561,13 @@ export class ScheduleBookingPage implements OnInit {
       buttons: [
         {
           text: 'Cancel',
-          role: 'cancel'
+          role: 'cancel',
         },
         {
           text: 'Confirm Booking',
-          handler: () => this.createBooking()
-        }
-      ]
+          handler: () => this.createBooking(),
+        },
+      ],
     });
 
     await alert.present();
@@ -520,8 +586,9 @@ export class ScheduleBookingPage implements OnInit {
   }
 
   private getBookingConfirmationMessage(): string {
-    if (!this.selectedService || !this.selectedDate || !this.selectedTimeSlot) return '';
-    
+    if (!this.selectedService || !this.selectedDate || !this.selectedTimeSlot)
+      return '';
+
     return `Service: ${this.selectedService.name}
 Worker: ${this.workerName}
 Date: ${this.formatDateString(this.selectedDate, 'EEEE, MMMM d, yyyy')}
@@ -534,7 +601,7 @@ Address: ${this.getCurrentAddress()}`;
   private async createBooking() {
     const loading = await this.loadingController.create({
       message: 'Creating booking...',
-      spinner: 'crescent'
+      spinner: 'crescent',
     });
     await loading.present();
 
@@ -552,16 +619,17 @@ Address: ${this.getCurrentAddress()}`;
         address: this.getCurrentAddress(),
         notes: this.bookingForm.notes,
         status: 'pending',
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       // Save to Firestore bookings collection
-      const bookingId = await this.firebaseBookingService.createBooking(bookingData);
+      const bookingId = await this.firebaseBookingService.createBooking(
+        bookingData
+      );
       console.log('Booking created with ID:', bookingId);
-      
+
       await this.showSuccessMessage();
       this.router.navigate(['/pages/my-bookings']);
-
     } catch (error) {
       console.error('Error creating booking:', error);
       this.showToast('Failed to create booking. Please try again.', 'danger');
@@ -574,7 +642,7 @@ Address: ${this.getCurrentAddress()}`;
     const alert = await this.alertController.create({
       header: 'Booking Successful!',
       message: `Your booking has been confirmed. ${this.workerName} will contact you shortly to confirm the details.`,
-      buttons: ['OK']
+      buttons: ['OK'],
     });
     await alert.present();
   }
@@ -582,10 +650,22 @@ Address: ${this.getCurrentAddress()}`;
   // Helper methods
   getMonthName(): string {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
-    return `${months[this.currentMonth.getMonth()]} ${this.currentMonth.getFullYear()}`;
+    return `${
+      months[this.currentMonth.getMonth()]
+    } ${this.currentMonth.getFullYear()}`;
   }
 
   getCalendarWeeks(): CalendarDay[][] {
@@ -598,14 +678,14 @@ Address: ${this.getCurrentAddress()}`;
 
   getDayClasses(day: CalendarDay): string {
     let classes = 'calendar-day';
-    
+
     if (!day.isCurrentMonth) classes += ' not-current-month';
     if (day.isToday) classes += ' today';
     if (day.isPast) classes += ' past';
     if (!day.isAvailable) classes += ' unavailable';
     if (day.isSelected) classes += ' selected';
     if (day.hasBookings) classes += ' has-bookings';
-    
+
     return classes;
   }
 
@@ -619,11 +699,16 @@ Address: ${this.getCurrentAddress()}`;
 
   getStepTitle(): string {
     switch (this.currentStep) {
-      case 1: return 'Select Service';
-      case 2: return 'Choose Date & Time';
-      case 3: return 'Booking Details';
-      case 4: return 'Confirmation';
-      default: return '';
+      case 1:
+        return 'Select Service';
+      case 2:
+        return 'Choose Date & Time';
+      case 3:
+        return 'Booking Details';
+      case 4:
+        return 'Confirmation';
+      default:
+        return '';
     }
   }
 
@@ -632,7 +717,7 @@ Address: ${this.getCurrentAddress()}`;
       this.previousStep();
     } else {
       this.router.navigate(['/client/worker-detail'], {
-        queryParams: { workerId: this.workerId }
+        queryParams: { workerId: this.workerId },
       });
     }
   }
@@ -656,9 +741,11 @@ Address: ${this.getCurrentAddress()}`;
   }
 
   private isSameDay(date1: Date, date2: Date): boolean {
-    return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate();
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    );
   }
 
   private isBefore(date1: Date, date2: Date): boolean {
@@ -667,7 +754,7 @@ Address: ${this.getCurrentAddress()}`;
 
   private formatDateString(date: Date, format: string): string {
     const options: Intl.DateTimeFormatOptions = {};
-    
+
     if (format === 'EEE d') {
       options.weekday = 'short';
       options.day = 'numeric';
@@ -677,7 +764,164 @@ Address: ${this.getCurrentAddress()}`;
       options.month = 'long';
       options.day = 'numeric';
     }
-    
+
     return date.toLocaleDateString('en-US', options);
+  }
+
+  /**
+   * Get month year display for calendar header
+   */
+  getMonthYearDisplay(date: Date): string {
+    const monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
+  /**
+   * Get CSS classes for calendar day
+   */
+  getCalendarDayClasses(day: CalendarDay): string {
+    const classes = [];
+
+    if (!day.isCurrentMonth) {
+      classes.push('text-gray-300', 'cursor-not-allowed');
+    } else if (day.isPast) {
+      classes.push('text-gray-400', 'cursor-not-allowed');
+    } else if (!day.isAvailable) {
+      classes.push('text-red-400', 'cursor-not-allowed');
+    } else if (day.isSelected) {
+      classes.push('bg-indigo-600', 'text-white');
+    } else {
+      classes.push('text-gray-900', 'hover:bg-gray-100', 'cursor-pointer');
+    }
+
+    if (day.isToday) {
+      classes.push('font-bold');
+    }
+
+    return classes.join(' ');
+  }
+
+  /**
+   * Get CSS classes for time slot button
+   */
+  getTimeSlotClasses(slot: TimeSlot): string {
+    const classes = [];
+
+    if (this.selectedTimeSlot?.time === slot.time) {
+      classes.push('bg-indigo-600', 'text-white', 'border-indigo-600');
+    } else if (slot.available) {
+      classes.push(
+        'bg-white',
+        'text-gray-900',
+        'border-gray-300',
+        'hover:bg-gray-50'
+      );
+    } else {
+      classes.push(
+        'bg-gray-100',
+        'text-gray-400',
+        'border-gray-200',
+        'cursor-not-allowed'
+      );
+    }
+
+    return classes.join(' ');
+  }
+
+  /**
+   * Check if user can proceed to next step
+   */
+  canProceedToNextStep(): boolean {
+    switch (this.currentStep) {
+      case 1:
+        return !!this.selectedService;
+      case 2:
+        return !!this.selectedDate && !!this.selectedTimeSlot;
+      case 3:
+        return !!(
+          this.bookingForm.selectedAddressId ||
+          this.bookingForm.customAddress?.trim()
+        );
+      case 4:
+        return this.bookingForm.agreeToTerms;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Go to previous month
+   */
+  previousMonth(): void {
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() - 1,
+      1
+    );
+    this.generateCalendarDays();
+  }
+
+  /**
+   * Go to next month
+   */
+  nextMonth(): void {
+    this.currentMonth = new Date(
+      this.currentMonth.getFullYear(),
+      this.currentMonth.getMonth() + 1,
+      1
+    );
+    this.generateCalendarDays();
+  }
+
+  /**
+   * Get worker image source URL from base64 data
+   * Handles different image formats automatically
+   */
+  getWorkerImageSrc(base64Data: string | undefined): string {
+    if (!base64Data) {
+      return '';
+    }
+
+    // Check if the base64 data already includes the data URI prefix
+    if (base64Data.startsWith('data:image/')) {
+      return base64Data;
+    }
+
+    // Detect image format based on base64 header or default to jpeg
+    let mimeType = 'image/jpeg';
+
+    // Check for common image format signatures in base64
+    if (base64Data.startsWith('/9j/')) {
+      mimeType = 'image/jpeg';
+    } else if (base64Data.startsWith('iVBORw0KGgo')) {
+      mimeType = 'image/png';
+    } else if (base64Data.startsWith('R0lGOD')) {
+      mimeType = 'image/gif';
+    } else if (base64Data.startsWith('UklGR')) {
+      mimeType = 'image/webp';
+    }
+
+    return `data:${mimeType};base64,${base64Data}`;
+  }
+
+  /**
+   * Handle worker image load error
+   */
+  onWorkerImageError(event: any): void {
+    console.warn('Failed to load worker ID photo:', event);
+    this.workerImageLoadError = true;
   }
 }

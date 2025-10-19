@@ -19,12 +19,21 @@ import { IonicModule } from '@ionic/angular';
 // Services
 import { AuthService } from '../../../services/auth.service';
 import { WorkerService } from '../../../services/worker.service';
-import { DashboardService, ServiceCategory } from '../../../services/dashboard.service';
+import {
+  DashboardService,
+  ServiceCategory,
+} from '../../../services/dashboard.service';
 
 // Components
 import { MapPickerComponent } from '../../../components/map-picker/map-picker.component';
 
 // Interfaces
+export interface ServicePrice {
+  name: string;
+  minPrice: number;
+  maxPrice: number;
+}
+
 export interface WorkerProfile {
   uid: string;
   fullName: string;
@@ -36,12 +45,15 @@ export interface WorkerProfile {
     lng: number;
   };
   skills?: string[];
+  servicePrices?: ServicePrice[]; // Service pricing information
   workRadius?: number;
   availableDays?: string[];
   idPhotoUrl?: string;
   profilePhotoUrl?: string;
   idPhotoData?: string; // Base64 image data for temporary storage
   profilePhotoData?: string; // Base64 image data for temporary storage
+  certificates?: { [skillName: string]: string }; // Base64 certificate data for each skill
+  certificateUrls?: { [skillName: string]: string }; // URLs for uploaded certificates
   status?: 'pending_verification' | 'verified' | 'rejected';
   createdAt: Date;
   currentStep?: number;
@@ -61,11 +73,12 @@ export interface WorkerProfile {
 })
 export class InterviewPage implements OnInit, OnDestroy {
   currentStep = 1;
-  totalSteps = 4;
+  totalSteps = 5;
 
   // Form groups for each step
   personalInfoForm!: FormGroup;
   skillsForm!: FormGroup;
+  certificateForm!: FormGroup;
   verificationForm!: FormGroup;
 
   // Worker profile data
@@ -98,6 +111,27 @@ export class InterviewPage implements OnInit, OnDestroy {
   // Photo previews
   idPhotoPreview: string | null = null;
   profilePhotoPreview: string | null = null;
+
+  // Certificate related
+  selectedSkills: string[] = [];
+  certificatePreviews: { [skillName: string]: string } = {};
+  certificateRequirements: { [skillName: string]: string } = {
+    'House Cleaning': 'Cleaning certification or training certificate',
+    Plumbing: 'Plumbing license or trade certification',
+    'Electrical Work': 'Electrical license or certification',
+    Carpentry: 'Carpentry certification or trade certificate',
+    Painting: 'Painting certification or portfolio of work',
+    Gardening: 'Landscaping or gardening certification',
+    'Appliance Repair': 'Appliance repair certification or technical training',
+    'AC Maintenance': 'HVAC certification or air conditioning license',
+    'Pest Control': 'Pest control license or certification',
+    'Home Security': 'Security system installation certification',
+    'Moving Services': 'Moving company certification or insurance',
+    'General Handyman': 'General trade certification or portfolio',
+  };
+
+  // Service pricing
+  servicePrices: { [skillName: string]: { min: number; max: number } } = {};
 
   private subscriptions = new Subscription();
 
@@ -149,7 +183,10 @@ export class InterviewPage implements OnInit, OnDestroy {
       availableDays: [[], Validators.required],
     });
 
-    // Step 3: Identity Verification
+    // Step 3: Certificate Upload
+    this.certificateForm = this.fb.group({});
+
+    // Step 4: Identity Verification
     this.verificationForm = this.fb.group({
       idPhoto: [null, Validators.required],
       profilePhoto: [null, Validators.required],
@@ -174,6 +211,13 @@ export class InterviewPage implements OnInit, OnDestroy {
 
       const profile = await this.workerService.getWorkerProfile(user.uid);
       if (profile) {
+        // Check if worker is already verified and completed interview
+        if (profile.verifiedAt && profile.status === 'verified') {
+          console.log('Worker is already verified, redirecting to dashboard');
+          this.router.navigate(['/pages/worker/dashboard']);
+          return;
+        }
+
         this.workerProfile = profile;
         this.currentStep = profile.currentStep || 1;
         this.populateFormsFromProfile(profile);
@@ -206,11 +250,12 @@ export class InterviewPage implements OnInit, OnDestroy {
   async loadServiceCategories() {
     this.isLoadingServices = true;
     try {
-      this.serviceCategories = await this.dashboardService.getServiceCategories();
+      this.serviceCategories =
+        await this.dashboardService.getServiceCategories();
       // Extract only the names of active service categories for the availableServices array
       this.availableServices = this.serviceCategories
-        .filter(category => category.isActive)
-        .map(category => category.name);
+        .filter((category) => category.isActive)
+        .map((category) => category.name);
       console.log('Loaded service categories:', this.serviceCategories);
       console.log('Available services:', this.availableServices);
     } catch (error) {
@@ -218,7 +263,7 @@ export class InterviewPage implements OnInit, OnDestroy {
       // Fallback to hardcoded services if Firestore fails
       this.availableServices = [
         'House Cleaning',
-        'Plumbing', 
+        'Plumbing',
         'Electrical Work',
         'Carpentry',
         'Painting',
@@ -228,7 +273,7 @@ export class InterviewPage implements OnInit, OnDestroy {
         'Pest Control',
         'Home Security',
         'Moving Services',
-        'General Handyman'
+        'General Handyman',
       ];
     } finally {
       this.isLoadingServices = false;
@@ -253,6 +298,30 @@ export class InterviewPage implements OnInit, OnDestroy {
       workRadius: profile.workRadius || 5,
       availableDays: profile.availableDays || [],
     });
+
+    // Update selected skills for certificate form
+    this.selectedSkills = profile.skills || [];
+    this.updateCertificateForm();
+
+    // Certificate form - restore certificate previews if they exist
+    if (profile.certificates) {
+      this.certificatePreviews = profile.certificates;
+    }
+
+    // Service prices - restore pricing if they exist
+    if (profile.servicePrices) {
+      profile.servicePrices.forEach((priceData) => {
+        this.servicePrices[priceData.name] = {
+          min: priceData.minPrice,
+          max: priceData.maxPrice,
+        };
+      });
+    }
+
+    // Update certificate form after loading data
+    if (profile.certificates || profile.servicePrices) {
+      this.updateCertificateForm();
+    }
 
     // Verification form - restore photo previews if they exist
     if (profile.idPhotoData) {
@@ -339,6 +408,37 @@ export class InterviewPage implements OnInit, OnDestroy {
         return true;
 
       case 3:
+        // Validate certificates and pricing for selected skills
+        const selectedSkills = this.skillsForm.get('skills')?.value || [];
+        for (const skill of selectedSkills) {
+          if (!this.certificateForm.get(skill)?.value) {
+            this.showErrorToast(`Please upload certificate for ${skill}`);
+            return false;
+          }
+
+          const minPrice = this.certificateForm.get(skill + '_minPrice')?.value;
+          const maxPrice = this.certificateForm.get(skill + '_maxPrice')?.value;
+
+          if (!minPrice || minPrice <= 0) {
+            this.showErrorToast(`Please set minimum price for ${skill}`);
+            return false;
+          }
+
+          if (!maxPrice || maxPrice <= 0) {
+            this.showErrorToast(`Please set maximum price for ${skill}`);
+            return false;
+          }
+
+          if (Number(minPrice) >= Number(maxPrice)) {
+            this.showErrorToast(
+              `Maximum price must be greater than minimum price for ${skill}`
+            );
+            return false;
+          }
+        }
+        return true;
+
+      case 4:
         if (!this.verificationForm.valid) {
           this.showValidationErrors(this.verificationForm);
           return false;
@@ -393,6 +493,54 @@ export class InterviewPage implements OnInit, OnDestroy {
           break;
 
         case 3:
+          // Save certificate data and pricing
+          const certificateData = this.certificateForm.value;
+
+          // Extract certificates (non-pricing fields)
+          const certificates: any = {};
+          const servicePrices: any[] = [];
+
+          Object.keys(certificateData).forEach((key) => {
+            if (key.endsWith('_minPrice') || key.endsWith('_maxPrice')) {
+              // Handle pricing data
+              const skillName = key
+                .replace('_minPrice', '')
+                .replace('_maxPrice', '');
+              const existingPrice = servicePrices.find(
+                (p) => p.name === skillName
+              );
+
+              if (!existingPrice) {
+                servicePrices.push({
+                  name: skillName,
+                  minPrice: 0,
+                  maxPrice: 0,
+                });
+              }
+
+              const priceEntry = servicePrices.find(
+                (p) => p.name === skillName
+              );
+              if (key.endsWith('_minPrice')) {
+                priceEntry.minPrice = Number(certificateData[key]) || 0;
+              } else {
+                priceEntry.maxPrice = Number(certificateData[key]) || 0;
+              }
+            } else {
+              // Handle certificate files
+              certificates[key] = certificateData[key];
+            }
+          });
+
+          updateData.certificates = certificates;
+          updateData.servicePrices = servicePrices;
+          console.log(
+            'Saving Step 3 data (certificates and pricing):',
+            updateData
+          );
+          break;
+
+        case 4:
           // Save photo data temporarily as base64
           const verificationData = this.verificationForm.value;
           if (verificationData.idPhoto) {
@@ -401,7 +549,7 @@ export class InterviewPage implements OnInit, OnDestroy {
           if (verificationData.profilePhoto) {
             updateData.profilePhotoData = verificationData.profilePhoto;
           }
-          console.log('Saving Step 3 data (photos saved as base64)');
+          console.log('Saving Step 4 data (photos saved as base64)');
           break;
       }
 
@@ -572,12 +720,19 @@ export class InterviewPage implements OnInit, OnDestroy {
         currentSkills.push(skill);
       } else {
         // Show toast message when limit is reached
-        this.showToast('You can select a maximum of 3 services only.', 'warning');
+        this.showToast(
+          'You can select a maximum of 3 services only.',
+          'warning'
+        );
         return;
       }
     }
 
     this.skillsForm.patchValue({ skills: currentSkills });
+
+    // Update selected skills and certificate form
+    this.selectedSkills = currentSkills;
+    this.updateCertificateForm();
   }
 
   /**
@@ -631,6 +786,184 @@ export class InterviewPage implements OnInit, OnDestroy {
    */
   getSelectedDays(): string[] {
     return this.skillsForm.get('availableDays')?.value || [];
+  }
+
+  /**
+   * Update certificate form based on selected skills
+   */
+  updateCertificateForm() {
+    const certificateControls: any = {};
+
+    // Create form controls for each selected skill
+    this.selectedSkills.forEach((skill) => {
+      const existingValue = this.certificatePreviews[skill] || null;
+      certificateControls[skill] = [existingValue, Validators.required];
+
+      // Add pricing controls for each skill
+      certificateControls[skill + '_minPrice'] = [
+        this.servicePrices[skill]?.min || '',
+        [Validators.required, Validators.min(1)],
+      ];
+      certificateControls[skill + '_maxPrice'] = [
+        this.servicePrices[skill]?.max || '',
+        [Validators.required, Validators.min(1)],
+      ];
+    });
+
+    // Remove certificates and pricing for unselected skills
+    Object.keys(this.certificatePreviews).forEach((skill) => {
+      if (!this.selectedSkills.includes(skill)) {
+        delete this.certificatePreviews[skill];
+        delete this.servicePrices[skill];
+      }
+    });
+
+    this.certificateForm = this.fb.group(certificateControls);
+  }
+
+  /**
+   * Upload certificate for a specific skill
+   */
+  async uploadCertificate(skillName: string) {
+    try {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*,application/pdf';
+      input.multiple = false;
+
+      input.onchange = (event: any) => {
+        const file = event.target.files[0];
+        if (file) {
+          // Check file size (limit to 5MB)
+          if (file.size > 5 * 1024 * 1024) {
+            this.showErrorToast('File size should not exceed 5MB');
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = (e: any) => {
+            this.certificatePreviews[skillName] = e.target.result;
+            this.certificateForm.get(skillName)?.setValue(e.target.result);
+            this.showSuccessToast(
+              `Certificate for ${skillName} uploaded successfully`
+            );
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      input.click();
+    } catch (error: any) {
+      console.error('Error uploading certificate:', error);
+      this.showErrorToast('Failed to upload certificate. Please try again.');
+    }
+  }
+
+  /**
+   * Check if certificate is uploaded for a skill
+   */
+  isCertificateUploaded(skillName: string): boolean {
+    return !!this.certificatePreviews[skillName];
+  }
+
+  /**
+   * Get certificate requirement text for a skill
+   */
+  getCertificateRequirement(skillName: string): string {
+    return (
+      this.certificateRequirements[skillName] ||
+      'Valid certification or license for this service'
+    );
+  }
+
+  /**
+   * Remove uploaded certificate for a skill
+   */
+  removeCertificate(skillName: string) {
+    delete this.certificatePreviews[skillName];
+    this.certificateForm.get(skillName)?.setValue(null);
+    this.showSuccessToast(`Certificate for ${skillName} removed`);
+  }
+
+  /**
+   * Update service pricing
+   */
+  updateServicePrice(
+    skillName: string,
+    type: 'min' | 'max',
+    value: string | number | null | undefined
+  ) {
+    // Convert value to number, default to 0 if invalid
+    const numericValue =
+      typeof value === 'string'
+        ? parseFloat(value) || 0
+        : typeof value === 'number'
+        ? value
+        : 0;
+
+    if (!this.servicePrices[skillName]) {
+      this.servicePrices[skillName] = { min: 0, max: 0 };
+    }
+    this.servicePrices[skillName][type] = numericValue;
+
+    // Validate that max is greater than min
+    if (
+      type === 'min' &&
+      this.servicePrices[skillName].max > 0 &&
+      numericValue >= this.servicePrices[skillName].max
+    ) {
+      this.showErrorToast('Minimum price must be less than maximum price');
+      return;
+    }
+    if (
+      type === 'max' &&
+      this.servicePrices[skillName].min > 0 &&
+      numericValue <= this.servicePrices[skillName].min
+    ) {
+      this.showErrorToast('Maximum price must be greater than minimum price');
+      return;
+    }
+  }
+
+  /**
+   * Get service price for a skill
+   */
+  getServicePrice(skillName: string): { min: number; max: number } {
+    return this.servicePrices[skillName] || { min: 0, max: 0 };
+  }
+
+  /**
+   * Get service pricing keys that have been set
+   */
+  getServicePricingKeys(): string[] {
+    return Object.keys(this.servicePrices).filter(
+      (skill) =>
+        this.servicePrices[skill].min > 0 || this.servicePrices[skill].max > 0
+    );
+  }
+
+  /**
+   * Get uploaded certificates count
+   */
+  getUploadedCertificatesCount(): number {
+    return Object.keys(this.certificatePreviews).length;
+  }
+
+  /**
+   * Check if all required certificates are uploaded
+   */
+  areAllCertificatesUploaded(): boolean {
+    return (
+      Object.keys(this.certificatePreviews).length ===
+      this.selectedSkills.length
+    );
+  }
+
+  /**
+   * Get certificates keys for iteration in template
+   */
+  getCertificateKeys(): string[] {
+    return Object.keys(this.certificatePreviews);
   }
 
   /**
@@ -714,7 +1047,7 @@ export class InterviewPage implements OnInit, OnDestroy {
 
       // Prepare final submission data with all interview information
       const finalSubmissionData: Partial<WorkerProfile> = {
-        currentStep: 4,
+        currentStep: 5,
         status: 'pending_verification',
         interviewCompletedAt: new Date(),
         updatedAt: new Date(),
@@ -730,9 +1063,28 @@ export class InterviewPage implements OnInit, OnDestroy {
         workRadius: this.skillsForm.get('workRadius')?.value || 5,
         availableDays: this.skillsForm.get('availableDays')?.value || [],
 
+        certificates: this.certificateForm.value || {},
+
         idPhotoData: this.verificationForm.get('idPhoto')?.value,
         profilePhotoData: this.verificationForm.get('profilePhoto')?.value,
       };
+
+      // Add service pricing data
+      const servicePricesArray: ServicePrice[] = [];
+      Object.keys(this.servicePrices).forEach((skillName) => {
+        const pricing = this.servicePrices[skillName];
+        if (pricing.min > 0 || pricing.max > 0) {
+          servicePricesArray.push({
+            name: skillName,
+            minPrice: pricing.min,
+            maxPrice: pricing.max,
+          });
+        }
+      });
+
+      if (servicePricesArray.length > 0) {
+        finalSubmissionData.servicePrices = servicePricesArray;
+      }
 
       // Add custom skill if provided
       const customSkill = this.skillsForm.get('customSkill')?.value;
@@ -753,16 +1105,23 @@ export class InterviewPage implements OnInit, OnDestroy {
 
       loading.dismiss();
 
-      // Show success message
+      // Show success message and logout
       const alert = await this.alertController.create({
         header: 'Application Submitted!',
         message:
-          'Your worker application has been submitted successfully. You will be notified once it has been reviewed by our team.',
+          'Your worker application has been submitted successfully. You will be notified once it has been reviewed by our team. Please log in again to check your application status.',
         buttons: [
           {
             text: 'OK',
-            handler: () => {
-              this.router.navigate(['/pages/auth/login']);
+            handler: async () => {
+              try {
+                // Log out the user to clear their session
+                await this.authService.logout();
+              } catch (error) {
+                console.error('Error during logout:', error);
+                // Fallback to manual navigation if logout fails
+                this.router.navigate(['/pages/auth/login']);
+              }
             },
           },
         ],
@@ -778,7 +1137,10 @@ export class InterviewPage implements OnInit, OnDestroy {
   /**
    * Show toast message
    */
-  private async showToast(message: string, color: 'success' | 'warning' | 'danger' = 'success') {
+  private async showToast(
+    message: string,
+    color: 'success' | 'warning' | 'danger' = 'success'
+  ) {
     const toast = await this.toastController.create({
       message,
       duration: 3000,

@@ -1,0 +1,247 @@
+ion-content {
+  --padding-start: 0px;
+  --padding-end: 0px;
+  --padding-top: 0px;
+  --background: linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%);
+}
+
+// Enhanced header animations and styles
+.hover\\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.header-card {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.header-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+  pointer-events: none;
+}
+
+.floating-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.pulse-animation {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.location-tracking-indicator {
+  position: relative;
+  overflow: hidden;
+}
+
+.location-tracking-indicator::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.4), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.status-card {
+  transition: all 0.3s ease;
+}
+
+.status-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.action-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.action-button:hover::before {
+  left: 100%;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+// Status-specific styles
+.status-accepted {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+  border-left: 4px solid #3b82f6;
+}
+
+.status-progress {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-left: 4px solid #f59e0b;
+}
+
+.status-completed {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-left: 4px solid #10b981;
+}
+
+// Proximity indicator
+.proximity-indicator {
+  position: relative;
+}
+
+.proximity-indicator.within-radius {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 2px solid #10b981;
+}
+
+.proximity-indicator.within-radius::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #10b981, #059669);
+  border-radius: inherit;
+  z-index: -1;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 10px #10b981;
+  }
+  to {
+    box-shadow: 0 0 20px #10b981, 0 0 30px #10b981;
+  }
+}
+
+// Custom Tailwind classes for HandyHome branding
+.bg-handy-blue-500 {
+  background-color: #3b82f6;
+}
+
+.bg-handy-blue-600 {
+  background-color: #2563eb;
+}
+
+.bg-handy-yellow-500 {
+  background-color: #eab308;
+}
+
+.bg-handy-yellow-600 {
+  background-color: #ca8a04;
+}
+
+.text-handy-navy-800 {
+  color: #1e293b;
+}
+
+.text-handy-navy-600 {
+  color: #475569;
+}
+
+.border-handy-blue-200 {
+  border-color: #bfdbfe;
+}
+
+.from-handy-blue-500 {
+  --tw-gradient-from: #3b82f6;
+}
+
+.to-handy-blue-600 {
+  --tw-gradient-to: #2563eb;
+}
+
+.from-handy-yellow-500 {
+  --tw-gradient-from: #eab308;
+}
+
+.to-handy-yellow-600 {
+  --tw-gradient-to: #ca8a04;
+}
+
+// Mobile responsive adjustments
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+  
+  .header-card {
+    margin-bottom: 16px;
+  }
+  
+  .floating-animation {
+    animation-duration: 4s;
+  }
+}

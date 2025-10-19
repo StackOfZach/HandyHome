@@ -6,6 +6,7 @@ import { IonicModule } from '@ionic/angular';
 import { WorkerFoundPageRoutingModule } from './worker-found-routing.module';
 import { WorkerFoundPage } from './worker-found.page';
 import { MapComponent } from '../../../components/map/map.component';
+import { SharedComponentsModule } from '../../../modules/shared-components.module';
 
 @NgModule({
   imports: [
@@ -14,6 +15,7 @@ import { MapComponent } from '../../../components/map/map.component';
     IonicModule,
     WorkerFoundPageRoutingModule,
     MapComponent,
+    SharedComponentsModule,
   ],
   declarations: [WorkerFoundPage],
 })

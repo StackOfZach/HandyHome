@@ -1,210 +1,334 @@
-<ion-header [translucent]="true">
-  <ion-toolbar color="primary">
-    <ion-buttons slot="start">
-      <ion-button (click)="goBack()">
-        <ion-icon name="arrow-back"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-    <ion-title>Booking Details</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content
   [fullscreen]="true"
-  class="bg-gradient-to-br from-green-50 via-white to-emerald-50"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
 >
+  <!-- Enhanced Custom Header matching Booking Progress -->
+  <div
+    class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6"
+  >
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <button
+          (click)="goBack()"
+          class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-105"
+        >
+          <ion-icon name="chevron-back" class="text-white text-xl"></ion-icon>
+        </button>
+        <h1 class="text-white text-2xl font-bold">Job Details</h1>
+      </div>
+      <div class="flex items-center space-x-3">
+        <div class="p-2 rounded-full bg-white/20">
+          <ion-icon name="briefcase-outline" class="text-white text-xl"></ion-icon>
+        </div>
+        <div 
+          *ngIf="booking?.status" 
+          class="px-4 py-2 rounded-full text-xs font-bold border-2 border-white/30"
+          [ngClass]="{
+            'bg-handy-yellow-500 text-handy-navy-800': booking?.status === 'pending',
+            'bg-emerald-500 text-white': booking?.status === 'accepted' || booking?.status === 'in-progress',
+            'bg-purple-500 text-white': booking?.status === 'completed'
+          }"
+        >
+          {{ getStatusDisplay() }}
+        </div>
+      </div>
+    </div>
+    <!-- Enhanced Subtitle with Job Type -->
+    <div class="mt-3 ml-14">
+      <p class="text-white/90 text-sm">Manage your current job assignment</p>
+      <p *ngIf="booking?.neededService" class="text-handy-yellow-200 text-xs font-medium mt-1">
+        <ion-icon name="construct-outline" class="text-xs mr-1"></ion-icon>
+        {{ booking.neededService }}
+      </p>
+    </div>
+  </div>
   <!-- Loading State -->
   <div *ngIf="isLoading" class="flex justify-center items-center h-full">
-    <ion-spinner name="crescent" color="primary"></ion-spinner>
+    <div class="text-center">
+      <ion-spinner name="crescent" class="text-handy-blue-500 mb-4" size="large"></ion-spinner>
+      <p class="text-handy-navy-700 font-medium">Loading job details...</p>
+    </div>
   </div>
 
-  <!-- Booking Details Content -->
-  <div *ngIf="!isLoading && booking" class="p-4">
-    <!-- Status Header -->
-    <div
-      class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-green-100"
-    >
-      <div class="text-center mb-4">
+  <!-- Enhanced Booking Details Content -->
+  <div *ngIf="!isLoading && booking" class="p-6 pt-6">
+    
+    <!-- Client Information Card -->
+    <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-emerald-100 relative overflow-hidden">
+      <!-- Decorative gradient overlay -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-500"></div>
+      
+      <div class="flex items-center justify-center mb-6">
+        <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3">
+          <ion-icon name="person" class="text-white text-xl"></ion-icon>
+        </div>
+        <h3 class="font-bold text-handy-navy-800 text-2xl">Client Information</h3>
+      </div>
+
+      <div class="space-y-6">
+        <!-- Client Name -->
+        <div class="text-center">
+          <div class="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg">
+            <ion-icon name="person" class="text-white text-2xl"></ion-icon>
+          </div>
+          <h2 class="text-2xl font-bold text-handy-navy-800 mb-1">
+            {{ booking.clientName || 'Client' }}
+          </h2>
+          <p class="text-sm text-gray-600 font-medium">Your client for this job</p>
+        </div>
+
+        <!-- Client Location -->
+        <div class="bg-gradient-to-r from-blue-50/50 to-blue-100/50 rounded-2xl p-6 border border-blue-200/30">
+          <div class="flex items-start space-x-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+              <ion-icon name="location" class="text-white text-lg"></ion-icon>
+            </div>
+            <div class="flex-1">
+              <h4 class="font-bold text-handy-navy-800 text-lg mb-2">Service Location</h4>
+              <p class="text-gray-700 text-sm leading-relaxed mb-4" *ngIf="booking.location?.address">
+                {{ booking.location.address }}
+              </p>
+              <p class="text-gray-500 text-sm" *ngIf="!booking.location?.address">
+                Location details not available
+              </p>
+              
+              <!-- View in Map Button -->
+              <button
+                (click)="openGoogleMapsDirections()"
+                [disabled]="!booking.location?.lat || !booking.location?.lng"
+                class="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-4 rounded-2xl font-bold text-sm shadow-xl hover:shadow-2xl hover:scale-[1.02] disabled:hover:scale-100 transition-all duration-300 flex items-center justify-center space-x-3"
+              >
+                <ion-icon name="map" class="text-lg"></ion-icon>
+                <span>{{ booking.location?.lat && booking.location?.lng ? 'View Directions in Map' : 'Location Unavailable' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Information (if available) -->
+        <div *ngIf="booking.clientPhone" class="bg-gradient-to-r from-green-50/50 to-green-100/50 rounded-2xl p-6 border border-green-200/30">
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <ion-icon name="call" class="text-white text-lg"></ion-icon>
+            </div>
+            <div>
+              <h4 class="font-bold text-handy-navy-800 text-lg">Contact</h4>
+              <p class="text-gray-700 text-sm">{{ booking.clientPhone }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job Status Card -->
+    <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-handy-blue-100 relative overflow-hidden">
+      <!-- Decorative gradient overlay -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"></div>
+      
+      <div class="text-center mb-6">
         <div
-          class="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center"
+          class="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center shadow-lg floating-animation"
           [ngClass]="{
-               'bg-green-100': booking.status === 'accepted',
-               'bg-blue-100': booking.status === 'on-the-way',
-               'bg-orange-100': booking.status === 'in-progress',
-               'bg-purple-100': booking.status === 'completed'
+               'bg-gradient-to-br from-emerald-500 to-green-600': booking.status === 'accepted',
+               'bg-gradient-to-br from-handy-blue-500 to-handy-blue-600': booking.status === 'on-the-way',
+               'bg-gradient-to-br from-orange-500 to-orange-600': booking.status === 'in-progress',
+               'bg-gradient-to-br from-purple-500 to-purple-600': booking.status === 'completed'
              }"
         >
           <ion-icon
             [name]="getStatusIcon(booking.status)"
-            class="text-2xl"
-            [ngClass]="{
-                     'text-green-600': booking.status === 'accepted',
-                     'text-blue-600': booking.status === 'on-the-way',
-                     'text-orange-600': booking.status === 'in-progress',
-                     'text-purple-600': booking.status === 'completed'
-                   }"
+            class="text-3xl text-white"
           ></ion-icon>
         </div>
-        <h2 class="text-xl font-bold text-gray-800 mb-1">
+        <h2 class="text-2xl font-bold text-handy-navy-800 mb-2">
           {{ getStatusText(booking.status) }}
         </h2>
-        <p class="text-sm text-gray-600">Booking ID: {{ booking.id }}</p>
+        <p class="text-sm text-gray-600 font-medium">Job ID: {{ booking.id }}</p>
       </div>
-    </div>
 
-    <!-- Service Information -->
-    <div
-      class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-green-100"
-    >
-      <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-        <ion-icon name="briefcase" class="text-green-600 mr-2"></ion-icon>
-        Service Details
-      </h3>
+      <!-- Location Tracking Status -->
+      <div *ngIf="isLocationTracking" class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 mb-4 border border-green-200">
+        <div class="flex items-center justify-center space-x-2">
+          <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+          <span class="text-green-700 font-bold text-sm">Location tracking active</span>
+          <ion-icon name="location" class="text-green-600"></ion-icon>
+        </div>
+      </div>
 
-      <div class="space-y-3">
-        <div class="flex justify-between items-center">
-          <span class="text-gray-600">Category:</span>
-          <span class="font-semibold text-gray-800"
-            >{{ booking.categoryName }}</span
-          >
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-gray-600">Service:</span>
-          <span class="font-semibold text-gray-800"
-            >{{ booking.subService }}</span
-          >
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-gray-600">Duration:</span>
-          <span class="font-semibold text-gray-800"
-            >{{ booking.estimatedDuration }} minutes</span
-          >
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-gray-600">Created:</span>
-          <span class="font-semibold text-gray-800"
-            >{{ booking.createdAt?.toDate() | date:'short' }}</span
-          >
+      <!-- Proximity Alert -->
+      <div *ngIf="isWithinRadius" class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-4 mb-4 border border-purple-200">
+        <div class="flex items-center justify-center space-x-2">
+          <ion-icon name="checkmark-circle" class="text-purple-600 text-lg"></ion-icon>
+          <span class="text-purple-700 font-bold text-sm">You've arrived at the client location!</span>
         </div>
       </div>
     </div>
 
-    <!-- Client Location -->
-    <div
-      class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-green-100"
-    >
-      <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-        <ion-icon name="location" class="text-blue-600 mr-2"></ion-icon>
-        Client Location
-      </h3>
-
-      <div class="space-y-3">
-        <p class="text-gray-700">{{ booking.location?.address }}</p>
-        <div
-          class="flex justify-between items-center"
-          *ngIf="booking.location?.city"
-        >
-          <span class="text-gray-600">City:</span>
-          <span class="font-semibold text-gray-800"
-            >{{ booking.location.city }}</span
-          >
+    <!-- Enhanced Service Information -->
+    <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-handy-blue-100 relative overflow-hidden">
+      <!-- Decorative gradient overlay -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-yellow-500 via-handy-blue-500 to-handy-yellow-500"></div>
+      
+      <div class="flex items-center justify-center mb-6">
+        <div class="w-12 h-12 bg-gradient-to-r from-handy-yellow-500 to-handy-yellow-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3">
+          <ion-icon name="briefcase" class="text-white text-xl"></ion-icon>
         </div>
-        <div
-          class="flex justify-between items-center"
-          *ngIf="booking.location?.province"
-        >
-          <span class="text-gray-600">Province:</span>
-          <span class="font-semibold text-gray-800"
-            >{{ booking.location.province }}</span
-          >
+        <h3 class="font-bold text-handy-navy-800 text-2xl">Service Details</h3>
+      </div>
+
+      <div class="space-y-4">
+        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-handy-blue-50/50 to-handy-blue-100/50 rounded-2xl border border-handy-blue-200/30">
+          <div class="w-12 h-12 bg-gradient-to-br from-handy-blue-500 to-handy-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <ion-icon name="construct" class="text-white text-lg"></ion-icon>
+          </div>
+          <div class="flex-1">
+            <p class="text-xs font-semibold text-handy-navy-600 mb-1">Service Category</p>
+            <p class="font-bold text-handy-navy-800 text-lg">{{ booking.categoryName || booking.neededService || 'Service' }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-purple-50/50 to-purple-100/50 rounded-2xl border border-purple-200/30">
+          <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <ion-icon name="settings" class="text-white text-lg"></ion-icon>
+          </div>
+          <div class="flex-1">
+            <p class="text-xs font-semibold text-handy-navy-600 mb-1">Specific Service</p>
+            <p class="font-bold text-handy-navy-800 text-lg">{{ booking.subService || booking.title || 'General Service' }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-emerald-50/50 to-emerald-100/50 rounded-2xl border border-emerald-200/30">
+          <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <ion-icon name="time" class="text-white text-lg"></ion-icon>
+          </div>
+          <div class="flex-1">
+            <p class="text-xs font-semibold text-handy-navy-600 mb-1">Duration</p>
+            <p class="font-bold text-handy-navy-800 text-lg">{{ booking.estimatedDuration || 60 }} minutes</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-yellow-50/50 to-yellow-100/50 rounded-2xl border border-yellow-200/30">
+          <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+            <ion-icon name="wallet" class="text-white text-lg"></ion-icon>
+          </div>
+          <div class="flex-1">
+            <p class="text-xs font-semibold text-handy-navy-600 mb-1">Budget Range</p>
+            <p class="font-bold text-handy-navy-800 text-lg">
+              <span *ngIf="booking.minBudget && booking.maxBudget; else fallbackBudget">
+                ₱{{ booking.minBudget | number:'1.0-0' }} - ₱{{ booking.maxBudget | number:'1.0-0' }}
+              </span>
+              <ng-template #fallbackBudget>
+                ₱{{ booking.price || booking.priceRange || 0 | number:'1.0-0' }}
+              </ng-template>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Client Location -->
+    <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-handy-blue-100 relative overflow-hidden">
+      <!-- Decorative gradient overlay -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500"></div>
+      
+      <div class="flex items-center justify-center mb-6">
+        <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3">
+          <ion-icon name="location" class="text-white text-xl"></ion-icon>
+        </div>
+        <h3 class="font-bold text-handy-navy-800 text-2xl">Client Location</h3>
+      </div>
+
+      <div class="bg-gradient-to-r from-red-50/50 to-orange-50/50 rounded-2xl p-4 mb-4 border border-red-200/30">
+        <p class="text-handy-navy-800 font-medium leading-relaxed">
+          {{ booking.location?.address || (booking.locations && booking.locations[0]?.address) || 'Address not provided' }}
+        </p>
+        <div class="flex items-center mt-2 text-sm text-gray-600" *ngIf="booking.location?.city || booking.location?.province">
+          <ion-icon name="map" class="mr-1 text-red-500"></ion-icon>
+          <span>{{ booking.location?.city }}{{ booking.location?.province ? ', ' + booking.location.province : '' }}</span>
         </div>
       </div>
 
       <!-- Get Directions Button -->
       <button
         (click)="openDirections()"
-        class="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center"
+        class="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
       >
-        <ion-icon name="navigate" class="mr-2"></ion-icon>
-        Get Directions
+        <ion-icon name="navigate" class="text-xl"></ion-icon>
+        <span>Get Directions</span>
       </button>
     </div>
 
-    <!-- Pricing Information -->
-    <div
-      class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-green-100"
-    >
-      <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-        <ion-icon name="calculator" class="text-green-600 mr-2"></ion-icon>
-        Payment Details
-      </h3>
+    <!-- Enhanced Job Action Buttons -->
+    <div class="space-y-4 mb-6">
+      <!-- SMS Client Button -->
+      <button
+        (click)="sendClientMessage()"
+        class="w-full bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white px-6 py-5 rounded-3xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
+      >
+        <ion-icon name="chatbubble" class="text-xl"></ion-icon>
+        <span>Message Client</span>
+      </button>
 
-      <div class="space-y-3">
-        <div class="flex justify-between items-center">
-          <span class="text-gray-600">Service Price:</span>
-          <span class="font-semibold text-green-600"
-            >₱{{ booking.pricing?.basePrice | number:'1.2-2' }}</span
-          >
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-gray-600">Platform Fee:</span>
-          <span class="font-semibold text-red-500"
-            >-₱{{ booking.pricing?.serviceCharge | number:'1.2-2' }}</span
-          >
-        </div>
-        <div class="border-t border-gray-300 pt-3 mt-3">
-          <div class="flex justify-between items-center">
-            <span class="text-lg font-bold text-gray-800">Your Earnings:</span>
-            <span
-              class="text-xl font-bold text-green-700 bg-green-100 px-3 py-1 rounded-lg"
-            >
-              ₱{{ (booking.pricing?.basePrice - booking.pricing?.serviceCharge)
-              | number:'1.2-2' }}
-            </span>
-          </div>
-        </div>
+      <!-- Location Tracking -->
+      <button
+        *ngIf="!isLocationTracking && booking.status === 'accepted'"
+        (click)="startLocationTracking()"
+        class="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white px-6 py-5 rounded-3xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
+      >
+        <ion-icon name="location" class="text-xl"></ion-icon>
+        <span>Start Location Tracking</span>
+      </button>
+
+      <!-- Job Control Buttons -->
+      <div class="grid grid-cols-1 gap-4">
+        <!-- Start Job -->
+        <button
+          *ngIf="booking.status === 'accepted' && isWithinRadius && !isJobStarted"
+          (click)="startJob()"
+          class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-5 rounded-3xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
+        >
+          <ion-icon name="play-circle" class="text-xl"></ion-icon>
+          <span>Start Job</span>
+        </button>
+
+        <!-- Complete Job -->
+        <button
+          *ngIf="booking.status === 'in-progress' && !isJobCompleted"
+          (click)="completeJob()"
+          class="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-6 py-5 rounded-3xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
+        >
+          <ion-icon name="checkmark-circle" class="text-xl"></ion-icon>
+          <span>Complete Job</span>
+        </button>
+
+        <!-- Confirm Payment -->
+        <button
+          *ngIf="isPaymentRequested && booking.status === 'completed'"
+          (click)="confirmPaymentReceived()"
+          class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-5 rounded-3xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
+        >
+          <ion-icon name="wallet" class="text-xl"></ion-icon>
+          <span>Confirm Payment Received</span>
+        </button>
       </div>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="space-y-3 mb-6">
-      <!-- On The Way Button -->
-      <button
-        *ngIf="booking.status === 'accepted'"
-        (click)="confirmOnTheWay()"
-        class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center"
-      >
-        <ion-icon name="car" class="mr-2"></ion-icon>
-        I'm On My Way
-      </button>
+    <!-- Payment Information (if applicable) -->
+    <div *ngIf="jobAmount > 0" class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-green-200 relative overflow-hidden">
+      <!-- Decorative gradient overlay -->
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 via-emerald-500 to-green-500"></div>
+      
+      <div class="flex items-center justify-center mb-6">
+        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3">
+          <ion-icon name="wallet" class="text-white text-xl"></ion-icon>
+        </div>
+        <h3 class="font-bold text-handy-navy-800 text-2xl">Payment Details</h3>
+      </div>
 
-      <!-- Arrived Button -->
-      <button
-        *ngIf="booking.status === 'on-the-way'"
-        (click)="confirmArrived()"
-        class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center"
-      >
-        <ion-icon name="checkmark-circle" class="mr-2"></ion-icon>
-        I've Arrived
-      </button>
-
-      <!-- Complete Service Button -->
-      <button
-        *ngIf="booking.status === 'in-progress'"
-        (click)="confirmCompleted()"
-        class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-4 rounded-xl font-bold shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center"
-      >
-        <ion-icon name="checkmark-done" class="mr-2"></ion-icon>
-        Mark as Completed
-      </button>
-
-      <!-- Completed Status -->
-      <div
-        *ngIf="booking.status === 'completed'"
-        class="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-4 rounded-xl font-bold shadow-lg flex items-center justify-center"
-      >
-        <ion-icon name="trophy" class="mr-2"></ion-icon>
-        Service Completed!
+      <div class="bg-gradient-to-r from-green-50/50 to-emerald-50/50 rounded-2xl p-6 border border-green-200/30 text-center">
+        <p class="text-sm font-semibold text-handy-navy-600 mb-2">Job Amount</p>
+        <p class="text-3xl font-bold text-green-600">₱{{ jobAmount | number:'1.0-0' }}</p>
+        <p class="text-sm text-gray-500 mt-2">Payment request sent to client</p>
       </div>
     </div>
   </div>

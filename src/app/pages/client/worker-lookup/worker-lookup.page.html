@@ -1,0 +1,140 @@
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+>
+  <!-- Custom Header matching Dashboard -->
+  <div
+    class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6"
+  >
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <button
+          (click)="goBack()"
+          class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-105"
+        >
+          <ion-icon name="chevron-back" class="text-white text-xl"></ion-icon>
+        </button>
+        <h1 class="text-white text-2xl font-bold">Finding Workers</h1>
+      </div>
+      <div class="flex items-center space-x-3">
+        <div class="p-2 rounded-full bg-white/20">
+          <ion-icon name="search-outline" class="text-white text-xl animate-pulse"></ion-icon>
+        </div>
+      </div>
+    </div>
+    <!-- Subtitle -->
+    <p class="text-white/90 text-sm mt-2 ml-14">Connecting you with the best workers</p>
+  </div>
+
+  <!-- Animated Search Content -->
+  <div class="flex flex-col items-center justify-center text-center px-6 min-h-[70vh]">
+    <!-- Enhanced Animated Search Icon -->
+    <div class="relative mb-12">
+      <!-- Main search circle -->
+      <div
+        class="w-40 h-40 bg-gradient-to-br from-handy-blue-500 via-handy-blue-600 to-handy-yellow-500 rounded-full flex items-center justify-center shadow-2xl animate-bounce relative overflow-hidden"
+      >
+        <!-- Shimmer effect -->
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 animate-pulse"></div>
+        <ion-icon name="search-outline" class="text-6xl text-white relative z-10"></ion-icon>
+      </div>
+
+      <!-- Enhanced pulse rings -->
+      <div
+        class="absolute inset-0 w-40 h-40 bg-handy-blue-400/30 rounded-full animate-ping"
+      ></div>
+      <div
+        class="absolute inset-2 w-36 h-36 bg-handy-blue-500/40 rounded-full animate-ping"
+        style="animation-delay: 0.2s;"
+      ></div>
+      <div
+        class="absolute inset-4 w-32 h-32 bg-handy-yellow-500/50 rounded-full animate-ping"
+        style="animation-delay: 0.4s;"
+      ></div>
+
+      <!-- Floating icons around the main circle -->
+      <div class="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg float-animation">
+        <ion-icon name="person-outline" class="text-white text-lg"></ion-icon>
+      </div>
+      <div class="absolute -bottom-4 -left-4 w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg float-animation" style="animation-delay: 1s;">
+        <ion-icon name="location-outline" class="text-white text-lg"></ion-icon>
+      </div>
+      <div class="absolute top-8 -left-6 w-10 h-10 bg-gradient-to-r from-handy-yellow-500 to-orange-500 rounded-full flex items-center justify-center shadow-lg float-animation" style="animation-delay: 2s;">
+        <ion-icon name="time-outline" class="text-white text-sm"></ion-icon>
+      </div>
+    </div>
+
+    <!-- Enhanced Search Messages -->
+    <div class="space-y-8 max-w-lg mx-auto">
+      <h2 class="text-3xl font-bold text-handy-navy-800 animate-fade-in gradient-text">
+        {{ searchMessages[currentMessageIndex] }}
+      </h2>
+
+      <!-- Modern Info Cards -->
+      <div class="space-y-4 animate-slide-up">
+        <div class="bg-white rounded-2xl p-4 shadow-lg border border-handy-blue-100 flex items-center space-x-4 hover:shadow-xl transition-all duration-300">
+          <div class="w-12 h-12 bg-gradient-to-r from-handy-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+            <ion-icon name="location-outline" class="text-white text-lg"></ion-icon>
+          </div>
+          <div class="flex-1 text-left">
+            <p class="font-semibold text-handy-navy-800">Location Match</p>
+            <p class="text-sm text-handy-navy-600">Finding workers in your area</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 shadow-lg border border-handy-yellow-100 flex items-center space-x-4 hover:shadow-xl transition-all duration-300">
+          <div class="w-12 h-12 bg-gradient-to-r from-handy-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+            <ion-icon name="calendar-outline" class="text-white text-lg"></ion-icon>
+          </div>
+          <div class="flex-1 text-left">
+            <p class="font-semibold text-handy-navy-800">Date & Time</p>
+            <p class="text-sm text-handy-navy-600">{{ selectedDate | date:'mediumDate' }}</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 shadow-lg border border-emerald-100 flex items-center space-x-4 hover:shadow-xl transition-all duration-300">
+          <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+            <ion-icon name="construct-outline" class="text-white text-lg"></ion-icon>
+          </div>
+          <div class="flex-1 text-left">
+            <p class="font-semibold text-handy-navy-800">Service Type</p>
+            <p class="text-sm text-handy-navy-600">{{ selectedService }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Progress Bar -->
+      <div class="space-y-4">
+        <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden shadow-inner relative">
+          <div
+            class="bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-600 h-4 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden"
+            [style.width.%]="progressWidth"
+          >
+            <!-- Shimmer effect in progress bar -->
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 animate-pulse"></div>
+          </div>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-handy-navy-600 font-medium">{{ progressWidth }}% Complete</span>
+          <span class="text-handy-blue-600 font-semibold">Almost there!</span>
+        </div>
+      </div>
+
+      <!-- Enhanced Fun Facts Card -->
+      <div class="mt-12 p-6 bg-white rounded-3xl shadow-xl border-2 border-handy-blue-100 enhanced-card relative overflow-hidden">
+        <!-- Decorative gradient line -->
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"></div>
+        
+        <div class="flex items-start space-x-4">
+          <div class="w-16 h-16 bg-gradient-to-r from-handy-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg float-animation">
+            <ion-icon name="information-circle-outline" class="text-white text-2xl"></ion-icon>
+          </div>
+          <div class="flex-1 text-left">
+            <h3 class="font-bold text-handy-navy-800 text-lg mb-2">Did you know?</h3>
+            <p class="text-handy-navy-600 leading-relaxed">{{ funFacts[currentFactIndex] }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>

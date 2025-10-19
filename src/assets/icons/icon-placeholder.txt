@@ -1,0 +1,17 @@
+# Flaticon Assets Directory
+
+This directory will contain modern Flaticons for the UI revamp:
+
+Required Icons:
+- back.png - Back arrow for headers
+- filter.png - Filter icon for results page
+- worker-search.png - Worker search animation
+- location.png - Location marker
+- star.png - Rating star
+- toolbox.png - Service category icon
+- calendar.png - Calendar/date icon
+- phone.png - Phone/call icon
+- message.png - Message/chat icon
+- report.png - Report/flag icon
+
+Note: For now, we'll use ion-icons as placeholders until Flaticons are added.
