@@ -1191,7 +1191,7 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   // Navigate to booking requests page  
   goToBookingRequests() {
     console.log('Navigating to booking requests');
-    this.router.navigate(['/pages/worker-booking-requests']);
+    this.router.navigate(['/worker-booking-requests']);
   }
 
   // Refresh available bookings

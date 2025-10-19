@@ -9,7 +9,8 @@ import {
   getDocs,
   query,
 } from '@angular/fire/firestore';
-import { AuthService } from '../../../services/auth.service';
+import { AuthService, UserLocation, UserProfile } from '../../../services/auth.service';
+import { Geolocation } from '@capacitor/geolocation';
 
 interface Service {
   id: string;
@@ -32,9 +33,24 @@ export class BookServicePage implements OnInit {
   isLoading = false;
   showValidation = false;
   currentUser: any = null;
+  userProfile: UserProfile | null = null;
   services: Service[] = [];
   minDate = new Date().toISOString();
   maxDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1 year from now
+
+  // Location properties
+  locationType: 'current' | 'custom' | 'saved' | '' = '';
+  currentLocationAddress = '';
+  customAddress = '';
+  city = '';
+  zipCode = '';
+  locationError = '';
+  currentCoordinates: { lat: number; lng: number } | null = null;
+  
+  // Saved locations properties
+  savedLocations: UserLocation[] = [];
+  selectedSavedLocationId = '';
+  loadingSavedLocations = false;
 
   constructor(
     private router: Router,
@@ -46,7 +62,11 @@ export class BookServicePage implements OnInit {
 
   async ngOnInit() {
     this.currentUser = this.authService.getCurrentUser();
+    if (this.currentUser) {
+      this.userProfile = await this.authService.getUserProfile(this.currentUser.uid);
+    }
     await this.loadServices();
+    await this.loadSavedLocations();
   }
 
   async loadServices() {
@@ -95,6 +115,125 @@ export class BookServicePage implements OnInit {
     this.router.navigate(['/client']);
   }
 
+  // Location Methods
+  selectLocationType(type: 'current' | 'custom' | 'saved') {
+    this.locationType = type;
+    this.locationError = '';
+    
+    if (type === 'current') {
+      this.customAddress = '';
+      this.city = '';
+      this.zipCode = '';
+      this.selectedSavedLocationId = '';
+      this.getCurrentLocation();
+    } else if (type === 'custom') {
+      this.currentLocationAddress = '';
+      this.currentCoordinates = null;
+      this.selectedSavedLocationId = '';
+    } else if (type === 'saved') {
+      this.customAddress = '';
+      this.city = '';
+      this.zipCode = '';
+      this.currentLocationAddress = '';
+      this.currentCoordinates = null;
+      this.loadSavedLocations();
+    }
+  }
+
+  async getCurrentLocation() {
+    try {
+      this.locationError = '';
+      const coordinates = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      });
+
+      this.currentCoordinates = {
+        lat: coordinates.coords.latitude,
+        lng: coordinates.coords.longitude
+      };
+
+      // Get address from coordinates (reverse geocoding)
+      await this.reverseGeocode(coordinates.coords.latitude, coordinates.coords.longitude);
+      
+    } catch (error) {
+      console.error('Error getting location:', error);
+      this.locationError = 'Unable to get your location. Please check your location permissions.';
+      this.currentLocationAddress = '';
+      this.currentCoordinates = null;
+    }
+  }
+
+  async reverseGeocode(lat: number, lng: number) {
+    try {
+      // Using a simple reverse geocoding approach
+      // In production, you might want to use a proper geocoding service
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        this.currentLocationAddress = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      } else {
+        this.currentLocationAddress = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      }
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+      this.currentLocationAddress = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    }
+  }
+
+  isValidLocation(): boolean {
+    if (this.locationType === 'current') {
+      return !!this.currentCoordinates;
+    } else if (this.locationType === 'custom') {
+      return !!this.customAddress.trim();
+    } else if (this.locationType === 'saved') {
+      return !!this.selectedSavedLocationId;
+    }
+    return false;
+  }
+
+  async loadSavedLocations() {
+    if (!this.currentUser) return;
+    
+    try {
+      this.loadingSavedLocations = true;
+      const userProfile = await this.authService.getUserProfile(this.currentUser.uid);
+      
+      if (userProfile && userProfile.savedLocations) {
+        this.savedLocations = userProfile.savedLocations;
+        
+        // Auto-select default location if available and no location is selected yet
+        if (!this.selectedSavedLocationId) {
+          const defaultLocation = this.savedLocations.find(location => location.isDefault);
+          if (defaultLocation) {
+            this.selectedSavedLocationId = defaultLocation.id;
+          }
+        }
+      } else {
+        this.savedLocations = [];
+      }
+    } catch (error) {
+      console.error('Error loading saved locations:', error);
+      this.savedLocations = [];
+      const toast = await this.toastController.create({
+        message: 'Error loading saved locations',
+        duration: 3000,
+        color: 'danger',
+      });
+      toast.present();
+    } finally {
+      this.loadingSavedLocations = false;
+    }
+  }
+
+  selectSavedLocation(location: UserLocation) {
+    this.selectedSavedLocationId = location.id;
+  }
+
   async findWorkers() {
     this.showValidation = true;
 
@@ -102,10 +241,11 @@ export class BookServicePage implements OnInit {
       !this.selectedService ||
       !this.selectedDateTime ||
       !this.minBudget ||
-      !this.maxBudget
+      !this.maxBudget ||
+      !this.isValidLocation()
     ) {
       const toast = await this.toastController.create({
-        message: 'Please fill in all required fields',
+        message: 'Please fill in all required fields (service, date/time, location, and budget)',
         duration: 3000,
         color: 'warning',
       });
@@ -123,7 +263,7 @@ export class BookServicePage implements OnInit {
       return;
     }
 
-    if (!this.currentUser) {
+    if (!this.currentUser || !this.userProfile) {
       const toast = await this.toastController.create({
         message: 'Please log in to continue',
         duration: 3000,
@@ -136,10 +276,43 @@ export class BookServicePage implements OnInit {
     this.isLoading = true;
 
     try {
+      // Prepare location data
+      let locationData: any = {};
+      
+      if (this.locationType === 'current' && this.currentCoordinates) {
+        locationData = {
+          locationType: 'current',
+          coordinates: this.currentCoordinates,
+          address: this.currentLocationAddress,
+        };
+      } else if (this.locationType === 'custom' && this.customAddress) {
+        locationData = {
+          locationType: 'custom',
+          address: this.customAddress,
+          city: this.city || '',
+          zipCode: this.zipCode || '',
+        };
+      } else if (this.locationType === 'saved' && this.selectedSavedLocationId) {
+        const selectedLocation = this.savedLocations.find(loc => loc.id === this.selectedSavedLocationId);
+        if (selectedLocation) {
+          locationData = {
+            locationType: 'saved',
+            address: selectedLocation.fullAddress,
+            coordinates: selectedLocation.coordinates ? {
+              lat: selectedLocation.coordinates.latitude,
+              lng: selectedLocation.coordinates.longitude
+            } : undefined,
+            contactPerson: selectedLocation.contactPerson,
+            phoneNumber: selectedLocation.phoneNumber,
+            savedLocationId: selectedLocation.id,
+          };
+        }
+      }
+
       // Create booking in Firestore
       const bookingData = {
         clientId: this.currentUser.uid,
-        clientName: this.currentUser.displayName || this.currentUser.email,
+        clientName: this.userProfile?.fullName || 'Unknown User',
         neededService: this.selectedService,
         scheduleDate: new Date(this.selectedDateTime),
         priceRange: this.maxBudget,
@@ -147,6 +320,8 @@ export class BookServicePage implements OnInit {
         maxBudget: this.maxBudget,
         additionalDetails: this.additionalDetails,
         status: 'searching',
+        // Location information
+        ...locationData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };

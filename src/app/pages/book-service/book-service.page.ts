@@ -45,6 +45,7 @@ export interface BookingLocation {
 
 export interface BookingData {
   clientId: string;
+  clientName?: string;
   title: string;
   description: string;
   category: string;
@@ -573,6 +574,7 @@ export class BookServicePage implements OnInit {
       // Prepare booking data
       const bookingData: Omit<BookingData, 'createdAt'> = {
         clientId: this.userProfile.uid,
+        clientName: this.userProfile.fullName,
         title: this.serviceForm.value.title,
         description: this.serviceForm.value.description,
         category: this.serviceForm.value.category,

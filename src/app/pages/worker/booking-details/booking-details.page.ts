@@ -79,6 +79,10 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
             ...doc.data(),
           };
           console.log('Booking loaded:', this.booking);
+          console.log('Booking address:', this.booking.address);
+          console.log('Booking coordinates:', this.booking.coordinates);
+          console.log('Booking location (legacy):', this.booking.location);
+          console.log('Booking locations (legacy):', this.booking.locations);
         } else {
           console.log('Booking not found in bookings collection');
           this.showToast('Booking not found', 'danger');
@@ -102,12 +106,28 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   async updateBookingStatus(status: string) {
     try {
       const bookingRef = doc(this.firestore, 'bookings', this.bookingId);
-      await updateDoc(bookingRef, {
+      const updateData: any = {
         status: status,
         updatedAt: Timestamp.now(),
-      });
+      };
+
+      // Add timestamp for specific status changes
+      if (status === 'on-the-way') {
+        updateData.onTheWayAt = Timestamp.now();
+      } else if (status === 'service-started') {
+        updateData.serviceStartedAt = Timestamp.now();
+      } else if (status === 'completed') {
+        updateData.completedAt = Timestamp.now();
+      }
+
+      await updateDoc(bookingRef, updateData);
 
       this.showToast(`Booking status updated to ${status}`, 'success');
+      
+      // Start location tracking when going on the way
+      if (status === 'on-the-way' && !this.isLocationTracking) {
+        await this.startLocationTracking();
+      }
     } catch (error) {
       console.error('Error updating booking status:', error);
       this.showToast('Error updating booking status', 'danger');
@@ -115,24 +135,37 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   }
 
   openDirections() {
+    console.log('Booking data for directions:', this.booking);
     let lat, lng;
     
-    // Handle different location formats
-    if (this.booking?.location) {
+    // Handle enhanced location structure (primary)
+    if (this.booking?.coordinates) {
+      lat = this.booking.coordinates.lat;
+      lng = this.booking.coordinates.lng;
+      console.log('Using coordinates from booking.coordinates:', lat, lng);
+    }
+    // Handle legacy location format (fallback)
+    else if (this.booking?.location) {
       ({ lat, lng } = this.booking.location);
-    } else if (this.booking?.locations && this.booking.locations.length > 0) {
+      console.log('Using coordinates from booking.location:', lat, lng);
+    } 
+    // Handle locations array format (fallback)
+    else if (this.booking?.locations && this.booking.locations.length > 0) {
       const location = this.booking.locations[0];
       if (location.coordinates) {
         lat = location.coordinates.latitude;
         lng = location.coordinates.longitude;
+        console.log('Using coordinates from booking.locations[0].coordinates:', lat, lng);
       }
     }
     
     if (!lat || !lng) {
+      console.log('No valid coordinates found');
       this.showToast('Location not available', 'danger');
       return;
     }
 
+    console.log('Opening directions to:', lat, lng);
     // Open Google Maps with directions
     const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
     window.open(directionsUrl, '_system');
@@ -192,13 +225,125 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
         {
           text: 'Yes, Completed',
           handler: () => {
-            this.updateBookingStatus('completed');
+            this.completeJob(); // Use the enhanced complete job method
           },
         },
       ],
     });
 
     await alert.present();
+  }
+
+  // Enhanced workflow methods
+  async confirmGoingOnTheWay() {
+    const alert = await this.alertController.create({
+      header: 'Going to Client',
+      message: 'Are you ready to head to the client location? This will start location tracking.',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Yes, On My Way',
+          handler: async () => {
+            await this.updateBookingStatus('on-the-way');
+            this.showToast('Status updated! Location tracking started.', 'success');
+          },
+        },
+      ],
+    });
+
+    await alert.present();
+  }
+
+  // Check if it's the scheduled date for the job
+  isScheduledDate(): boolean {
+    if (!this.booking?.scheduleDate) {
+      console.log('No schedule date found in booking:', this.booking);
+      return false;
+    }
+    
+    const today = new Date();
+    let scheduleDate: Date;
+    
+    // Handle different date formats
+    if (this.booking.scheduleDate instanceof Date) {
+      scheduleDate = this.booking.scheduleDate;
+    } else if (typeof this.booking.scheduleDate === 'string') {
+      scheduleDate = new Date(this.booking.scheduleDate);
+    } else if (this.booking.scheduleDate.toDate) {
+      // Firestore Timestamp
+      scheduleDate = this.booking.scheduleDate.toDate();
+    } else {
+      console.log('Unknown schedule date format:', this.booking.scheduleDate);
+      return false;
+    }
+    
+    // Normalize dates to compare only year, month, and day
+    const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const scheduleDateNormalized = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+    
+    console.log('Date comparison:', {
+      today: todayNormalized,
+      scheduleDate: scheduleDateNormalized,
+      isToday: todayNormalized.getTime() === scheduleDateNormalized.getTime(),
+      bookingStatus: this.booking.status
+    });
+    
+    return todayNormalized.getTime() === scheduleDateNormalized.getTime();
+  }
+
+  // Format the scheduled date for display
+  getFormattedScheduleDate(): string {
+    if (!this.booking?.scheduleDate) return 'Not scheduled';
+    
+    let scheduleDate: Date;
+    
+    try {
+      // Handle different date formats
+      if (this.booking.scheduleDate instanceof Date) {
+        scheduleDate = this.booking.scheduleDate;
+      } else if (typeof this.booking.scheduleDate === 'string') {
+        scheduleDate = new Date(this.booking.scheduleDate);
+      } else if (this.booking.scheduleDate.toDate) {
+        // Firestore Timestamp
+        scheduleDate = this.booking.scheduleDate.toDate();
+      } else {
+        return 'Invalid date format';
+      }
+      
+      return scheduleDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long', 
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting schedule date:', error);
+      return 'Date formatting error';
+    }
+  }
+
+  // Get appropriate button text based on current status and conditions
+  getActionButtonText(): string {
+    if (!this.booking?.status) return '';
+    
+    switch (this.booking.status) {
+      case 'accepted':
+        if (!this.isScheduledDate()) return 'Not scheduled for today';
+        return 'Go to Client';
+      case 'on-the-way':
+        return 'Heading to location...';
+      case 'service-started':
+        return 'Complete Job';
+      case 'awaiting-payment':
+        return 'Confirm Payment Received';
+      case 'completed':
+        return 'Job Finished';
+      default:
+        return '';
+    }
   }
 
   async showToast(message: string, color: 'success' | 'danger' | 'medium') {
@@ -236,8 +381,10 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
         return 'Booking Accepted';
       case 'on-the-way':
         return 'On The Way';
-      case 'in-progress':
-        return 'Service In Progress';
+      case 'service-started':
+        return 'Service Started';
+      case 'awaiting-payment':
+        return 'Awaiting Payment';
       case 'completed':
         return 'Service Completed';
       default:
@@ -255,8 +402,10 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
         return 'ACCEPTED';
       case 'on-the-way':
         return 'ON THE WAY';
-      case 'in-progress':
-        return 'IN PROGRESS';
+      case 'service-started':
+        return 'SERVICE STARTED';
+      case 'awaiting-payment':
+        return 'AWAITING PAYMENT';
       case 'completed':
         return 'COMPLETED';
       default:
@@ -355,19 +504,32 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
 
     let clientLat, clientLng;
     
-    // Get client location
-    if (this.booking.location) {
+    // Get client location - handle enhanced location structure (primary)
+    if (this.booking.coordinates) {
+      clientLat = this.booking.coordinates.lat;
+      clientLng = this.booking.coordinates.lng;
+      console.log('Using client location from booking.coordinates:', clientLat, clientLng);
+    }
+    // Handle legacy location format (fallback)
+    else if (this.booking.location) {
       clientLat = this.booking.location.lat;
       clientLng = this.booking.location.lng;
-    } else if (this.booking.locations && this.booking.locations.length > 0) {
+      console.log('Using client location from booking.location:', clientLat, clientLng);
+    } 
+    // Handle locations array format (fallback)
+    else if (this.booking.locations && this.booking.locations.length > 0) {
       const location = this.booking.locations[0];
       if (location.coordinates) {
         clientLat = location.coordinates.latitude;
         clientLng = location.coordinates.longitude;
+        console.log('Using client location from booking.locations[0].coordinates:', clientLat, clientLng);
       }
     }
 
-    if (!clientLat || !clientLng) return;
+    if (!clientLat || !clientLng) {
+      console.log('No valid client coordinates found for proximity check');
+      return;
+    }
 
     // Calculate distance using Haversine formula
     const distance = this.calculateDistance(
@@ -381,10 +543,10 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     const wasWithinRadius = this.isWithinRadius;
     this.isWithinRadius = distance <= 0.1; // 0.1 km = 100m
 
-    // If just arrived within radius, update status
-    if (this.isWithinRadius && !wasWithinRadius) {
-      this.updateBookingStatus('worker-arrived');
-      this.showToast('You have arrived at the client location!', 'success');
+    // If just arrived within radius and worker is on the way, automatically start service
+    if (this.isWithinRadius && !wasWithinRadius && this.booking.status === 'on-the-way') {
+      this.updateBookingStatus('service-started');
+      this.showToast('You have arrived! Service automatically started.', 'success');
     }
   }
 
@@ -454,9 +616,11 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
             }
 
             this.jobAmount = amount;
-            await this.updateBookingStatus('completed');
+            // Update to awaiting-payment first, then completed after payment
+            await this.updateBookingStatus('awaiting-payment');
             await this.requestPayment(amount);
             this.isJobCompleted = true;
+            this.stopLocationTracking(); // Stop tracking when job is completed
             return true;
           }
         }
@@ -492,6 +656,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
           text: 'Yes, Received',
           handler: async () => {
             await updateDoc(doc(this.firestore, 'bookings', this.bookingId), {
+              status: 'completed',
               paymentStatus: 'completed',
               paymentConfirmedAt: serverTimestamp(),
               updatedAt: serverTimestamp()

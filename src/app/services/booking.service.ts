@@ -41,6 +41,16 @@ export interface BookingData {
   };
   scheduleDate?: Date;
   locations?: BookingLocation[];
+  // Enhanced location fields
+  locationType?: 'current' | 'custom' | 'saved';
+  coordinates?: { lat: number; lng: number };
+  address?: string;
+  city?: string;
+  zipCode?: string;
+  // Saved location specific fields
+  contactPerson?: string;
+  phoneNumber?: string;
+  savedLocationId?: string;
   minBudget?: number;
   maxBudget?: number;
   priceRange?: number;

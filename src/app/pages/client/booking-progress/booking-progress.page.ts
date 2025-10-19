@@ -11,8 +11,15 @@ import {
   onSnapshot,
   updateDoc,
   Unsubscribe,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
 } from '@angular/fire/firestore';
 import { AuthService } from '../../../services/auth.service';
+import { Subscription, interval } from 'rxjs';
 
 interface BookingData {
   id: string;
@@ -25,9 +32,34 @@ interface BookingData {
   priceRange: number;
   minBudget?: number;
   maxBudget?: number;
-  status: 'pending' | 'accepted' | 'completed' | 'cancelled';
+  status: 'pending' | 'accepted' | 'on-the-way' | 'service-started' | 'awaiting-payment' | 'completed' | 'cancelled';
   createdAt: any;
   updatedAt: any;
+  // Enhanced location fields
+  locationType?: 'current' | 'custom' | 'saved';
+  coordinates?: { lat: number; lng: number };
+  address?: string;
+  city?: string;
+  zipCode?: string;
+  // Saved location specific fields
+  contactPerson?: string;
+  phoneNumber?: string;
+  savedLocationId?: string;
+  // Payment and completion fields
+  requestedAmount?: number;
+  paymentStatus?: 'none' | 'requested' | 'paid';
+  completionPhoto?: string;
+  serviceStartedAt?: any;
+  completedAt?: any;
+  // Worker location tracking
+  workerLocation?: { lat: number; lng: number; timestamp: any };
+}
+
+interface WorkerLocationUpdate {
+  workerId: string;
+  bookingId: string;
+  location: { lat: number; lng: number };
+  timestamp: any;
 }
 
 interface WorkerProfile {
@@ -54,10 +86,20 @@ export class BookingProgressPage implements OnInit, OnDestroy {
   currentUser: any = null;
   bookingSubscription: Unsubscribe | null = null;
 
+  // Live location tracking
+  workerLocation: { lat: number; lng: number; timestamp?: any } | null = null;
+  locationTrackingActive: boolean = false;
+  workerDistance: number | null = null;
+  estimatedArrival: string = '';
+  private locationSubscription?: Subscription;
+
   statusMessages = {
     pending: 'Waiting for worker to accept your booking...',
     accepted: 'Worker accepted your booking! Job is scheduled.',
-    completed: 'Service completed successfully!',
+    'on-the-way': 'Worker is on the way to your location!',
+    'service-started': 'Worker has started the service at your location.',
+    'awaiting-payment': 'Service completed. Payment requested by worker.',
+    completed: 'Service completed successfully! Payment confirmed.',
     cancelled: 'Booking was cancelled.',
   };
 
@@ -96,14 +138,27 @@ export class BookingProgressPage implements OnInit, OnDestroy {
       bookingDocRef,
       (doc) => {
         if (doc.exists()) {
+          const previousStatus = this.booking?.status;
+          
           this.booking = {
             id: doc.id,
             ...doc.data(),
           } as BookingData;
 
+          console.log('Booking updated:', this.booking);
+
           // Load worker profile if not loaded
           if (this.booking.workerId && !this.worker) {
             this.loadWorkerProfile();
+          }
+
+          // Handle location tracking based on status changes
+          this.handleLocationTrackingUpdate(previousStatus);
+
+          // Update worker location if available
+          if (this.booking.workerLocation && this.locationTrackingActive) {
+            this.workerLocation = this.booking.workerLocation;
+            this.calculateDistanceAndArrival();
           }
         }
       },
@@ -111,6 +166,31 @@ export class BookingProgressPage implements OnInit, OnDestroy {
         console.error('Error listening to booking updates:', error);
       }
     );
+  }
+
+  private handleLocationTrackingUpdate(previousStatus?: string) {
+    if (!this.booking) return;
+
+    const currentStatus = this.booking.status;
+    
+    // Start tracking when booking is accepted and scheduled for today
+    if (currentStatus === 'accepted' && previousStatus !== 'accepted' && this.shouldTrackLocation()) {
+      this.startLocationTracking();
+    }
+    
+    // Continue tracking for active statuses
+    else if (['accepted', 'on-the-way', 'service-started'].includes(currentStatus) && this.shouldTrackLocation()) {
+      if (!this.locationTrackingActive) {
+        this.startLocationTracking();
+      }
+    }
+    
+    // Stop tracking when job is completed or cancelled
+    else if (['completed', 'cancelled', 'awaiting-payment'].includes(currentStatus)) {
+      if (this.locationTrackingActive) {
+        this.stopLocationTracking();
+      }
+    }
   }
 
   async loadWorkerProfile() {
@@ -380,9 +460,17 @@ export class BookingProgressPage implements OnInit, OnDestroy {
       case 'pending':
         return 'We will notify you when a worker accepts your booking';
       case 'accepted':
-        return 'Your worker will contact you soon';
+        return this.shouldTrackLocation() ? 'Track your worker\'s location below when they start traveling' : 'Your worker will contact you soon';
+      case 'on-the-way':
+        return 'Your worker is traveling to your location. Live tracking is active.';
+      case 'service-started':
+        return 'Work is now in progress at your location.';
+      case 'awaiting-payment':
+        return 'Service completed! Please review and confirm payment.';
       case 'completed':
         return 'Thank you for using HandyHome!';
+      case 'cancelled':
+        return 'This booking has been cancelled.';
       default:
         return '';
     }
@@ -419,5 +507,169 @@ export class BookingProgressPage implements OnInit, OnDestroy {
       console.warn('Error formatting date:', error);
       return 'Invalid date';
     }
+  }
+
+  // ===== LIVE LOCATION TRACKING METHODS =====
+
+  private startLocationTracking() {
+    if (!this.booking?.workerId || !this.shouldTrackLocation()) {
+      console.log('Location tracking not started - missing requirements');
+      return;
+    }
+
+    console.log('Starting live worker location tracking for booking:', this.bookingId);
+    this.locationTrackingActive = true;
+
+    // Subscribe to worker location updates from booking document
+    if (this.booking.workerLocation) {
+      this.workerLocation = this.booking.workerLocation;
+      this.calculateDistanceAndArrival();
+    }
+
+    // Set up periodic location polling every 10 seconds
+    this.locationSubscription = interval(10000).subscribe(() => {
+      this.pollWorkerLocation();
+    });
+  }
+
+  private stopLocationTracking() {
+    console.log('Stopping location tracking');
+    this.locationTrackingActive = false;
+    this.locationSubscription?.unsubscribe();
+    this.workerLocation = null;
+    this.workerDistance = null;
+    this.estimatedArrival = '';
+  }
+
+  private shouldTrackLocation(): boolean {
+    if (!this.booking) return false;
+    
+    // Only track location if booking is accepted and scheduled for today
+    const isAcceptedStatus = ['accepted', 'on-the-way', 'service-started'].includes(this.booking.status);
+    
+    if (!isAcceptedStatus) return false;
+
+    // Check if scheduled date is today
+    if (this.booking.scheduleDate) {
+      try {
+        let scheduleDate: Date;
+        if (this.booking.scheduleDate?.toDate) {
+          scheduleDate = this.booking.scheduleDate.toDate();
+        } else {
+          scheduleDate = new Date(this.booking.scheduleDate);
+        }
+        
+        const today = new Date();
+        const isToday = scheduleDate.toDateString() === today.toDateString();
+        
+        console.log('Schedule date:', scheduleDate.toDateString(), 'Today:', today.toDateString(), 'Is today:', isToday);
+        return isToday;
+      } catch (error) {
+        console.error('Error checking schedule date:', error);
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  private async pollWorkerLocation() {
+    if (!this.booking?.workerId || !this.locationTrackingActive) return;
+
+    try {
+      // Get the latest booking data which should include workerLocation
+      const bookingRef = doc(this.firestore, 'bookings', this.bookingId);
+      const bookingDoc = await getDocs(query(collection(this.firestore, 'bookings'), where('__name__', '==', this.bookingId), limit(1)));
+      
+      if (!bookingDoc.empty) {
+        const bookingData = bookingDoc.docs[0].data() as BookingData;
+        if (bookingData.workerLocation) {
+          this.workerLocation = bookingData.workerLocation;
+          this.calculateDistanceAndArrival();
+        }
+      }
+    } catch (error) {
+      console.error('Error polling worker location:', error);
+    }
+  }
+
+  private calculateDistanceAndArrival() {
+    if (!this.workerLocation || !this.booking?.coordinates) {
+      this.workerDistance = null;
+      this.estimatedArrival = '';
+      return;
+    }
+
+    // Calculate distance using Haversine formula
+    const distance = this.calculateDistance(
+      this.workerLocation.lat,
+      this.workerLocation.lng,
+      this.booking.coordinates.lat,
+      this.booking.coordinates.lng
+    );
+
+    this.workerDistance = distance;
+
+    // Estimate arrival time (assuming average speed of 30 km/h in city)
+    if (distance > 0) {
+      const estimatedMinutes = Math.round((distance / 30) * 60); // Convert to minutes
+      if (estimatedMinutes < 5) {
+        this.estimatedArrival = 'Arriving soon';
+      } else if (estimatedMinutes < 60) {
+        this.estimatedArrival = `~${estimatedMinutes} minutes`;
+      } else {
+        const hours = Math.floor(estimatedMinutes / 60);
+        const minutes = estimatedMinutes % 60;
+        this.estimatedArrival = `~${hours}h ${minutes}m`;
+      }
+    } else {
+      this.estimatedArrival = 'Worker has arrived';
+    }
+  }
+
+  private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = this.toRadians(lat2 - lat1);
+    const dLng = this.toRadians(lng2 - lng1);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) * 
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  private toRadians(degrees: number): number {
+    return degrees * (Math.PI / 180);
+  }
+
+  getLocationTrackingStatus(): string {
+    if (!this.locationTrackingActive) return '';
+    
+    if (!this.workerLocation) {
+      return 'Waiting for worker location...';
+    }
+
+    if (this.workerDistance !== null) {
+      if (this.workerDistance < 0.1) { // Less than 100m
+        return 'Worker has arrived at your location!';
+      } else {
+        return `Worker is ${this.workerDistance.toFixed(1)}km away`;
+      }
+    }
+
+    return 'Tracking worker location...';
+  }
+
+  getWorkerLocationIcon(): string {
+    if (!this.locationTrackingActive || !this.workerLocation) {
+      return 'location-outline';
+    }
+
+    if (this.workerDistance !== null && this.workerDistance < 0.1) {
+      return 'checkmark-circle'; // Worker arrived
+    }
+
+    return 'navigate-circle'; // Worker en route
   }
 }

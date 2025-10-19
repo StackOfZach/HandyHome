@@ -95,6 +95,231 @@
         </div>
       </div>
 
+      <!-- Service Location -->
+      <div class="mb-8">
+        <label class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg">
+          <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation" style="animation-delay: 0.5s;">
+            <ion-icon name="location-outline" class="text-white text-lg"></ion-icon>
+          </div>
+          Where do you need the service?
+        </label>
+        
+        <!-- Location Options -->
+        <div class="space-y-4">
+          <!-- Choose Saved Location -->
+          <div 
+            class="p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-md"
+            [class.border-handy-blue-500]="locationType === 'saved'"
+            [class.bg-handy-blue-50]="locationType === 'saved'"
+            [class.border-gray-200]="locationType !== 'saved'"
+            (click)="selectLocationType('saved')"
+          >
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                <ion-icon name="bookmark-outline" class="text-white text-xl"></ion-icon>
+              </div>
+              <div class="flex-1">
+                <h4 class="font-bold text-handy-navy-800 text-lg">Saved Locations</h4>
+                <p class="text-gray-600 text-sm">Choose from your saved addresses</p>
+              </div>
+              <div class="w-6 h-6 border-2 rounded-full flex items-center justify-center"
+                   [class.border-handy-blue-500]="locationType === 'saved'"
+                   [class.bg-handy-blue-500]="locationType === 'saved'"
+                   [class.border-gray-300]="locationType !== 'saved'">
+                <div *ngIf="locationType === 'saved'" class="w-3 h-3 bg-white rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use Current Location -->
+          <div 
+            class="p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-md"
+            [class.border-handy-blue-500]="locationType === 'current'"
+            [class.bg-handy-blue-50]="locationType === 'current'"
+            [class.border-gray-200]="locationType !== 'current'"
+            (click)="selectLocationType('current')"
+          >
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <ion-icon name="navigate-circle-outline" class="text-white text-xl"></ion-icon>
+              </div>
+              <div class="flex-1">
+                <h4 class="font-bold text-handy-navy-800 text-lg">Use Current Location</h4>
+                <p class="text-gray-600 text-sm">We'll automatically detect your location</p>
+              </div>
+              <div class="w-6 h-6 border-2 rounded-full flex items-center justify-center"
+                   [class.border-handy-blue-500]="locationType === 'current'"
+                   [class.bg-handy-blue-500]="locationType === 'current'"
+                   [class.border-gray-300]="locationType !== 'current'">
+                <div *ngIf="locationType === 'current'" class="w-3 h-3 bg-white rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Enter Custom Address -->
+          <div 
+            class="p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-md"
+            [class.border-handy-blue-500]="locationType === 'custom'"
+            [class.bg-handy-blue-50]="locationType === 'custom'"
+            [class.border-gray-200]="locationType !== 'custom'"
+            (click)="selectLocationType('custom')"
+          >
+            <div class="flex items-center space-x-4">
+              <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                <ion-icon name="home-outline" class="text-white text-xl"></ion-icon>
+              </div>
+              <div class="flex-1">
+                <h4 class="font-bold text-handy-navy-800 text-lg">Enter Address</h4>
+                <p class="text-gray-600 text-sm">Type your specific address</p>
+              </div>
+              <div class="w-6 h-6 border-2 rounded-full flex items-center justify-center"
+                   [class.border-handy-blue-500]="locationType === 'custom'"
+                   [class.bg-handy-blue-500]="locationType === 'custom'"
+                   [class.border-gray-300]="locationType !== 'custom'">
+                <div *ngIf="locationType === 'custom'" class="w-3 h-3 bg-white rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Custom Address Input -->
+          <div *ngIf="locationType === 'custom'" class="mt-4 space-y-4 animate-fade-in">
+            <div class="relative">
+              <input
+                type="text"
+                [(ngModel)]="customAddress"
+                placeholder="Enter your complete address"
+                class="w-full border-2 border-gray-200 rounded-2xl px-4 py-5 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 shadow-sm font-medium"
+                [class.border-red-400]="locationType === 'custom' && !customAddress && showValidation"
+                [class.bg-red-50]="locationType === 'custom' && !customAddress && showValidation"
+              />
+              <div class="absolute inset-y-0 right-0 flex items-center pr-4">
+                <ion-icon name="location" class="text-gray-400 text-lg"></ion-icon>
+              </div>
+            </div>
+            
+            <!-- Address Details -->
+            <div class="grid grid-cols-2 gap-4">
+              <input
+                type="text"
+                [(ngModel)]="city"
+                placeholder="City"
+                class="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 shadow-sm font-medium"
+              />
+              <input
+                type="text"
+                [(ngModel)]="zipCode"
+                placeholder="Zip Code"
+                class="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 shadow-sm font-medium"
+              />
+            </div>
+          </div>
+
+          <!-- Saved Locations Selection -->
+          <div *ngIf="locationType === 'saved'" class="mt-4 space-y-4 animate-fade-in">
+            <!-- Loading State -->
+            <div *ngIf="loadingSavedLocations" class="text-center py-8">
+              <ion-spinner name="crescent" class="text-handy-blue-500 mb-4"></ion-spinner>
+              <p class="text-gray-600 text-sm">Loading your saved locations...</p>
+            </div>
+
+            <!-- No Saved Locations -->
+            <div *ngIf="!loadingSavedLocations && savedLocations.length === 0" class="text-center py-8">
+              <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <ion-icon name="location-outline" class="text-gray-400 text-2xl"></ion-icon>
+              </div>
+              <h4 class="font-bold text-gray-700 text-lg mb-2">No Saved Locations</h4>
+              <p class="text-gray-500 text-sm mb-4">You don't have any saved locations yet</p>
+              <button 
+                (click)="selectLocationType('custom')"
+                class="text-handy-blue-600 font-bold text-sm underline hover:text-handy-blue-800 transition-colors"
+              >
+                Add a new address instead
+              </button>
+            </div>
+
+            <!-- Saved Locations List -->
+            <div *ngIf="!loadingSavedLocations && savedLocations.length > 0" class="space-y-3">
+              <div 
+                *ngFor="let location of savedLocations" 
+                class="p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-md"
+                [class.border-handy-blue-500]="selectedSavedLocationId === location.id"
+                [class.bg-handy-blue-50]="selectedSavedLocationId === location.id"
+                [class.border-gray-200]="selectedSavedLocationId !== location.id"
+                (click)="selectSavedLocation(location)"
+              >
+                <div class="flex items-start space-x-4">
+                  <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                    <ion-icon name="home" class="text-white text-lg"></ion-icon>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between mb-1">
+                      <h4 class="font-bold text-handy-navy-800 text-base">{{ location.contactPerson }}</h4>
+                      <div *ngIf="location.isDefault" class="bg-handy-yellow-100 text-handy-yellow-800 text-xs font-bold px-2 py-1 rounded-full">
+                        DEFAULT
+                      </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-2 line-clamp-2">{{ location.fullAddress }}</p>
+                    <div class="flex items-center space-x-3">
+                      <div class="flex items-center space-x-1">
+                        <ion-icon name="person-outline" class="text-gray-400 text-xs"></ion-icon>
+                        <span class="text-gray-500 text-xs">{{ location.contactPerson }}</span>
+                      </div>
+                      <div class="flex items-center space-x-1">
+                        <ion-icon name="call-outline" class="text-gray-400 text-xs"></ion-icon>
+                        <span class="text-gray-500 text-xs">{{ location.phoneNumber }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0"
+                       [class.border-handy-blue-500]="selectedSavedLocationId === location.id"
+                       [class.bg-handy-blue-500]="selectedSavedLocationId === location.id"
+                       [class.border-gray-300]="selectedSavedLocationId !== location.id">
+                    <div *ngIf="selectedSavedLocationId === location.id" class="w-3 h-3 bg-white rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Current Location Display -->
+          <div *ngIf="locationType === 'current' && currentLocationAddress" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-2xl">
+            <div class="flex items-center space-x-3">
+              <ion-icon name="checkmark-circle" class="text-green-600 text-lg"></ion-icon>
+              <div>
+                <p class="font-bold text-green-800 text-sm">Location Detected</p>
+                <p class="text-green-700 text-sm">{{ currentLocationAddress }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Location Error -->
+          <div *ngIf="locationType === 'current' && locationError" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-2xl">
+            <div class="flex items-center space-x-3">
+              <ion-icon name="alert-circle" class="text-red-600 text-lg"></ion-icon>
+              <div>
+                <p class="font-bold text-red-800 text-sm">Location Error</p>
+                <p class="text-red-700 text-sm">{{ locationError }}</p>
+                <button 
+                  (click)="getCurrentLocation()" 
+                  class="mt-2 text-handy-blue-600 font-bold text-sm underline hover:text-handy-blue-800 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Validation Error -->
+        <div
+          *ngIf="!isValidLocation() && showValidation"
+          class="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center animate-pulse"
+        >
+          <ion-icon name="alert-circle" class="text-red-500 mr-2 text-lg"></ion-icon>
+          <p class="text-red-600 text-sm font-medium">Please select a service location</p>
+        </div>
+      </div>
+
       <!-- Budget Range -->
       <div class="mb-8">
         <label class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg">
