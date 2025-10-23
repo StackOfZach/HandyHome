@@ -104,24 +104,7 @@
   }
 }
 
-// Enhanced compact profile card
-.profile-summary-card {
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #10b981, #059669, #047857);
-    opacity: 0.8;
-  }
-}
-
-// Enhanced compact stats cards
+// Enhanced stats cards
 .stats-card {
   transition: all 0.3s ease;
   position: relative;
@@ -148,49 +131,8 @@
   }
 
   &:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  }
-}
-
-// Compact profile picture enhancement
-.profile-picture-compact {
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  }
-}
-
-// Compact verification badge animation
-.verification-badge-compact {
-  animation: badgeGlowCompact 2s ease-in-out infinite alternate;
-}
-
-@keyframes badgeGlowCompact {
-  from {
-    box-shadow: 0 0 3px rgba(16, 185, 129, 0.5);
-  }
-  to {
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
-  }
-}
-
-// Compact status indicator pulse
-.status-indicator-compact {
-  animation: statusPulseCompact 2s ease-in-out infinite;
-}
-
-@keyframes statusPulseCompact {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.1);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   }
 }
 

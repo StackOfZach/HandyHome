@@ -321,211 +321,171 @@
   </div>
 
   <div class="p-4">
-    <!-- Enhanced Compact Profile Summary Card -->
+    <!-- Profile Summary Card -->
     <div
-      class="profile-summary-card bg-gradient-to-br from-white via-green-50 to-emerald-50 rounded-2xl shadow-lg p-5 mb-6 border border-green-200 relative overflow-hidden"
+      class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-green-100"
     >
-      <!-- Background Pattern -->
-      <div
-        class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full -translate-y-10 translate-x-10 opacity-30"
-      ></div>
-      <div
-        class="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-blue-100 to-green-100 rounded-full translate-y-8 -translate-x-8 opacity-40"
-      ></div>
-
-      <div class="relative z-10">
-        <div class="flex items-center mb-4">
-          <!-- Compact Profile Picture -->
-          <div class="relative mr-4">
-            <div
-              class="profile-picture-compact w-16 h-16 bg-gradient-to-br from-green-200 to-emerald-200 rounded-full flex items-center justify-center overflow-hidden border-3 border-white shadow-lg"
+      <div class="flex items-center mb-4">
+        <!-- Profile Picture -->
+        <div class="relative mr-4">
+          <div
+            class="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-green-200"
+          >
+            <img
+              *ngIf="workerProfile?.profilePhotoData"
+              [src]="workerProfile?.profilePhotoData"
+              alt="Profile"
+              class="w-full h-full object-cover"
+            />
+            <span
+              *ngIf="!workerProfile?.profilePhotoData"
+              class="text-green-600 font-bold text-2xl"
             >
-              <img
-                *ngIf="workerProfile?.profilePhotoData"
-                [src]="workerProfile?.profilePhotoData"
-                alt="Profile"
-                class="w-full h-full object-cover"
-              />
-              <span
-                *ngIf="!workerProfile?.profilePhotoData"
-                class="text-green-700 font-bold text-xl"
-              >
-                {{ getInitials(userProfile?.fullName || 'W') }}
-              </span>
-            </div>
-            <!-- Compact Verification Badge -->
-            <div
-              *ngIf="workerProfile?.status === 'verified'"
-              class="verification-badge-compact absolute -bottom-1 -right-1 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full p-1.5 border-2 border-white shadow-md"
-            >
-              <ion-icon name="checkmark" class="text-white text-xs"></ion-icon>
-            </div>
-            <!-- Pending Verification Badge -->
-            <div
-              *ngIf="workerProfile?.status !== 'verified'"
-              class="verification-badge-compact absolute -bottom-1 -right-1 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full p-1.5 border-2 border-white shadow-md"
-            >
-              <ion-icon name="time" class="text-white text-xs"></ion-icon>
-            </div>
+              {{ getInitials(userProfile?.fullName || 'W') }}
+            </span>
           </div>
-
-          <div class="flex-1">
-            <h2 class="text-xl font-bold text-gray-800 mb-1">
-              {{ userProfile?.fullName || 'Worker' }}
-            </h2>
-            <div class="flex items-center mb-2">
-              <span
-                [class]="workerProfile?.status === 'verified' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'"
-                class="text-xs font-semibold px-2 py-1 rounded-full mr-3"
-              >
-                {{ workerProfile?.status === 'verified' ? '✓ Verified' : '⏳
-                Pending' }}
-              </span>
-              <div class="flex items-center" *ngIf="workerProfile?.rating">
-                <ion-icon
-                  name="star"
-                  class="text-yellow-500 text-sm mr-1"
-                ></ion-icon>
-                <span class="text-sm font-semibold text-gray-700"
-                  >{{ workerProfile?.rating | number:'1.1-1' }}</span
-                >
-              </div>
-            </div>
-
-            <!-- Compact Status Indicators -->
-            <div class="space-y-1">
-              <!-- Availability Status -->
-              <div class="flex items-center">
-                <div
-                  [class]="isAvailable ? 'bg-green-500 status-indicator-compact' : 'bg-red-500'"
-                  class="w-2 h-2 rounded-full mr-2 shadow-sm"
-                ></div>
-                <span class="text-xs font-medium text-gray-700"
-                  >{{ isAvailable ? 'Available for Jobs' : 'Offline' }}</span
-                >
-              </div>
-
-              <!-- Location Tracking Status -->
-              <div class="flex items-center" *ngIf="isAvailable">
-                <div
-                  [class]="locationTrackingStatus.isTracking ? 'bg-blue-500 status-indicator-compact' : 'bg-orange-500'"
-                  class="w-2 h-2 rounded-full mr-2 shadow-sm"
-                ></div>
-                <span class="text-xs text-gray-600">
-                  {{ locationTrackingStatus.isTracking ? 'Location Active' :
-                  'Location Pending' }}
-                </span>
-                <ion-icon
-                  *ngIf="locationTrackingStatus.lastUpdate"
-                  name="time-outline"
-                  class="text-xs text-gray-400 ml-1 mr-1"
-                ></ion-icon>
-                <span
-                  *ngIf="locationTrackingStatus.lastUpdate"
-                  class="text-xs text-gray-400"
-                >
-                  {{ locationTrackingStatus.lastUpdate | date:'short' }}
-                </span>
-              </div>
-            </div>
+          <!-- Verification Badge -->
+          <div
+            *ngIf="workerProfile?.status === 'verified'"
+            class="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-2 border-2 border-white"
+          >
+            <ion-icon name="checkmark" class="text-white text-sm"></ion-icon>
           </div>
         </div>
 
-        <!-- Compact Quick Stats Cards -->
-        <div class="grid grid-cols-3 gap-3 mb-4">
-          <div
-            class="stats-card bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 text-center border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300"
-          >
-            <div
-              class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2"
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold text-gray-800">
+            {{ userProfile?.fullName || 'Worker' }}
+          </h2>
+          <div class="flex items-center mt-1">
+            <span
+              [class]="workerProfile?.status === 'verified' ? 'text-green-600' : 'text-orange-600'"
+              class="text-sm font-medium mr-3"
             >
-              <ion-icon name="briefcase" class="text-white text-sm"></ion-icon>
+              {{ workerProfile?.status === 'verified' ? 'Verified Worker' :
+              'Pending Verification' }}
+            </span>
+            <div class="flex items-center" *ngIf="workerProfile?.rating">
+              <ion-icon
+                name="star"
+                class="text-yellow-500 text-sm mr-1"
+              ></ion-icon>
+              <span class="text-sm text-gray-600"
+                >{{ workerProfile?.rating | number:'1.1-1' }}</span
+              >
             </div>
-            <div class="text-lg font-bold text-blue-700 mb-1">
-              {{ workerStats.jobsCompleted || 0 }}
-            </div>
-            <div class="text-xs text-blue-600 font-medium">Jobs Done</div>
           </div>
-          <div
-            class="stats-card bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 text-center border border-green-200 shadow-md hover:shadow-lg transition-all duration-300"
-          >
+
+          <!-- Availability Status -->
+          <div class="flex items-center mt-2">
             <div
-              class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2"
+              [class]="isAvailable ? 'bg-green-500' : 'bg-red-500'"
+              class="w-2 h-2 rounded-full mr-2"
+            ></div>
+            <span class="text-sm text-gray-600"
+              >{{ isAvailable ? 'Available for Jobs' : 'Offline' }}</span
             >
-              <ion-icon name="cash" class="text-white text-sm"></ion-icon>
-            </div>
-            <div class="text-lg font-bold text-green-700 mb-1">
-              ₱{{ workerStats.monthlyEarnings | number:'1.0-0' }}
-            </div>
-            <div class="text-xs text-green-600 font-medium">This Month</div>
           </div>
-          <div
-            class="stats-card bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-3 text-center border border-yellow-200 shadow-md hover:shadow-lg transition-all duration-300"
-          >
+
+          <!-- Location Tracking Status -->
+          <div class="flex items-center mt-1" *ngIf="isAvailable">
             <div
-              class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-2"
+              [class]="locationTrackingStatus.isTracking ? 'bg-blue-500' : 'bg-orange-500'"
+              class="w-2 h-2 rounded-full mr-2"
+            ></div>
+            <span class="text-xs text-gray-500">
+              {{ locationTrackingStatus.isTracking ? 'Location Active' :
+              'Location Pending' }}
+            </span>
+            <ion-icon
+              *ngIf="locationTrackingStatus.lastUpdate"
+              name="time-outline"
+              class="text-xs text-gray-400 ml-2 mr-1"
+            ></ion-icon>
+            <span
+              *ngIf="locationTrackingStatus.lastUpdate"
+              class="text-xs text-gray-400"
             >
-              <ion-icon name="star" class="text-white text-sm"></ion-icon>
-            </div>
-            <div class="text-lg font-bold text-yellow-700 mb-1">
-              {{ (workerProfile?.rating || 0) | number:'1.1-1' }}
-            </div>
-            <div class="text-xs text-yellow-600 font-medium">Rating</div>
+              {{ locationTrackingStatus.lastUpdate | date:'short' }}
+            </span>
           </div>
         </div>
+      </div>
 
-        <!-- Compact Update Profile Button -->
-        <div class="flex justify-center mb-4">
+      <!-- Quick Stats Cards -->
+      <div class="grid grid-cols-3 gap-4 mb-4">
+        <div
+          class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center border border-blue-200"
+        >
+          <div class="text-2xl font-bold text-blue-700">
+            {{ workerStats.jobsCompleted || 0 }}
+          </div>
+          <div class="text-xs text-blue-600 font-medium">Jobs Done</div>
+        </div>
+        <div
+          class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 text-center border border-green-200"
+        >
+          <div class="text-2xl font-bold text-green-700">
+            ₱{{ workerStats.monthlyEarnings | number:'1.0-0' }}
+          </div>
+          <div class="text-xs text-green-600 font-medium">This Month</div>
+        </div>
+        <div
+          class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 text-center border border-yellow-200"
+        >
+          <div
+            class="text-2xl font-bold flex items-center justify-center text-yellow-700"
+          >
+            <ion-icon name="star" class="text-yellow-500 mr-1"></ion-icon>
+            {{ (workerProfile?.rating || 0) | number:'1.1-1' }}
+          </div>
+          <div class="text-xs text-yellow-600 font-medium">Rating</div>
+        </div>
+      </div>
+
+      <!-- Update Profile Button -->
+      <div class="flex justify-center">
+        <button
+          (click)="updateProfile()"
+          class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center space-x-2 shadow-lg"
+        >
+          <ion-icon name="create-outline" class="text-lg"></ion-icon>
+          <span>Update Profile</span>
+        </button>
+      </div>
+
+      <!-- Enhanced Quick Actions Section -->
+      <div class="mt-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+          <ion-icon name="flash" class="text-green-600 mr-2"></ion-icon>
+          Quick Actions
+        </h3>
+        <div class="grid grid-cols-2 gap-4">
           <button
-            (click)="updateProfile()"
-            class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+            (click)="viewActiveBookings()"
+            class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center text-center"
           >
             <div
-              class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center"
+              class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3"
             >
-              <ion-icon name="create-outline" class="text-sm"></ion-icon>
+              <ion-icon name="list-outline" class="text-2xl"></ion-icon>
             </div>
-            <span>Update Profile</span>
+            <span class="font-semibold text-sm">Active Bookings</span>
+            <span class="text-xs text-blue-100 mt-1">View current jobs</span>
           </button>
-        </div>
 
-        <!-- Compact Quick Actions Section -->
-        <div class="mt-4">
-          <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
-            <ion-icon name="flash" class="text-green-600 mr-2"></ion-icon>
-            Quick Actions
-          </h3>
-          <div class="grid grid-cols-2 gap-3">
-            <button
-              (click)="viewActiveBookings()"
-              class="quick-action-btn bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center text-center"
+          <button
+            (click)="goToBookingRequests()"
+            class="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center text-center"
+          >
+            <div
+              class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3"
             >
-              <div
-                class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mb-2"
-              >
-                <ion-icon name="list-outline" class="text-lg"></ion-icon>
-              </div>
-              <span class="font-semibold text-xs">Active Bookings</span>
-              <span class="text-xs text-blue-100 mt-0.5"
-                >View current jobs</span
-              >
-            </button>
-
-            <button
-              (click)="goToBookingRequests()"
-              class="quick-action-btn bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white p-3 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center text-center"
-            >
-              <div
-                class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mb-2"
-              >
-                <ion-icon name="mail-outline" class="text-lg"></ion-icon>
-              </div>
-              <span class="font-semibold text-xs">Booking Requests</span>
-              <span class="text-xs text-emerald-100 mt-0.5"
-                >Review requests</span
-              >
-            </button>
-          </div>
+              <ion-icon name="mail-outline" class="text-2xl"></ion-icon>
+            </div>
+            <span class="font-semibold text-sm">Booking Requests</span>
+            <span class="text-xs text-emerald-100 mt-1">Review requests</span>
+          </button>
         </div>
       </div>
     </div>
