@@ -6,7 +6,7 @@ const routes: Routes = [
   {
     path: '',
     loadChildren: () =>
-      import('./home/home.module').then((m) => m.HomePageModule),
+      import('./pages/auth/login/login.module').then((m) => m.LoginPageModule),
     pathMatch: 'full',
   },
   {
