@@ -18,10 +18,13 @@
       </div>
       <div class="flex items-center space-x-3">
         <div class="p-2 rounded-full bg-white/20">
-          <ion-icon name="briefcase-outline" class="text-white text-xl"></ion-icon>
+          <ion-icon
+            name="briefcase-outline"
+            class="text-white text-xl"
+          ></ion-icon>
         </div>
-        <div 
-          *ngIf="booking?.status" 
+        <div
+          *ngIf="booking?.status"
           class="px-4 py-2 rounded-full text-xs font-bold border-2 border-white/30"
           [ngClass]="{
             'bg-handy-yellow-500 text-handy-navy-800': booking?.status === 'pending',
@@ -39,7 +42,10 @@
     <!-- Enhanced Subtitle with Job Type -->
     <div class="mt-3 ml-14">
       <p class="text-white/90 text-sm">Manage your current job assignment</p>
-      <p *ngIf="booking?.neededService" class="text-handy-yellow-200 text-xs font-medium mt-1">
+      <p
+        *ngIf="booking?.neededService"
+        class="text-handy-yellow-200 text-xs font-medium mt-1"
+      >
         <ion-icon name="construct-outline" class="text-xs mr-1"></ion-icon>
         {{ booking.neededService }}
       </p>
@@ -48,47 +54,71 @@
   <!-- Loading State -->
   <div *ngIf="isLoading" class="flex justify-center items-center h-full">
     <div class="text-center">
-      <ion-spinner name="crescent" class="text-handy-blue-500 mb-4" size="large"></ion-spinner>
+      <ion-spinner
+        name="crescent"
+        class="text-handy-blue-500 mb-4"
+        size="large"
+      ></ion-spinner>
       <p class="text-handy-navy-700 font-medium">Loading job details...</p>
     </div>
   </div>
 
   <!-- Enhanced Booking Details Content -->
   <div *ngIf="!isLoading && booking" class="p-6 pt-6">
-    
     <!-- Client Information Card -->
-    <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-emerald-100 relative overflow-hidden">
+    <div
+      class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-emerald-100 relative overflow-hidden"
+    >
       <!-- Decorative gradient overlay -->
-      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-500"></div>
-      
+      <div
+        class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-500"
+      ></div>
+
       <div class="flex items-center justify-center mb-6">
-        <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3">
+        <div
+          class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3"
+        >
           <ion-icon name="person" class="text-white text-xl"></ion-icon>
         </div>
-        <h3 class="font-bold text-handy-navy-800 text-2xl">Client Information</h3>
+        <h3 class="font-bold text-handy-navy-800 text-2xl">
+          Client Information
+        </h3>
       </div>
 
       <div class="space-y-6">
         <!-- Client Name -->
         <div class="text-center">
-          <div class="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg">
+          <div
+            class="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg"
+          >
             <ion-icon name="person" class="text-white text-2xl"></ion-icon>
           </div>
           <h2 class="text-2xl font-bold text-handy-navy-800 mb-1">
             {{ booking.clientName || 'Client' }}
           </h2>
-          <p class="text-sm text-gray-600 font-medium">Your client for this job</p>
+          <p class="text-sm text-gray-600 font-medium">
+            Your client for this job
+          </p>
         </div>
 
         <!-- Client Location -->
-        <div class="bg-gradient-to-r from-blue-50/50 to-blue-100/50 rounded-2xl p-6 border border-blue-200/30">
+        <div
+          class="bg-gradient-to-r from-blue-50/50 to-blue-100/50 rounded-2xl p-6 border border-blue-200/30"
+        >
           <div class="flex items-start space-x-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+            <div
+              class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0"
+            >
               <ion-icon name="location" class="text-white text-lg"></ion-icon>
             </div>
             <div class="flex-1">
-              <h4 class="font-bold text-handy-navy-800 text-lg mb-2">Service Location</h4>
-              <p class="text-gray-700 text-sm leading-relaxed mb-4" *ngIf="booking.address">
+              <h4 class="font-bold text-handy-navy-800 text-lg mb-2">
+                Service Location
+              </h4>
+              <p
+                class="text-gray-700 text-sm leading-relaxed mb-4"
+                *ngIf="booking.address"
+              >
                 {{ booking.address }}
               </p>
               <p class="text-gray-500 text-sm" *ngIf="!booking.address">
@@ -97,47 +127,77 @@
 
               <!-- Location Type Badge -->
               <div class="mb-4" *ngIf="booking.locationType">
-                <span 
-                  *ngIf="booking.locationType === 'saved'" 
+                <span
+                  *ngIf="booking.locationType === 'saved'"
                   class="text-xs text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full font-bold"
                 >
                   <ion-icon name="bookmark" class="text-xs mr-1"></ion-icon>
                   SAVED LOCATION
                 </span>
-                <span 
-                  *ngIf="booking.locationType === 'current'" 
+                <span
+                  *ngIf="booking.locationType === 'current'"
                   class="text-xs text-blue-600 bg-blue-100 px-3 py-1 rounded-full font-bold"
                 >
                   <ion-icon name="navigate" class="text-xs mr-1"></ion-icon>
                   CURRENT LOCATION
                 </span>
-                <span 
-                  *ngIf="booking.locationType === 'custom'" 
+                <span
+                  *ngIf="booking.locationType === 'custom'"
                   class="text-xs text-purple-600 bg-purple-100 px-3 py-1 rounded-full font-bold"
                 >
-                  <ion-icon name="location-outline" class="text-xs mr-1"></ion-icon>
+                  <ion-icon
+                    name="location-outline"
+                    class="text-xs mr-1"
+                  ></ion-icon>
                   CUSTOM ADDRESS
                 </span>
               </div>
 
               <!-- Contact Information for Saved Locations -->
-              <div *ngIf="booking.locationType === 'saved' && booking.contactPerson" class="space-y-2 mb-4 p-3 bg-gray-50 rounded-xl border border-gray-200">
+              <div
+                *ngIf="booking.locationType === 'saved' && booking.contactPerson"
+                class="space-y-2 mb-4 p-3 bg-gray-50 rounded-xl border border-gray-200"
+              >
                 <div class="flex items-center space-x-2">
-                  <ion-icon name="person-outline" class="text-gray-400 text-sm"></ion-icon>
-                  <span class="text-sm text-gray-700 font-medium">{{ booking.contactPerson }}</span>
+                  <ion-icon
+                    name="person-outline"
+                    class="text-gray-400 text-sm"
+                  ></ion-icon>
+                  <span class="text-sm text-gray-700 font-medium"
+                    >{{ booking.contactPerson }}</span
+                  >
                 </div>
-                <div *ngIf="booking.phoneNumber" class="flex items-center space-x-2">
-                  <ion-icon name="call-outline" class="text-gray-400 text-sm"></ion-icon>
-                  <span class="text-sm text-gray-700">{{ booking.phoneNumber }}</span>
+                <div
+                  *ngIf="booking.phoneNumber"
+                  class="flex items-center space-x-2"
+                >
+                  <ion-icon
+                    name="call-outline"
+                    class="text-gray-400 text-sm"
+                  ></ion-icon>
+                  <span class="text-sm text-gray-700"
+                    >{{ booking.phoneNumber }}</span
+                  >
                 </div>
               </div>
 
               <!-- Additional Location Details -->
-              <div *ngIf="booking.city || booking.zipCode" class="flex items-center space-x-2 mb-4">
-                <span *ngIf="booking.city" class="text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded-full">{{ booking.city }}</span>
-                <span *ngIf="booking.zipCode" class="text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded-full">{{ booking.zipCode }}</span>
+              <div
+                *ngIf="booking.city || booking.zipCode"
+                class="flex items-center space-x-2 mb-4"
+              >
+                <span
+                  *ngIf="booking.city"
+                  class="text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded-full"
+                  >{{ booking.city }}</span
+                >
+                <span
+                  *ngIf="booking.zipCode"
+                  class="text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded-full"
+                  >{{ booking.zipCode }}</span
+                >
               </div>
-              
+
               <!-- View in Map Button -->
               <button
                 (click)="openDirections()"
@@ -145,16 +205,24 @@
                 class="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-4 rounded-2xl font-bold text-sm shadow-xl hover:shadow-2xl hover:scale-[1.02] disabled:hover:scale-100 transition-all duration-300 flex items-center justify-center space-x-3"
               >
                 <ion-icon name="map" class="text-lg"></ion-icon>
-                <span>{{ booking.coordinates?.lat && booking.coordinates?.lng ? 'View Directions in Map' : 'Location Unavailable' }}</span>
+                <span
+                  >{{ booking.coordinates?.lat && booking.coordinates?.lng ?
+                  'View Directions in Map' : 'Location Unavailable' }}</span
+                >
               </button>
             </div>
           </div>
         </div>
 
         <!-- Contact Information (if available) -->
-        <div *ngIf="booking.clientPhone" class="bg-gradient-to-r from-green-50/50 to-green-100/50 rounded-2xl p-6 border border-green-200/30">
+        <div
+          *ngIf="booking.clientPhone"
+          class="bg-gradient-to-r from-green-50/50 to-green-100/50 rounded-2xl p-6 border border-green-200/30"
+        >
           <div class="flex items-center space-x-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <div
+              class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg"
+            >
               <ion-icon name="call" class="text-white text-lg"></ion-icon>
             </div>
             <div>
@@ -167,10 +235,14 @@
     </div>
 
     <!-- Job Status Card -->
-    <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-handy-blue-100 relative overflow-hidden">
+    <div
+      class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-handy-blue-100 relative overflow-hidden"
+    >
       <!-- Decorative gradient overlay -->
-      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"></div>
-      
+      <div
+        class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"
+      ></div>
+
       <div class="text-center mb-6">
         <div
           class="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center shadow-lg floating-animation"
@@ -189,86 +261,134 @@
         <h2 class="text-2xl font-bold text-handy-navy-800 mb-2">
           {{ getStatusText(booking.status) }}
         </h2>
-        <p class="text-sm text-gray-600 font-medium">Job ID: {{ booking.id }}</p>
+        <p class="text-sm text-gray-600 font-medium">
+          Job ID: {{ booking.id }}
+        </p>
       </div>
 
       <!-- Location Tracking Status -->
-      <div *ngIf="isLocationTracking" class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 mb-4 border border-green-200">
+      <div
+        *ngIf="isLocationTracking"
+        class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 mb-4 border border-green-200"
+      >
         <div class="flex items-center justify-center space-x-2">
           <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-          <span class="text-green-700 font-bold text-sm">Location tracking active</span>
+          <span class="text-green-700 font-bold text-sm"
+            >Location tracking active</span
+          >
           <ion-icon name="location" class="text-green-600"></ion-icon>
         </div>
       </div>
 
       <!-- Enhanced Proximity Status -->
-      <div *ngIf="isLocationTracking" class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-4 mb-4 border border-blue-200">
+      <div
+        *ngIf="isLocationTracking"
+        class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-4 mb-4 border border-blue-200"
+      >
         <div class="flex items-center justify-center space-x-2">
           <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
           <ion-icon name="location" class="text-blue-600 text-lg"></ion-icon>
-          <span class="text-blue-700 font-bold text-sm">Live location tracking active</span>
+          <span class="text-blue-700 font-bold text-sm"
+            >Live location tracking active</span
+          >
         </div>
       </div>
 
       <!-- Arrival Alert -->
-      <div *ngIf="isWithinRadius && booking.status === 'service-started'" class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 mb-4 border border-green-200">
+      <div
+        *ngIf="isWithinRadius && booking.status === 'service-started'"
+        class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 mb-4 border border-green-200"
+      >
         <div class="flex items-center justify-center space-x-2">
-          <ion-icon name="checkmark-circle" class="text-green-600 text-lg"></ion-icon>
-          <span class="text-green-700 font-bold text-sm">Service automatically started - you're at the location!</span>
+          <ion-icon
+            name="checkmark-circle"
+            class="text-green-600 text-lg"
+          ></ion-icon>
+          <span class="text-green-700 font-bold text-sm"
+            >Service automatically started - you're at the location!</span
+          >
         </div>
       </div>
     </div>
 
     <!-- Enhanced Service Information -->
-    <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-handy-blue-100 relative overflow-hidden">
+    <div
+      class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-handy-blue-100 relative overflow-hidden"
+    >
       <!-- Decorative gradient overlay -->
-      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-yellow-500 via-handy-blue-500 to-handy-yellow-500"></div>
-      
+      <div
+        class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-yellow-500 via-handy-blue-500 to-handy-yellow-500"
+      ></div>
+
       <div class="flex items-center justify-center mb-6">
-        <div class="w-12 h-12 bg-gradient-to-r from-handy-yellow-500 to-handy-yellow-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3">
+        <div
+          class="w-12 h-12 bg-gradient-to-r from-handy-yellow-500 to-handy-yellow-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3"
+        >
           <ion-icon name="briefcase" class="text-white text-xl"></ion-icon>
         </div>
         <h3 class="font-bold text-handy-navy-800 text-2xl">Service Details</h3>
       </div>
 
       <div class="space-y-4">
-        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-handy-blue-50/50 to-handy-blue-100/50 rounded-2xl border border-handy-blue-200/30">
-          <div class="w-12 h-12 bg-gradient-to-br from-handy-blue-500 to-handy-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+        <div
+          class="flex items-center space-x-4 p-4 bg-gradient-to-r from-handy-blue-50/50 to-handy-blue-100/50 rounded-2xl border border-handy-blue-200/30"
+        >
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-handy-blue-500 to-handy-blue-600 rounded-2xl flex items-center justify-center shadow-lg"
+          >
             <ion-icon name="construct" class="text-white text-lg"></ion-icon>
           </div>
           <div class="flex-1">
-            <p class="text-xs font-semibold text-handy-navy-600 mb-1">Service Category</p>
-            <p class="font-bold text-handy-navy-800 text-lg">{{ booking.categoryName || booking.neededService || 'Service' }}</p>
+            <p class="text-xs font-semibold text-handy-navy-600 mb-1">
+              Service Category
+            </p>
+            <p class="font-bold text-handy-navy-800 text-lg">
+              {{ booking.categoryName || booking.neededService || 'Service' }}
+            </p>
           </div>
         </div>
 
-        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-purple-50/50 to-purple-100/50 rounded-2xl border border-purple-200/30">
-          <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+        <div
+          class="flex items-center space-x-4 p-4 bg-gradient-to-r from-purple-50/50 to-purple-100/50 rounded-2xl border border-purple-200/30"
+        >
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg"
+          >
             <ion-icon name="settings" class="text-white text-lg"></ion-icon>
           </div>
           <div class="flex-1">
-            <p class="text-xs font-semibold text-handy-navy-600 mb-1">Specific Service</p>
-            <p class="font-bold text-handy-navy-800 text-lg">{{ booking.subService || booking.title || 'General Service' }}</p>
+            <p class="text-xs font-semibold text-handy-navy-600 mb-1">
+              Specific Service
+            </p>
+            <p class="font-bold text-handy-navy-800 text-lg">
+              {{ booking.subService || booking.title || 'General Service' }}
+            </p>
           </div>
         </div>
 
-        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-purple-50/50 to-purple-100/50 rounded-2xl border border-purple-200/30">
-          <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+        <div
+          class="flex items-center space-x-4 p-4 bg-gradient-to-r from-purple-50/50 to-purple-100/50 rounded-2xl border border-purple-200/30"
+        >
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg"
+          >
             <ion-icon name="calendar" class="text-white text-lg"></ion-icon>
           </div>
           <div class="flex-1">
-            <p class="text-xs font-semibold text-handy-navy-600 mb-1">Scheduled Date</p>
+            <p class="text-xs font-semibold text-handy-navy-600 mb-1">
+              Scheduled Date
+            </p>
             <p class="font-bold text-handy-navy-800 text-lg">
               {{ getFormattedScheduleDate() }}
             </p>
             <div class="mt-1">
-              <span 
+              <span
                 *ngIf="isScheduledDate()"
                 class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full font-bold"
               >
                 TODAY
               </span>
-              <span 
+              <span
                 *ngIf="!isScheduledDate()"
                 class="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full font-bold"
               >
@@ -278,25 +398,42 @@
           </div>
         </div>
 
-        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-emerald-50/50 to-emerald-100/50 rounded-2xl border border-emerald-200/30">
-          <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+        <div
+          class="flex items-center space-x-4 p-4 bg-gradient-to-r from-emerald-50/50 to-emerald-100/50 rounded-2xl border border-emerald-200/30"
+        >
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg"
+          >
             <ion-icon name="time" class="text-white text-lg"></ion-icon>
           </div>
           <div class="flex-1">
-            <p class="text-xs font-semibold text-handy-navy-600 mb-1">Duration</p>
-            <p class="font-bold text-handy-navy-800 text-lg">{{ booking.estimatedDuration || 60 }} minutes</p>
+            <p class="text-xs font-semibold text-handy-navy-600 mb-1">
+              Duration
+            </p>
+            <p class="font-bold text-handy-navy-800 text-lg">
+              {{ booking.estimatedDuration || 60 }} minutes
+            </p>
           </div>
         </div>
 
-        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-yellow-50/50 to-yellow-100/50 rounded-2xl border border-yellow-200/30">
-          <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+        <div
+          class="flex items-center space-x-4 p-4 bg-gradient-to-r from-yellow-50/50 to-yellow-100/50 rounded-2xl border border-yellow-200/30"
+        >
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg"
+          >
             <ion-icon name="wallet" class="text-white text-lg"></ion-icon>
           </div>
           <div class="flex-1">
-            <p class="text-xs font-semibold text-handy-navy-600 mb-1">Budget Range</p>
+            <p class="text-xs font-semibold text-handy-navy-600 mb-1">
+              Budget Range
+            </p>
             <p class="font-bold text-handy-navy-800 text-lg">
-              <span *ngIf="booking.minBudget && booking.maxBudget; else fallbackBudget">
-                ₱{{ booking.minBudget | number:'1.0-0' }} - ₱{{ booking.maxBudget | number:'1.0-0' }}
+              <span
+                *ngIf="booking.minBudget && booking.maxBudget; else fallbackBudget"
+              >
+                ₱{{ booking.minBudget | number:'1.0-0' }} - ₱{{
+                booking.maxBudget | number:'1.0-0' }}
               </span>
               <ng-template #fallbackBudget>
                 ₱{{ booking.price || booking.priceRange || 0 | number:'1.0-0' }}
@@ -308,40 +445,48 @@
     </div>
 
     <!-- Enhanced Client Location -->
-    <div class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-handy-blue-100 relative overflow-hidden">
+    <div
+      class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-handy-blue-100 relative overflow-hidden"
+    >
       <!-- Decorative gradient overlay -->
-      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500"></div>
-      
+      <div
+        class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500"
+      ></div>
+
       <div class="flex items-center justify-center mb-6">
-        <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3">
+        <div
+          class="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3"
+        >
           <ion-icon name="location" class="text-white text-xl"></ion-icon>
         </div>
         <h3 class="font-bold text-handy-navy-800 text-2xl">Client Location</h3>
       </div>
 
-      <div class="bg-gradient-to-r from-red-50/50 to-orange-50/50 rounded-2xl p-4 mb-4 border border-red-200/30">
+      <div
+        class="bg-gradient-to-r from-red-50/50 to-orange-50/50 rounded-2xl p-4 mb-4 border border-red-200/30"
+      >
         <p class="text-handy-navy-800 font-medium leading-relaxed">
           {{ booking.address || 'Address not provided' }}
         </p>
-        
+
         <!-- Location Type Badge -->
         <div class="mt-2" *ngIf="booking.locationType">
-          <span 
-            *ngIf="booking.locationType === 'saved'" 
+          <span
+            *ngIf="booking.locationType === 'saved'"
             class="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full font-bold"
           >
             <ion-icon name="bookmark" class="text-xs mr-1"></ion-icon>
             SAVED
           </span>
-          <span 
-            *ngIf="booking.locationType === 'current'" 
+          <span
+            *ngIf="booking.locationType === 'current'"
             class="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full font-bold"
           >
             <ion-icon name="navigate" class="text-xs mr-1"></ion-icon>
             CURRENT
           </span>
-          <span 
-            *ngIf="booking.locationType === 'custom'" 
+          <span
+            *ngIf="booking.locationType === 'custom'"
             class="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full font-bold"
           >
             <ion-icon name="location-outline" class="text-xs mr-1"></ion-icon>
@@ -349,18 +494,30 @@
           </span>
         </div>
 
-        <div class="flex items-center mt-2 text-sm text-gray-600" *ngIf="booking.city || booking.zipCode">
+        <div
+          class="flex items-center mt-2 text-sm text-gray-600"
+          *ngIf="booking.city || booking.zipCode"
+        >
           <ion-icon name="map" class="mr-1 text-red-500"></ion-icon>
-          <span>{{ booking.city }}{{ booking.zipCode ? ' ' + booking.zipCode : '' }}</span>
+          <span
+            >{{ booking.city }}{{ booking.zipCode ? ' ' + booking.zipCode : ''
+            }}</span
+          >
         </div>
 
         <!-- Contact Information for Saved Locations -->
-        <div *ngIf="booking.locationType === 'saved' && booking.contactPerson" class="mt-3 p-2 bg-gray-100 rounded-lg">
+        <div
+          *ngIf="booking.locationType === 'saved' && booking.contactPerson"
+          class="mt-3 p-2 bg-gray-100 rounded-lg"
+        >
           <div class="flex items-center space-x-2 text-sm">
             <ion-icon name="person-outline" class="text-gray-500"></ion-icon>
             <span class="text-gray-700">{{ booking.contactPerson }}</span>
           </div>
-          <div *ngIf="booking.phoneNumber" class="flex items-center space-x-2 text-sm mt-1">
+          <div
+            *ngIf="booking.phoneNumber"
+            class="flex items-center space-x-2 text-sm mt-1"
+          >
             <ion-icon name="call-outline" class="text-gray-500"></ion-icon>
             <span class="text-gray-700">{{ booking.phoneNumber }}</span>
           </div>
@@ -389,7 +546,10 @@
       </button>
 
       <!-- Location Tracking Status -->
-      <div *ngIf="isLocationTracking" class="w-full bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700 px-6 py-5 rounded-3xl font-bold text-lg border-2 border-emerald-300 flex items-center justify-center space-x-3 mb-4">
+      <div
+        *ngIf="isLocationTracking"
+        class="w-full bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700 px-6 py-5 rounded-3xl font-bold text-lg border-2 border-emerald-300 flex items-center justify-center space-x-3 mb-4"
+      >
         <div class="animate-pulse">
           <ion-icon name="location" class="text-xl"></ion-icon>
         </div>
@@ -399,16 +559,17 @@
 
       <!-- Enhanced Job Control Flow -->
       <div class="grid grid-cols-1 gap-4">
-        
         <!-- Debug Information (Remove this after debugging) -->
-        <div class="w-full bg-yellow-100 text-yellow-800 px-4 py-3 rounded-2xl text-sm border border-yellow-300">
+        <div
+          class="w-full bg-yellow-100 text-yellow-800 px-4 py-3 rounded-2xl text-sm border border-yellow-300"
+        >
           <p><strong>Debug Info:</strong></p>
           <p>Status: {{ booking?.status }}</p>
           <p>Schedule Date: {{ booking?.scheduleDate | json }}</p>
           <p>Is Scheduled Date: {{ isScheduledDate() }}</p>
           <p>Formatted Date: {{ getFormattedScheduleDate() }}</p>
         </div>
-        
+
         <!-- Step 1: Go to Client (On accepted status, scheduled for today) -->
         <button
           *ngIf="booking.status === 'accepted' && isScheduledDate()"
@@ -502,20 +663,31 @@
     </div>
 
     <!-- Payment Information (if applicable) -->
-    <div *ngIf="jobAmount > 0" class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-green-200 relative overflow-hidden">
+    <div
+      *ngIf="jobAmount > 0"
+      class="bg-white rounded-3xl shadow-2xl p-8 mb-6 border border-green-200 relative overflow-hidden"
+    >
       <!-- Decorative gradient overlay -->
-      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 via-emerald-500 to-green-500"></div>
-      
+      <div
+        class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 via-emerald-500 to-green-500"
+      ></div>
+
       <div class="flex items-center justify-center mb-6">
-        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3">
+        <div
+          class="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg floating-animation mr-3"
+        >
           <ion-icon name="wallet" class="text-white text-xl"></ion-icon>
         </div>
         <h3 class="font-bold text-handy-navy-800 text-2xl">Payment Details</h3>
       </div>
 
-      <div class="bg-gradient-to-r from-green-50/50 to-emerald-50/50 rounded-2xl p-6 border border-green-200/30 text-center">
+      <div
+        class="bg-gradient-to-r from-green-50/50 to-emerald-50/50 rounded-2xl p-6 border border-green-200/30 text-center"
+      >
         <p class="text-sm font-semibold text-handy-navy-600 mb-2">Job Amount</p>
-        <p class="text-3xl font-bold text-green-600">₱{{ jobAmount | number:'1.0-0' }}</p>
+        <p class="text-3xl font-bold text-green-600">
+          ₱{{ jobAmount | number:'1.0-0' }}
+        </p>
         <p class="text-sm text-gray-500 mt-2">Payment request sent to client</p>
       </div>
     </div>

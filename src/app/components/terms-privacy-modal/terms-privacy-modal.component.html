@@ -1,0 +1,495 @@
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+  >
+    <!-- Header -->
+    <div
+      class="bg-gradient-to-r from-handy-blue-500 to-handy-navy-600 text-white p-6 flex-shrink-0"
+    >
+      <h2 class="text-2xl font-bold mb-2">Terms of Service & Privacy Policy</h2>
+      <p class="text-handy-blue-100">
+        Please review our policies before creating your account
+      </p>
+
+      <!-- Tab Navigation -->
+      <div class="flex mt-4 space-x-1">
+        <button
+          (click)="switchTab('terms')"
+          [class]="
+            currentTab === 'terms'
+              ? 'bg-white text-handy-blue-600'
+              : 'bg-handy-blue-400 text-white'
+          "
+          class="px-4 py-2 rounded-lg font-semibold transition-all duration-200"
+        >
+          Terms of Service
+        </button>
+        <button
+          (click)="switchTab('privacy')"
+          [class]="
+            currentTab === 'privacy'
+              ? 'bg-white text-handy-blue-600'
+              : 'bg-handy-blue-400 text-white'
+          "
+          class="px-4 py-2 rounded-lg font-semibold transition-all duration-200"
+        >
+          Privacy Policy
+        </button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6 overflow-y-auto flex-1 min-h-0">
+      <!-- Terms of Service Tab -->
+      <div *ngIf="currentTab === 'terms'" class="space-y-4">
+        <h3 class="text-xl font-bold text-handy-navy-700 mb-4">
+          HandyHome Terms and Conditions
+        </h3>
+
+        <div class="space-y-4 text-handy-navy-600">
+          <div>
+            <p class="text-sm leading-relaxed">
+              Welcome to HandyHome (the "App"). By accessing or using the App,
+              you agree to be bound by these Terms and Conditions (the "Terms").
+              Please read them carefully before using the App.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              1. App Description
+            </h4>
+            <p class="text-sm leading-relaxed">
+              HandyHome is a digital platform that allows users to instantly
+              book reliable home service providers such as electricians,
+              plumbers, cleaners, and other household professionals. We act
+              solely as a connection platform between users and independent
+              service providers. HandyHome does not employ, manage, or control
+              any of the listed service providers, and we are not responsible
+              for the quality, timing, or performance of their services. We also
+              do not guarantee the accuracy or completeness of information
+              provided by service providers on the App.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              2. User Conduct
+            </h4>
+            <p class="text-sm leading-relaxed mb-2">
+              By using HandyHome, you agree to use the App only for lawful
+              purposes and in a respectful, responsible manner. You must not use
+              the App to:
+            </p>
+            <ul class="list-disc list-inside text-sm space-y-1 ml-4">
+              <li>(a) Harass, threaten, or harm others.</li>
+              <li>
+                (b) Impersonate another person or misrepresent your identity.
+              </li>
+              <li>(c) Engage in illegal, fraudulent, or abusive behavior.</li>
+              <li>
+                (d) Interfere with the operation of the App or its servers.
+              </li>
+              <li>
+                (e) Upload or transmit viruses, malware, or other harmful code.
+              </li>
+            </ul>
+            <p class="text-sm leading-relaxed mt-2">
+              Any misuse of the App may result in immediate suspension or
+              termination of your account.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              3. Privacy Policy
+            </h4>
+            <p class="text-sm leading-relaxed">
+              We value and respect your privacy. Our data collection and usage
+              practices are explained in our Privacy Policy, which is
+              incorporated into these Terms by reference. For questions or
+              concerns, contact us at Handyhome2026@gmail.com.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              4. Intellectual Property
+            </h4>
+            <p class="text-sm leading-relaxed">
+              All materials found within HandyHome including text, images,
+              logos, icons, designs, and software are the property of HandyHome
+              or its licensors and are protected by intellectual property laws.
+              You may not copy, reproduce, distribute, or use any part of the
+              App's content without prior written permission.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              5. Liability for Services
+            </h4>
+            <ul class="list-disc list-inside text-sm space-y-1">
+              <li>
+                (a) HandyHome serves only as a booking platform. We are not
+                liable for any loss, damage, or injury resulting from the
+                actions, negligence, or misconduct of service providers.
+              </li>
+              <li>
+                (b) We do not provide warranties or guarantees regarding the
+                quality, safety, or suitability of any services provided by
+                third-party providers.
+              </li>
+              <li>
+                (c) You acknowledge that you use the App and engage service
+                providers at your own risk.
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              6. Limitation of Liability
+            </h4>
+            <ul class="list-disc list-inside text-sm space-y-1">
+              <li>
+                (a) HandyHome shall not be liable for any direct, indirect,
+                incidental, or consequential damages arising from your use or
+                inability to use the App.
+              </li>
+              <li>
+                (b) Our total liability, if any, shall not exceed the amount of
+                fees you paid to HandyHome for using the App.
+              </li>
+              <li>
+                (c) You are solely responsible for your safety and for securing
+                your personal belongings when using services booked through
+                HandyHome.
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              7. Indemnification
+            </h4>
+            <p class="text-sm leading-relaxed">
+              You agree to indemnify, defend, and hold harmless HandyHome, its
+              affiliates, employees, and partners from any claims, damages, or
+              expenses arising out of your use of the App or violation of these
+              Terms.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              8. Changes to Terms
+            </h4>
+            <p class="text-sm leading-relaxed">
+              HandyHome reserves the right to modify or update these Terms at
+              any time. Changes take effect immediately upon posting on the App.
+              Your continued use of the App constitutes your acceptance of any
+              revised Terms.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              9. Governing Law and Jurisdiction
+            </h4>
+            <p class="text-sm leading-relaxed">
+              These Terms are governed by and construed in accordance with the
+              laws of the Republic of the Philippines. Any disputes shall be
+              exclusively handled by the courts within the Philippines.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              10. Termination
+            </h4>
+            <p class="text-sm leading-relaxed">
+              We may suspend or terminate your account and access to the App at
+              any time, without prior notice, for any reason including violation
+              of these Terms.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              11. Severability
+            </h4>
+            <p class="text-sm leading-relaxed">
+              If any provision of these Terms is found invalid or unenforceable,
+              the remaining provisions shall continue in full force and effect.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              12. Entire Agreement
+            </h4>
+            <p class="text-sm leading-relaxed">
+              These Terms constitute the entire agreement between you and
+              HandyHome regarding your use of the App, superseding any prior
+              agreements or communications.
+            </p>
+          </div>
+
+          <div
+            class="bg-handy-blue-50 border-l-4 border-handy-blue-400 p-4 rounded-r-lg"
+          >
+            <p class="text-sm leading-relaxed text-handy-blue-800 font-medium">
+              By using HandyHome, you acknowledge that you have read,
+              understood, and agreed to these Terms and Conditions. If you do
+              not agree, please discontinue use of the App.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy Policy Tab -->
+      <div *ngIf="currentTab === 'privacy'" class="space-y-4">
+        <h3 class="text-xl font-bold text-handy-navy-700 mb-4">
+          Privacy Policy
+        </h3>
+
+        <div class="space-y-4 text-handy-navy-600">
+          <div>
+            <p class="text-sm leading-relaxed">
+              We at HandyHome value your trust and take your privacy very
+              seriously. This Privacy Policy (the "Policy") explains how we
+              collect, use, and protect your personal information when you use
+              the HandyHome mobile or web application (the "App").
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              1. Information We Collect
+            </h4>
+            <p class="text-sm leading-relaxed mb-2">
+              We collect different types of information to provide you with a
+              smooth and secure experience when using HandyHome:
+            </p>
+            <div class="space-y-2 ml-4">
+              <div>
+                <h5 class="font-medium text-handy-navy-700 text-sm">
+                  (a) Personal Information:
+                </h5>
+                <p class="text-sm leading-relaxed">
+                  When you register or use the App, we may collect personal
+                  details such as your name, email address, phone number, and
+                  payment information to process bookings and communicate with
+                  you.
+                </p>
+              </div>
+              <div>
+                <h5 class="font-medium text-handy-navy-700 text-sm">
+                  (b) Usage Information:
+                </h5>
+                <p class="text-sm leading-relaxed">
+                  We collect data about how you use the App, including the
+                  services you request, the service providers you book, and your
+                  interactions within the platform.
+                </p>
+              </div>
+              <div>
+                <h5 class="font-medium text-handy-navy-700 text-sm">
+                  (c) Device Information:
+                </h5>
+                <p class="text-sm leading-relaxed">
+                  We may gather technical data such as your device type,
+                  operating system, browser type, and IP address to help improve
+                  app performance and resolve technical issues.
+                </p>
+              </div>
+              <div>
+                <h5 class="font-medium text-handy-navy-700 text-sm">
+                  (d) Location Information:
+                </h5>
+                <p class="text-sm leading-relaxed">
+                  If you enable location services, we may collect your device's
+                  location to match you with nearby service providers and
+                  enhance booking accuracy. You can disable location sharing at
+                  any time in your device settings.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              2. How We Use Your Information
+            </h4>
+            <p class="text-sm leading-relaxed mb-2">
+              We use your information to:
+            </p>
+            <ul class="list-disc list-inside text-sm space-y-1 ml-4">
+              <li>Provide, maintain, and improve HandyHome's services;</li>
+              <li>Process your bookings and payments;</li>
+              <li>
+                Communicate with you regarding your account, requests, and
+                service updates;
+              </li>
+              <li>
+                Personalize your experience and recommend services near your
+                area;
+              </li>
+              <li>Comply with legal, regulatory, or security obligations.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              3. Disclosure of Your Information
+            </h4>
+            <p class="text-sm leading-relaxed mb-2">
+              We may share your information in the following cases:
+            </p>
+            <div class="space-y-2 ml-4">
+              <div>
+                <h5 class="font-medium text-handy-navy-700 text-sm">
+                  (a) Worker:
+                </h5>
+                <p class="text-sm leading-relaxed">
+                  We share relevant details (such as your name, contact
+                  information, and service address) with Worker to fulfill your
+                  booking requests.
+                </p>
+              </div>
+              <div>
+                <h5 class="font-medium text-handy-navy-700 text-sm">
+                  (b) Third-Party Partners:
+                </h5>
+                <p class="text-sm leading-relaxed">
+                  We may share limited information with trusted third parties
+                  that help us operate the App, hosting services, and analytics
+                  providers.
+                </p>
+              </div>
+              <div>
+                <h5 class="font-medium text-handy-navy-700 text-sm">
+                  (c) Legal Requirements:
+                </h5>
+                <p class="text-sm leading-relaxed">
+                  We may disclose your information if required by law, court
+                  order, or government request to comply with legal obligations
+                  or protect our rights and users.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              4. Your Choices
+            </h4>
+            <p class="text-sm leading-relaxed mb-2">
+              You have control over the personal information you share:
+            </p>
+            <ul class="list-disc list-inside text-sm space-y-1 ml-4">
+              <li>
+                You may choose not to provide certain details, but this may
+                limit your ability to use some features of the App.
+              </li>
+              <li>
+                You can disable or adjust location access in your device
+                settings.
+              </li>
+              <li>
+                You can contact us to review, update, or delete your personal
+                data, subject to legal or operational requirements.
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              5. Data Security
+            </h4>
+            <p class="text-sm leading-relaxed">
+              We implement reasonable technical and organizational measures to
+              protect your data from unauthorized access, loss, misuse, or
+              disclosure. However, please note that no online platform or
+              electronic storage method can guarantee 100% security.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              6. Children's Privacy
+            </h4>
+            <p class="text-sm leading-relaxed">
+              HandyHome is not intended for children under 13 years old. We do
+              not knowingly collect personal information from anyone under this
+              age. If we learn that a child's data has been collected, we will
+              promptly delete it.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              7. Changes to This Policy
+            </h4>
+            <p class="text-sm leading-relaxed">
+              We may update this Privacy Policy from time to time. Any changes
+              will take effect immediately upon posting on the App. Continued
+              use of HandyHome after updates means you accept the revised
+              Policy.
+            </p>
+          </div>
+
+          <div>
+            <h4 class="font-semibold text-handy-navy-700 mb-2">
+              8. Contact Us
+            </h4>
+            <p class="text-sm leading-relaxed">
+              If you have questions, concerns, or feedback about this Policy or
+              HandyHome's data practices, you may contact us at:
+            </p>
+            <p class="text-sm font-medium text-handy-blue-600 mt-1">
+              Handyhome2026@gmail.com
+            </p>
+          </div>
+
+          <div
+            class="bg-handy-blue-50 border-l-4 border-handy-blue-400 p-4 rounded-r-lg"
+          >
+            <p class="text-sm leading-relaxed text-handy-blue-800 font-medium">
+              By using HandyHome, you acknowledge that you have read,
+              understood, and agreed to this Privacy Policy. If you do not
+              agree, please stop using the App.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div
+      class="bg-gray-50 px-6 py-6 pb-8 flex flex-col sm:flex-row gap-4 justify-end flex-shrink-0"
+    >
+      <button
+        (click)="onDisagree()"
+        class="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-all duration-200"
+      >
+        <span class="flex items-center justify-center">
+          <ion-icon name="close-outline" class="mr-2"></ion-icon>
+          Disagree
+        </span>
+      </button>
+      <button
+        (click)="onAgree()"
+        class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-handy-yellow-500 to-handy-blue-500 hover:from-handy-yellow-600 hover:to-handy-blue-600 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105"
+      >
+        <span class="flex items-center justify-center">
+          <ion-icon name="checkmark-outline" class="mr-2"></ion-icon>
+          I Agree
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

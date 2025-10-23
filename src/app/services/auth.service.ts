@@ -40,6 +40,10 @@ export interface UserProfile {
   role: 'client' | 'worker' | 'admin';
   services?: string[]; // For workers
   savedLocations?: UserLocation[]; // User's saved addresses
+  verificationStatus?: 'not_submitted' | 'pending' | 'approved' | 'rejected'; // For clients
+  verificationSubmittedAt?: Date;
+  verificationApprovedAt?: Date;
+  verificationRejectedAt?: Date;
   createdAt: Date;
 }
 
@@ -170,11 +174,18 @@ export class AuthService {
         userProfile.services = [];
       }
 
+      // Add verification status for clients
+      if (role === 'client') {
+        userProfile.verificationStatus = 'not_submitted';
+      }
+
       await setDoc(doc(this.firestore, 'users', user.uid), userProfile);
       this.userProfileSubject.next(userProfile);
 
-      // Redirect based on role
-      await this.redirectBasedOnRole(role);
+      // Don't auto-redirect for clients - let the signup page handle it
+      if (role !== 'client') {
+        await this.redirectBasedOnRole(role);
+      }
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -201,6 +212,25 @@ export class AuthService {
       // Get user profile
       const profile = await this.getUserProfile(user.uid);
       if (profile) {
+        // Check verification status for clients
+        if (profile.role === 'client') {
+          if (profile.verificationStatus === 'not_submitted') {
+            // Client needs to complete verification
+            throw new Error('Please complete your account verification first.');
+          } else if (profile.verificationStatus === 'pending') {
+            // Client verification is under review
+            throw new Error(
+              'Your account verification is pending. Please wait for admin approval.'
+            );
+          } else if (profile.verificationStatus === 'rejected') {
+            // Client verification was rejected
+            throw new Error(
+              'Your account verification was rejected. Please contact support.'
+            );
+          }
+          // If approved, continue with login
+        }
+
         // Save session and set navigation state
         this.saveUserSession(user, profile);
         this.navigationState.setUserRole(profile.role);

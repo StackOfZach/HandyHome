@@ -47,9 +47,9 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
       console.log('🔍 Checking all bookings in database...');
       const bookingsRef = collection(this.firestore, 'bookings');
       const snapshot = await getDocs(bookingsRef);
-      
+
       console.log('📊 Total bookings in database:', snapshot.size);
-      
+
       snapshot.forEach((doc: any) => {
         const data = doc.data();
         console.log('📄 Booking found:', {
@@ -60,7 +60,7 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
           clientId: data['clientId'],
           neededService: data['neededService'],
           createdAt: data['createdAt'],
-          updatedAt: data['updatedAt']
+          updatedAt: data['updatedAt'],
         });
       });
     } catch (error) {
@@ -80,7 +80,10 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('🔍 Loading pending bookings for worker:', this.userProfile.uid);
+    console.log(
+      '🔍 Loading pending bookings for worker:',
+      this.userProfile.uid
+    );
     this.loading = true;
     this.bookingsSubscription = this.bookingService
       .getPendingBookingsForWorker$(this.userProfile.uid)
@@ -191,7 +194,7 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
 
   formatScheduleDate(booking: BookingData): string {
     let date = null;
-    
+
     // Check for different date formats
     if (booking.scheduleDate) {
       date = booking.scheduleDate;
@@ -213,13 +216,13 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
             day: 'numeric',
           });
         }
-        
+
         // Handle regular Date or string
         const jsDate = new Date(date);
         if (isNaN(jsDate.getTime())) {
           return 'Date not specified';
         }
-        
+
         return jsDate.toLocaleDateString('en-US', {
           weekday: 'short',
           year: 'numeric',
@@ -234,7 +237,10 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
   }
 
   getClientName(booking: BookingData): string {
-    return booking.clientName || `Client ${booking.clientId?.substring(0, 8) || 'Unknown'}...`;
+    return (
+      booking.clientName ||
+      `Client ${booking.clientId?.substring(0, 8) || 'Unknown'}...`
+    );
   }
 
   getClientPhotoUrl(booking: BookingData): string {
@@ -242,13 +248,19 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
   }
 
   getServiceName(booking: BookingData): string {
-    return booking.neededService || booking.title || booking.category || 'Service Request';
+    return (
+      booking.neededService ||
+      booking.title ||
+      booking.category ||
+      'Service Request'
+    );
   }
 
   getPriceRange(booking: BookingData): { min: number; max: number } {
     const minBudget = booking.minBudget || booking.price || 0;
-    const maxBudget = booking.maxBudget || booking.priceRange || booking.price || 0;
-    
+    const maxBudget =
+      booking.maxBudget || booking.priceRange || booking.price || 0;
+
     return {
       min: minBudget,
       max: maxBudget || minBudget,
@@ -257,7 +269,7 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
 
   getFormattedDate(date: any): string {
     if (!date) return 'Unknown date';
-    
+
     try {
       // Handle Firestore Timestamp
       if (date && typeof date === 'object' && 'seconds' in date) {
@@ -267,22 +279,22 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
           month: 'short',
           day: 'numeric',
           hour: '2-digit',
-          minute: '2-digit'
+          minute: '2-digit',
         });
       }
-      
+
       // Handle regular Date or string
       const jsDate = new Date(date);
       if (isNaN(jsDate.getTime())) {
         return 'Invalid date';
       }
-      
+
       return jsDate.toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
       });
     } catch (error) {
       return 'Invalid date';
@@ -293,28 +305,32 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
     if (booking.schedule?.time) {
       return booking.schedule.time;
     }
-    
+
     // If scheduleDate contains time info, extract it
     if (booking.scheduleDate) {
       try {
         let jsDate;
-        if (booking.scheduleDate && typeof booking.scheduleDate === 'object' && 'seconds' in booking.scheduleDate) {
+        if (
+          booking.scheduleDate &&
+          typeof booking.scheduleDate === 'object' &&
+          'seconds' in booking.scheduleDate
+        ) {
           jsDate = new Date((booking.scheduleDate as any).seconds * 1000);
         } else {
           jsDate = new Date(booking.scheduleDate);
         }
-        
+
         if (!isNaN(jsDate.getTime())) {
           return jsDate.toLocaleTimeString('en-US', {
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
           });
         }
       } catch (error) {
         console.log('Error extracting time:', error);
       }
     }
-    
+
     return 'Time not specified';
   }
 }

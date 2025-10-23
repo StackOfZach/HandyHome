@@ -30,7 +30,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   isLocationTracking: boolean = false;
   workerLocation: { lat: number; lng: number } | null = null;
   isWithinRadius: boolean = false;
-  
+
   // Job control states
   isJobStarted: boolean = false;
   isJobCompleted: boolean = false;
@@ -72,28 +72,32 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       const bookingRef = doc(this.firestore, 'bookings', this.bookingId);
 
       // Set up real-time listener
-      const unsubscribe = onSnapshot(bookingRef, (doc) => {
-        if (doc.exists()) {
-          this.booking = {
-            id: doc.id,
-            ...doc.data(),
-          };
-          console.log('Booking loaded:', this.booking);
-          console.log('Booking address:', this.booking.address);
-          console.log('Booking coordinates:', this.booking.coordinates);
-          console.log('Booking location (legacy):', this.booking.location);
-          console.log('Booking locations (legacy):', this.booking.locations);
-        } else {
-          console.log('Booking not found in bookings collection');
-          this.showToast('Booking not found', 'danger');
-          this.router.navigate(['/pages/worker/dashboard']);
+      const unsubscribe = onSnapshot(
+        bookingRef,
+        (doc) => {
+          if (doc.exists()) {
+            this.booking = {
+              id: doc.id,
+              ...doc.data(),
+            };
+            console.log('Booking loaded:', this.booking);
+            console.log('Booking address:', this.booking.address);
+            console.log('Booking coordinates:', this.booking.coordinates);
+            console.log('Booking location (legacy):', this.booking.location);
+            console.log('Booking locations (legacy):', this.booking.locations);
+          } else {
+            console.log('Booking not found in bookings collection');
+            this.showToast('Booking not found', 'danger');
+            this.router.navigate(['/pages/worker/dashboard']);
+          }
+          this.isLoading = false;
+        },
+        (error) => {
+          console.error('Error listening to booking:', error);
+          this.showToast('Error loading booking details', 'danger');
+          this.isLoading = false;
         }
-        this.isLoading = false;
-      }, (error) => {
-        console.error('Error listening to booking:', error);
-        this.showToast('Error loading booking details', 'danger');
-        this.isLoading = false;
-      });
+      );
 
       this.subscriptions.push({ unsubscribe } as any);
     } catch (error) {
@@ -123,7 +127,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       await updateDoc(bookingRef, updateData);
 
       this.showToast(`Booking status updated to ${status}`, 'success');
-      
+
       // Start location tracking when going on the way
       if (status === 'on-the-way' && !this.isLocationTracking) {
         await this.startLocationTracking();
@@ -137,7 +141,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   openDirections() {
     console.log('Booking data for directions:', this.booking);
     let lat, lng;
-    
+
     // Handle enhanced location structure (primary)
     if (this.booking?.coordinates) {
       lat = this.booking.coordinates.lat;
@@ -148,17 +152,21 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     else if (this.booking?.location) {
       ({ lat, lng } = this.booking.location);
       console.log('Using coordinates from booking.location:', lat, lng);
-    } 
+    }
     // Handle locations array format (fallback)
     else if (this.booking?.locations && this.booking.locations.length > 0) {
       const location = this.booking.locations[0];
       if (location.coordinates) {
         lat = location.coordinates.latitude;
         lng = location.coordinates.longitude;
-        console.log('Using coordinates from booking.locations[0].coordinates:', lat, lng);
+        console.log(
+          'Using coordinates from booking.locations[0].coordinates:',
+          lat,
+          lng
+        );
       }
     }
-    
+
     if (!lat || !lng) {
       console.log('No valid coordinates found');
       this.showToast('Location not available', 'danger');
@@ -238,7 +246,8 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   async confirmGoingOnTheWay() {
     const alert = await this.alertController.create({
       header: 'Going to Client',
-      message: 'Are you ready to head to the client location? This will start location tracking.',
+      message:
+        'Are you ready to head to the client location? This will start location tracking.',
       buttons: [
         {
           text: 'Cancel',
@@ -248,7 +257,10 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
           text: 'Yes, On My Way',
           handler: async () => {
             await this.updateBookingStatus('on-the-way');
-            this.showToast('Status updated! Location tracking started.', 'success');
+            this.showToast(
+              'Status updated! Location tracking started.',
+              'success'
+            );
           },
         },
       ],
@@ -263,10 +275,10 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       console.log('No schedule date found in booking:', this.booking);
       return false;
     }
-    
+
     const today = new Date();
     let scheduleDate: Date;
-    
+
     // Handle different date formats
     if (this.booking.scheduleDate instanceof Date) {
       scheduleDate = this.booking.scheduleDate;
@@ -279,27 +291,35 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       console.log('Unknown schedule date format:', this.booking.scheduleDate);
       return false;
     }
-    
+
     // Normalize dates to compare only year, month, and day
-    const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const scheduleDateNormalized = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
-    
+    const todayNormalized = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const scheduleDateNormalized = new Date(
+      scheduleDate.getFullYear(),
+      scheduleDate.getMonth(),
+      scheduleDate.getDate()
+    );
+
     console.log('Date comparison:', {
       today: todayNormalized,
       scheduleDate: scheduleDateNormalized,
       isToday: todayNormalized.getTime() === scheduleDateNormalized.getTime(),
-      bookingStatus: this.booking.status
+      bookingStatus: this.booking.status,
     });
-    
+
     return todayNormalized.getTime() === scheduleDateNormalized.getTime();
   }
 
   // Format the scheduled date for display
   getFormattedScheduleDate(): string {
     if (!this.booking?.scheduleDate) return 'Not scheduled';
-    
+
     let scheduleDate: Date;
-    
+
     try {
       // Handle different date formats
       if (this.booking.scheduleDate instanceof Date) {
@@ -312,12 +332,12 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       } else {
         return 'Invalid date format';
       }
-      
+
       return scheduleDate.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
-        month: 'long', 
-        day: 'numeric'
+        month: 'long',
+        day: 'numeric',
       });
     } catch (error) {
       console.error('Error formatting schedule date:', error);
@@ -328,7 +348,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   // Get appropriate button text based on current status and conditions
   getActionButtonText(): string {
     if (!this.booking?.status) return '';
-    
+
     switch (this.booking.status) {
       case 'accepted':
         if (!this.isScheduledDate()) return 'Not scheduled for today';
@@ -394,7 +414,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
 
   getStatusDisplay(): string {
     if (!this.booking?.status) return 'UNKNOWN';
-    
+
     switch (this.booking.status) {
       case 'pending':
         return 'PENDING';
@@ -420,19 +440,21 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       return;
     }
 
-    const scheduleDate = this.booking.scheduleDate || this.booking.date || new Date();
+    const scheduleDate =
+      this.booking.scheduleDate || this.booking.date || new Date();
     const formattedDate = new Date(scheduleDate).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
 
     const message = `Hi! I am ${this.userProfile.fullName}, your HandyHome worker. I have accepted your job and will see you on ${formattedDate}. Thank you for choosing HandyHome!`;
-    
+
     // Get client phone number
-    const clientPhone = this.booking.clientPhone || this.booking.customerPhone || '';
-    
+    const clientPhone =
+      this.booking.clientPhone || this.booking.customerPhone || '';
+
     if (!clientPhone) {
       this.showToast('Client phone number not available', 'medium');
       return;
@@ -456,7 +478,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       }
 
       this.isLocationTracking = true;
-      
+
       // Update location every 10 seconds
       this.locationSubscription = interval(10000).subscribe(async () => {
         await this.updateWorkerLocation();
@@ -464,7 +486,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
 
       // Initial location update
       await this.updateWorkerLocation();
-      
+
       this.showToast('Location tracking started', 'success');
     } catch (error) {
       console.error('Error starting location tracking:', error);
@@ -486,9 +508,9 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
           workerLocation: {
             latitude: lat,
             longitude: lng,
-            timestamp: serverTimestamp()
+            timestamp: serverTimestamp(),
           },
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
         });
       }
 
@@ -503,26 +525,38 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     if (!this.workerLocation || !this.booking) return;
 
     let clientLat, clientLng;
-    
+
     // Get client location - handle enhanced location structure (primary)
     if (this.booking.coordinates) {
       clientLat = this.booking.coordinates.lat;
       clientLng = this.booking.coordinates.lng;
-      console.log('Using client location from booking.coordinates:', clientLat, clientLng);
+      console.log(
+        'Using client location from booking.coordinates:',
+        clientLat,
+        clientLng
+      );
     }
     // Handle legacy location format (fallback)
     else if (this.booking.location) {
       clientLat = this.booking.location.lat;
       clientLng = this.booking.location.lng;
-      console.log('Using client location from booking.location:', clientLat, clientLng);
-    } 
+      console.log(
+        'Using client location from booking.location:',
+        clientLat,
+        clientLng
+      );
+    }
     // Handle locations array format (fallback)
     else if (this.booking.locations && this.booking.locations.length > 0) {
       const location = this.booking.locations[0];
       if (location.coordinates) {
         clientLat = location.coordinates.latitude;
         clientLng = location.coordinates.longitude;
-        console.log('Using client location from booking.locations[0].coordinates:', clientLat, clientLng);
+        console.log(
+          'Using client location from booking.locations[0].coordinates:',
+          clientLat,
+          clientLng
+        );
       }
     }
 
@@ -544,26 +578,40 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     this.isWithinRadius = distance <= 0.1; // 0.1 km = 100m
 
     // If just arrived within radius and worker is on the way, automatically start service
-    if (this.isWithinRadius && !wasWithinRadius && this.booking.status === 'on-the-way') {
+    if (
+      this.isWithinRadius &&
+      !wasWithinRadius &&
+      this.booking.status === 'on-the-way'
+    ) {
       this.updateBookingStatus('service-started');
-      this.showToast('You have arrived! Service automatically started.', 'success');
+      this.showToast(
+        'You have arrived! Service automatically started.',
+        'success'
+      );
     }
   }
 
-  calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  calculateDistance(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number
+  ): number {
     const R = 6371; // Earth's radius in kilometers
     const dLat = this.toRadians(lat2 - lat1);
     const dLng = this.toRadians(lng2 - lng1);
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) * 
-      Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRadians(lat1)) *
+        Math.cos(this.toRadians(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
 
   toRadians(degrees: number): number {
-    return degrees * (Math.PI/180);
+    return degrees * (Math.PI / 180);
   }
 
   // Job Control Methods
@@ -579,9 +627,9 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
             await this.updateBookingStatus('in-progress');
             this.isJobStarted = true;
             this.showToast('Job started successfully!', 'success');
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
     await alert.present();
   }
@@ -596,10 +644,12 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
         {
           name: 'amount',
           type: 'number',
-          placeholder: `Amount (₱${this.booking.minBudget || 0} - ₱${this.booking.maxBudget || this.booking.priceRange || 0})`,
+          placeholder: `Amount (₱${this.booking.minBudget || 0} - ₱${
+            this.booking.maxBudget || this.booking.priceRange || 0
+          })`,
           min: this.booking.minBudget || 0,
-          max: this.booking.maxBudget || this.booking.priceRange || 999999
-        }
+          max: this.booking.maxBudget || this.booking.priceRange || 999999,
+        },
       ],
       buttons: [
         { text: 'Cancel', role: 'cancel' },
@@ -608,10 +658,14 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
           handler: async (data) => {
             const amount = parseFloat(data.amount);
             const minBudget = this.booking.minBudget || 0;
-            const maxBudget = this.booking.maxBudget || this.booking.priceRange || 999999;
+            const maxBudget =
+              this.booking.maxBudget || this.booking.priceRange || 999999;
 
             if (amount < minBudget || amount > maxBudget) {
-              this.showToast(`Amount must be between ₱${minBudget} and ₱${maxBudget}`, 'medium');
+              this.showToast(
+                `Amount must be between ₱${minBudget} and ₱${maxBudget}`,
+                'medium'
+              );
               return false;
             }
 
@@ -622,9 +676,9 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
             this.isJobCompleted = true;
             this.stopLocationTracking(); // Stop tracking when job is completed
             return true;
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
     await alert.present();
   }
@@ -635,7 +689,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
         finalAmount: amount,
         paymentStatus: 'requested',
         completedAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
 
       this.isPaymentRequested = true;
@@ -659,14 +713,17 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
               status: 'completed',
               paymentStatus: 'completed',
               paymentConfirmedAt: serverTimestamp(),
-              updatedAt: serverTimestamp()
+              updatedAt: serverTimestamp(),
             });
-            
-            this.showToast('Payment confirmed! Job completed successfully.', 'success');
+
+            this.showToast(
+              'Payment confirmed! Job completed successfully.',
+              'success'
+            );
             this.router.navigate(['/pages/worker/dashboard']);
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
     await alert.present();
   }
@@ -683,7 +740,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       const coordinates = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 60000
+        maximumAge: 60000,
       });
 
       const workerLat = coordinates.coords.latitude;
@@ -693,19 +750,19 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
 
       // Create Google Maps directions URL
       const mapsUrl = `https://www.google.com/maps/dir/${workerLat},${workerLng}/${clientLat},${clientLng}`;
-      
+
       // Open Google Maps in a new window/tab
       window.open(mapsUrl, '_blank');
-      
+
       this.showToast('Opening Google Maps for directions...', 'success');
     } catch (error) {
       console.error('Error opening Google Maps directions:', error);
-      
+
       // Fallback: Open maps with just destination
       const clientLat = this.booking.coordinates.lat;
       const clientLng = this.booking.coordinates.lng;
       const fallbackUrl = `https://www.google.com/maps?q=${clientLat},${clientLng}`;
-      
+
       window.open(fallbackUrl, '_blank');
       this.showToast('Opened client location in Google Maps', 'success');
     }
@@ -720,7 +777,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.stopLocationTracking();
   }
 }

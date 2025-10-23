@@ -734,7 +734,7 @@ export class BookingService {
   getPendingBookingsForWorker$(workerId: string): Observable<BookingData[]> {
     return new Observable((observer) => {
       console.log('🔍 Querying pending bookings for worker:', workerId);
-      
+
       const q = query(
         this.bookingsCollection,
         where('assignedWorker', '==', workerId),

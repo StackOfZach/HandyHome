@@ -32,7 +32,14 @@ interface BookingData {
   priceRange: number;
   minBudget?: number;
   maxBudget?: number;
-  status: 'pending' | 'accepted' | 'on-the-way' | 'service-started' | 'awaiting-payment' | 'completed' | 'cancelled';
+  status:
+    | 'pending'
+    | 'accepted'
+    | 'on-the-way'
+    | 'service-started'
+    | 'awaiting-payment'
+    | 'completed'
+    | 'cancelled';
   createdAt: any;
   updatedAt: any;
   // Enhanced location fields
@@ -139,7 +146,7 @@ export class BookingProgressPage implements OnInit, OnDestroy {
       (doc) => {
         if (doc.exists()) {
           const previousStatus = this.booking?.status;
-          
+
           this.booking = {
             id: doc.id,
             ...doc.data(),
@@ -172,21 +179,30 @@ export class BookingProgressPage implements OnInit, OnDestroy {
     if (!this.booking) return;
 
     const currentStatus = this.booking.status;
-    
+
     // Start tracking when booking is accepted and scheduled for today
-    if (currentStatus === 'accepted' && previousStatus !== 'accepted' && this.shouldTrackLocation()) {
+    if (
+      currentStatus === 'accepted' &&
+      previousStatus !== 'accepted' &&
+      this.shouldTrackLocation()
+    ) {
       this.startLocationTracking();
     }
-    
+
     // Continue tracking for active statuses
-    else if (['accepted', 'on-the-way', 'service-started'].includes(currentStatus) && this.shouldTrackLocation()) {
+    else if (
+      ['accepted', 'on-the-way', 'service-started'].includes(currentStatus) &&
+      this.shouldTrackLocation()
+    ) {
       if (!this.locationTrackingActive) {
         this.startLocationTracking();
       }
     }
-    
+
     // Stop tracking when job is completed or cancelled
-    else if (['completed', 'cancelled', 'awaiting-payment'].includes(currentStatus)) {
+    else if (
+      ['completed', 'cancelled', 'awaiting-payment'].includes(currentStatus)
+    ) {
       if (this.locationTrackingActive) {
         this.stopLocationTracking();
       }
@@ -460,7 +476,9 @@ export class BookingProgressPage implements OnInit, OnDestroy {
       case 'pending':
         return 'We will notify you when a worker accepts your booking';
       case 'accepted':
-        return this.shouldTrackLocation() ? 'Track your worker\'s location below when they start traveling' : 'Your worker will contact you soon';
+        return this.shouldTrackLocation()
+          ? "Track your worker's location below when they start traveling"
+          : 'Your worker will contact you soon';
       case 'on-the-way':
         return 'Your worker is traveling to your location. Live tracking is active.';
       case 'service-started':
@@ -482,7 +500,7 @@ export class BookingProgressPage implements OnInit, OnDestroy {
       if (!timestamp) {
         return 'Not scheduled';
       }
-      
+
       // If it's a Firestore timestamp
       let date: Date;
       if (timestamp?.toDate && typeof timestamp.toDate === 'function') {
@@ -492,16 +510,16 @@ export class BookingProgressPage implements OnInit, OnDestroy {
       } else {
         date = new Date(timestamp);
       }
-      
+
       if (isNaN(date.getTime())) {
         return 'Invalid date';
       }
-      
-      return date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       });
     } catch (error) {
       console.warn('Error formatting date:', error);
@@ -517,7 +535,10 @@ export class BookingProgressPage implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('Starting live worker location tracking for booking:', this.bookingId);
+    console.log(
+      'Starting live worker location tracking for booking:',
+      this.bookingId
+    );
     this.locationTrackingActive = true;
 
     // Subscribe to worker location updates from booking document
@@ -543,10 +564,14 @@ export class BookingProgressPage implements OnInit, OnDestroy {
 
   private shouldTrackLocation(): boolean {
     if (!this.booking) return false;
-    
+
     // Only track location if booking is accepted and scheduled for today
-    const isAcceptedStatus = ['accepted', 'on-the-way', 'service-started'].includes(this.booking.status);
-    
+    const isAcceptedStatus = [
+      'accepted',
+      'on-the-way',
+      'service-started',
+    ].includes(this.booking.status);
+
     if (!isAcceptedStatus) return false;
 
     // Check if scheduled date is today
@@ -558,11 +583,18 @@ export class BookingProgressPage implements OnInit, OnDestroy {
         } else {
           scheduleDate = new Date(this.booking.scheduleDate);
         }
-        
+
         const today = new Date();
         const isToday = scheduleDate.toDateString() === today.toDateString();
-        
-        console.log('Schedule date:', scheduleDate.toDateString(), 'Today:', today.toDateString(), 'Is today:', isToday);
+
+        console.log(
+          'Schedule date:',
+          scheduleDate.toDateString(),
+          'Today:',
+          today.toDateString(),
+          'Is today:',
+          isToday
+        );
         return isToday;
       } catch (error) {
         console.error('Error checking schedule date:', error);
@@ -579,8 +611,14 @@ export class BookingProgressPage implements OnInit, OnDestroy {
     try {
       // Get the latest booking data which should include workerLocation
       const bookingRef = doc(this.firestore, 'bookings', this.bookingId);
-      const bookingDoc = await getDocs(query(collection(this.firestore, 'bookings'), where('__name__', '==', this.bookingId), limit(1)));
-      
+      const bookingDoc = await getDocs(
+        query(
+          collection(this.firestore, 'bookings'),
+          where('__name__', '==', this.bookingId),
+          limit(1)
+        )
+      );
+
       if (!bookingDoc.empty) {
         const bookingData = bookingDoc.docs[0].data() as BookingData;
         if (bookingData.workerLocation) {
@@ -627,15 +665,22 @@ export class BookingProgressPage implements OnInit, OnDestroy {
     }
   }
 
-  private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  private calculateDistance(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number
+  ): number {
     const R = 6371; // Earth's radius in kilometers
     const dLat = this.toRadians(lat2 - lat1);
     const dLng = this.toRadians(lng2 - lng1);
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) * 
-      Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRadians(lat1)) *
+        Math.cos(this.toRadians(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
 
@@ -645,13 +690,14 @@ export class BookingProgressPage implements OnInit, OnDestroy {
 
   getLocationTrackingStatus(): string {
     if (!this.locationTrackingActive) return '';
-    
+
     if (!this.workerLocation) {
       return 'Waiting for worker location...';
     }
 
     if (this.workerDistance !== null) {
-      if (this.workerDistance < 0.1) { // Less than 100m
+      if (this.workerDistance < 0.1) {
+        // Less than 100m
         return 'Worker has arrived at your location!';
       } else {
         return `Worker is ${this.workerDistance.toFixed(1)}km away`;

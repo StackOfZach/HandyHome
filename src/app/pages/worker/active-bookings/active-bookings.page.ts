@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { 
-  Firestore, 
-  collection, 
-  query, 
-  where, 
-  onSnapshot, 
+import {
+  Firestore,
+  collection,
+  query,
+  where,
+  onSnapshot,
   orderBy,
-  Timestamp 
+  Timestamp,
 } from '@angular/fire/firestore';
 import { ToastController } from '@ionic/angular';
 import { AuthService, UserProfile } from '../../../services/auth.service';
@@ -45,7 +45,7 @@ export class ActiveBookingsPage implements OnInit, OnDestroy {
   activeBookings: ActiveBooking[] = [];
   userProfile: UserProfile | null = null;
   isLoading: boolean = true;
-  
+
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -68,7 +68,7 @@ export class ActiveBookingsPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
   async loadActiveBookings() {
@@ -77,7 +77,7 @@ export class ActiveBookingsPage implements OnInit, OnDestroy {
     try {
       console.log('Loading active bookings for user:', this.userProfile.uid);
       const bookingsRef = collection(this.firestore, 'bookings');
-      
+
       // First, try querying with just the workerId to see if we get any results
       const simpleQuery = query(
         bookingsRef,
@@ -85,30 +85,39 @@ export class ActiveBookingsPage implements OnInit, OnDestroy {
       );
 
       // Set up real-time listener
-      const unsubscribe = onSnapshot(simpleQuery, (snapshot) => {
-        const allBookings = snapshot.docs.map(doc => {
-          const data = doc.data();
-          console.log('Found booking:', { id: doc.id, status: data['status'], workerId: data['workerId'] });
-          return {
-            id: doc.id,
-            ...data
-          };
-        }) as ActiveBooking[];
-        
-        // Filter for active statuses in JavaScript (to avoid Firestore index issues)
-        this.activeBookings = allBookings.filter(booking => 
-          booking.status === 'accepted' || booking.status === 'in-progress'
-        );
-        
-        console.log('All bookings for this worker:', allBookings.length);
-        console.log('Active bookings:', this.activeBookings.length);
-        console.log('Active bookings data:', this.activeBookings);
-        this.isLoading = false;
-      }, (error) => {
-        console.error('Error loading active bookings:', error);
-        this.showToast('Error loading active bookings', 'danger');
-        this.isLoading = false;
-      });
+      const unsubscribe = onSnapshot(
+        simpleQuery,
+        (snapshot) => {
+          const allBookings = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            console.log('Found booking:', {
+              id: doc.id,
+              status: data['status'],
+              workerId: data['workerId'],
+            });
+            return {
+              id: doc.id,
+              ...data,
+            };
+          }) as ActiveBooking[];
+
+          // Filter for active statuses in JavaScript (to avoid Firestore index issues)
+          this.activeBookings = allBookings.filter(
+            (booking) =>
+              booking.status === 'accepted' || booking.status === 'in-progress'
+          );
+
+          console.log('All bookings for this worker:', allBookings.length);
+          console.log('Active bookings:', this.activeBookings.length);
+          console.log('Active bookings data:', this.activeBookings);
+          this.isLoading = false;
+        },
+        (error) => {
+          console.error('Error loading active bookings:', error);
+          this.showToast('Error loading active bookings', 'danger');
+          this.isLoading = false;
+        }
+      );
 
       this.subscriptions.push({ unsubscribe } as any);
     } catch (error) {
@@ -125,7 +134,7 @@ export class ActiveBookingsPage implements OnInit, OnDestroy {
 
   getFormattedDate(timestamp: Timestamp | undefined): string {
     if (!timestamp) return 'Not specified';
-    
+
     try {
       const date = timestamp.toDate();
       return date.toLocaleDateString('en-US', {
@@ -133,7 +142,7 @@ export class ActiveBookingsPage implements OnInit, OnDestroy {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
       });
     } catch (error) {
       return 'Invalid date';

@@ -13,10 +13,14 @@ import {
   AlertController,
 } from '@ionic/angular';
 
-interface ServiceWithPrice {
-  name: string;
-  minPrice: number;
-  maxPrice: number;
+interface SubServicePrice {
+  subServiceName: string;
+  price: number;
+}
+
+interface ServiceWithPricing {
+  categoryName: string;
+  subServices: SubServicePrice[];
 }
 
 @Component({
@@ -62,7 +66,7 @@ export class UpdateProfilePage implements OnInit {
       emergencyPhone: [''],
       bio: [''],
       skills: this.formBuilder.array([]),
-      servicePrices: this.formBuilder.array([]),
+      serviceWithPricing: this.formBuilder.array([]),
     });
   }
 
@@ -110,24 +114,27 @@ export class UpdateProfilePage implements OnInit {
     }
 
     // Populate service prices
-    const servicePricesArray = this.profileForm.get(
-      'servicePrices'
+    const serviceWithPricingArray = this.profileForm.get(
+      'serviceWithPricing'
     ) as FormArray;
-    servicePricesArray.clear();
-    if ((this.workerProfile as any).servicePrices) {
-      (this.workerProfile as any).servicePrices.forEach(
-        (service: ServiceWithPrice) => {
-          servicePricesArray.push(
+    serviceWithPricingArray.clear();
+    if ((this.workerProfile as any).serviceWithPricing) {
+      (this.workerProfile as any).serviceWithPricing.forEach(
+        (svc: ServiceWithPricing) => {
+          const subServicesControls: any[] = [];
+          svc.subServices.forEach((s: SubServicePrice) => {
+            subServicesControls.push(
+              this.formBuilder.group({
+                subServiceName: [s.subServiceName, Validators.required],
+                price: [s.price || 0, [Validators.required, Validators.min(0)]],
+              })
+            );
+          });
+
+          serviceWithPricingArray.push(
             this.formBuilder.group({
-              name: [service.name, Validators.required],
-              minPrice: [
-                service.minPrice,
-                [Validators.required, Validators.min(1)],
-              ],
-              maxPrice: [
-                service.maxPrice,
-                [Validators.required, Validators.min(1)],
-              ],
+              categoryName: [svc.categoryName, Validators.required],
+              subServices: this.formBuilder.array(subServicesControls),
             })
           );
         }
@@ -161,8 +168,8 @@ export class UpdateProfilePage implements OnInit {
     return this.profileForm.get('skills') as FormArray;
   }
 
-  get servicePricesArray(): FormArray {
-    return this.profileForm.get('servicePrices') as FormArray;
+  get serviceWithPricingArray(): FormArray {
+    return this.profileForm.get('serviceWithPricing') as FormArray;
   }
 
   get availableDaysArray(): FormArray {
@@ -179,18 +186,53 @@ export class UpdateProfilePage implements OnInit {
     this.skillsArray.removeAt(index);
   }
 
-  addServicePrice() {
-    this.servicePricesArray.push(
+  addServiceWithPricing() {
+    this.serviceWithPricingArray.push(
       this.formBuilder.group({
-        name: ['', Validators.required],
-        minPrice: [0, [Validators.required, Validators.min(1)]],
-        maxPrice: [0, [Validators.required, Validators.min(1)]],
+        categoryName: ['', Validators.required],
+        subServices: this.formBuilder.array([]),
       })
     );
   }
 
-  removeServicePrice(index: number) {
-    this.servicePricesArray.removeAt(index);
+  removeServiceWithPricing(index: number) {
+    this.serviceWithPricingArray.removeAt(index);
+  }
+
+  // When a category is selected, populate its sub-services into the form
+  onCategorySelected(index: number, categoryName: string) {
+    const grp = this.serviceWithPricingArray.at(index) as FormGroup;
+    grp.patchValue({ categoryName });
+
+    // Clear existing sub-services and create new ones
+    const subServicesControls: any[] = [];
+    const category = this.serviceCategories.find(
+      (c) => c.name === categoryName
+    );
+    if (category && category.services && category.services.length) {
+      category.services.forEach((sub) => {
+        subServicesControls.push(
+          this.formBuilder.group({
+            subServiceName: [sub, Validators.required],
+            price: [0, [Validators.required, Validators.min(0)]],
+          })
+        );
+      });
+    }
+
+    // Replace the entire subServices FormArray
+    grp.setControl('subServices', this.formBuilder.array(subServicesControls));
+  }
+
+  removeSubService(catIndex: number, subIndex: number) {
+    const grp = this.serviceWithPricingArray.at(catIndex) as FormGroup;
+    const subServicesFA = grp.get('subServices') as FormArray;
+    subServicesFA.removeAt(subIndex);
+  }
+
+  // Helper method to get sub-services FormArray
+  getSubServicesArray(svcCtrl: any): FormArray {
+    return svcCtrl.get('subServices') as FormArray;
   }
 
   onPhotoSelected(event: any) {
@@ -268,13 +310,18 @@ export class UpdateProfilePage implements OnInit {
           emergencyContact: formValue.emergencyContact,
           emergencyPhone: formValue.emergencyPhone,
           bio: formValue.bio,
-          servicePrices: formValue.servicePrices.filter(
-            (service: any) =>
-              service.name.trim() !== '' &&
-              service.minPrice > 0 &&
-              service.maxPrice > 0 &&
-              service.maxPrice >= service.minPrice
-          ),
+          // Convert serviceWithPricing form to storage format
+          serviceWithPricing: (formValue.serviceWithPricing || [])
+            .map((svc: any) => ({
+              categoryName: svc.categoryName,
+              subServices: (svc.subServices || [])
+                .filter((s: any) => s.subServiceName && s.price >= 0)
+                .map((s: any) => ({
+                  subServiceName: s.subServiceName,
+                  price: s.price,
+                })),
+            }))
+            .filter((svc: any) => svc.subServices.length > 0),
           updatedAt: new Date(),
         };
 

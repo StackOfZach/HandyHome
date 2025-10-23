@@ -13,6 +13,7 @@ import { Router } from '@angular/router';
 export class SignupPage implements OnInit {
   signupForm: FormGroup;
   isLoading = false;
+  showTermsModal = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -64,28 +65,51 @@ export class SignupPage implements OnInit {
 
   async onSignup() {
     if (this.signupForm.valid) {
-      const { fullName, email, phone, password, role } = this.signupForm.value;
-
-      const loading = await this.loadingController.create({
-        message: 'Creating your account...',
-        spinner: 'crescent',
-      });
-      await loading.present();
-
-      try {
-        this.isLoading = true;
-        await this.authService.signup(email, password, fullName, phone, role);
-        // Navigation is handled by AuthService
-      } catch (error: any) {
-        await this.showErrorAlert(this.getErrorMessage(error));
-      } finally {
-        this.isLoading = false;
-        await loading.dismiss();
-      }
+      // Show terms and privacy modal before proceeding
+      this.showTermsModal = true;
     } else {
       await this.showErrorAlert(
         'Please fill in all required fields correctly.'
       );
+    }
+  }
+
+  async onTermsAgree() {
+    this.showTermsModal = false;
+    await this.proceedWithSignup();
+  }
+
+  onTermsDisagree() {
+    this.showTermsModal = false;
+    // User disagreed with terms, don't proceed with signup
+  }
+
+  async proceedWithSignup() {
+    const { fullName, email, phone, password, role } = this.signupForm.value;
+
+    const loading = await this.loadingController.create({
+      message: 'Creating your account...',
+      spinner: 'crescent',
+    });
+    await loading.present();
+
+    try {
+      this.isLoading = true;
+      await this.authService.signup(email, password, fullName, phone, role);
+
+      // Handle redirect based on role
+      if (role === 'client') {
+        // For clients, redirect to verification page
+        this.router.navigate(['/pages/auth/client-verification']);
+      } else {
+        // For workers and admins, use the original redirect logic
+        this.redirectBasedOnRole(role);
+      }
+    } catch (error: any) {
+      await this.showErrorAlert(this.getErrorMessage(error));
+    } finally {
+      this.isLoading = false;
+      await loading.dismiss();
     }
   }
 

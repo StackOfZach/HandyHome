@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { SignupPageRoutingModule } from './signup-routing.module';
 import { SignupPage } from './signup.page';
+import { TermsPrivacyModalComponent } from '../../../components/terms-privacy-modal/terms-privacy-modal.component';
 
 @NgModule({
   imports: [
@@ -13,6 +14,6 @@ import { SignupPage } from './signup.page';
     IonicModule,
     SignupPageRoutingModule,
   ],
-  declarations: [SignupPage],
+  declarations: [SignupPage, TermsPrivacyModalComponent],
 })
 export class SignupPageModule {}

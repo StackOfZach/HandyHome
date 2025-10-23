@@ -9,7 +9,15 @@ import {
   getDocs,
   query,
 } from '@angular/fire/firestore';
-import { AuthService, UserLocation, UserProfile } from '../../../services/auth.service';
+import {
+  AuthService,
+  UserLocation,
+  UserProfile,
+} from '../../../services/auth.service';
+import {
+  DashboardService,
+  ServiceCategory,
+} from '../../../services/dashboard.service';
 import { Geolocation } from '@capacitor/geolocation';
 
 interface Service {
@@ -26,6 +34,7 @@ interface Service {
 })
 export class BookServicePage implements OnInit {
   selectedService = '';
+  selectedSubService = '';
   selectedDateTime = '';
   minBudget: number | null = null;
   maxBudget: number | null = null;
@@ -35,6 +44,8 @@ export class BookServicePage implements OnInit {
   currentUser: any = null;
   userProfile: UserProfile | null = null;
   services: Service[] = [];
+  serviceCategories: ServiceCategory[] = [];
+  availableSubServices: string[] = [];
   minDate = new Date().toISOString();
   maxDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1 year from now
 
@@ -46,7 +57,7 @@ export class BookServicePage implements OnInit {
   zipCode = '';
   locationError = '';
   currentCoordinates: { lat: number; lng: number } | null = null;
-  
+
   // Saved locations properties
   savedLocations: UserLocation[] = [];
   selectedSavedLocationId = '';
@@ -57,16 +68,29 @@ export class BookServicePage implements OnInit {
     private loadingController: LoadingController,
     private toastController: ToastController,
     private firestore: Firestore,
-    private authService: AuthService
+    private authService: AuthService,
+    private dashboardService: DashboardService
   ) {}
 
   async ngOnInit() {
     this.currentUser = this.authService.getCurrentUser();
     if (this.currentUser) {
-      this.userProfile = await this.authService.getUserProfile(this.currentUser.uid);
+      this.userProfile = await this.authService.getUserProfile(
+        this.currentUser.uid
+      );
     }
     await this.loadServices();
+    await this.loadServiceCategories();
     await this.loadSavedLocations();
+  }
+
+  async loadServiceCategories() {
+    try {
+      this.serviceCategories =
+        await this.dashboardService.getServiceCategories();
+    } catch (error) {
+      console.error('Error loading service categories:', error);
+    }
   }
 
   async loadServices() {
@@ -111,6 +135,20 @@ export class BookServicePage implements OnInit {
     }
   }
 
+  // Service selection methods
+  onServiceChange() {
+    // Reset sub-service selection when main service changes
+    this.selectedSubService = '';
+    this.updateAvailableSubServices();
+  }
+
+  updateAvailableSubServices() {
+    const selectedCategory = this.serviceCategories.find(
+      (category) => category.name === this.selectedService
+    );
+    this.availableSubServices = selectedCategory?.services || [];
+  }
+
   goBack() {
     this.router.navigate(['/client']);
   }
@@ -119,7 +157,7 @@ export class BookServicePage implements OnInit {
   selectLocationType(type: 'current' | 'custom' | 'saved') {
     this.locationType = type;
     this.locationError = '';
-    
+
     if (type === 'current') {
       this.customAddress = '';
       this.city = '';
@@ -146,20 +184,23 @@ export class BookServicePage implements OnInit {
       const coordinates = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 60000
+        maximumAge: 60000,
       });
 
       this.currentCoordinates = {
         lat: coordinates.coords.latitude,
-        lng: coordinates.coords.longitude
+        lng: coordinates.coords.longitude,
       };
 
       // Get address from coordinates (reverse geocoding)
-      await this.reverseGeocode(coordinates.coords.latitude, coordinates.coords.longitude);
-      
+      await this.reverseGeocode(
+        coordinates.coords.latitude,
+        coordinates.coords.longitude
+      );
     } catch (error) {
       console.error('Error getting location:', error);
-      this.locationError = 'Unable to get your location. Please check your location permissions.';
+      this.locationError =
+        'Unable to get your location. Please check your location permissions.';
       this.currentLocationAddress = '';
       this.currentCoordinates = null;
     }
@@ -172,10 +213,11 @@ export class BookServicePage implements OnInit {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`
       );
-      
+
       if (response.ok) {
         const data = await response.json();
-        this.currentLocationAddress = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        this.currentLocationAddress =
+          data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
       } else {
         this.currentLocationAddress = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
       }
@@ -198,17 +240,21 @@ export class BookServicePage implements OnInit {
 
   async loadSavedLocations() {
     if (!this.currentUser) return;
-    
+
     try {
       this.loadingSavedLocations = true;
-      const userProfile = await this.authService.getUserProfile(this.currentUser.uid);
-      
+      const userProfile = await this.authService.getUserProfile(
+        this.currentUser.uid
+      );
+
       if (userProfile && userProfile.savedLocations) {
         this.savedLocations = userProfile.savedLocations;
-        
+
         // Auto-select default location if available and no location is selected yet
         if (!this.selectedSavedLocationId) {
-          const defaultLocation = this.savedLocations.find(location => location.isDefault);
+          const defaultLocation = this.savedLocations.find(
+            (location) => location.isDefault
+          );
           if (defaultLocation) {
             this.selectedSavedLocationId = defaultLocation.id;
           }
@@ -239,13 +285,15 @@ export class BookServicePage implements OnInit {
 
     if (
       !this.selectedService ||
+      (this.availableSubServices.length > 0 && !this.selectedSubService) ||
       !this.selectedDateTime ||
       !this.minBudget ||
       !this.maxBudget ||
       !this.isValidLocation()
     ) {
       const toast = await this.toastController.create({
-        message: 'Please fill in all required fields (service, date/time, location, and budget)',
+        message:
+          'Please fill in all required fields (service, specific service, date/time, location, and budget)',
         duration: 3000,
         color: 'warning',
       });
@@ -278,7 +326,7 @@ export class BookServicePage implements OnInit {
     try {
       // Prepare location data
       let locationData: any = {};
-      
+
       if (this.locationType === 'current' && this.currentCoordinates) {
         locationData = {
           locationType: 'current',
@@ -292,16 +340,23 @@ export class BookServicePage implements OnInit {
           city: this.city || '',
           zipCode: this.zipCode || '',
         };
-      } else if (this.locationType === 'saved' && this.selectedSavedLocationId) {
-        const selectedLocation = this.savedLocations.find(loc => loc.id === this.selectedSavedLocationId);
+      } else if (
+        this.locationType === 'saved' &&
+        this.selectedSavedLocationId
+      ) {
+        const selectedLocation = this.savedLocations.find(
+          (loc) => loc.id === this.selectedSavedLocationId
+        );
         if (selectedLocation) {
           locationData = {
             locationType: 'saved',
             address: selectedLocation.fullAddress,
-            coordinates: selectedLocation.coordinates ? {
-              lat: selectedLocation.coordinates.latitude,
-              lng: selectedLocation.coordinates.longitude
-            } : undefined,
+            coordinates: selectedLocation.coordinates
+              ? {
+                  lat: selectedLocation.coordinates.latitude,
+                  lng: selectedLocation.coordinates.longitude,
+                }
+              : undefined,
             contactPerson: selectedLocation.contactPerson,
             phoneNumber: selectedLocation.phoneNumber,
             savedLocationId: selectedLocation.id,
@@ -314,6 +369,7 @@ export class BookServicePage implements OnInit {
         clientId: this.currentUser.uid,
         clientName: this.userProfile?.fullName || 'Unknown User',
         neededService: this.selectedService,
+        specificService: this.selectedSubService || '',
         scheduleDate: new Date(this.selectedDateTime),
         priceRange: this.maxBudget,
         minBudget: this.minBudget,

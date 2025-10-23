@@ -7,6 +7,10 @@ import {
 } from '../../../services/dashboard.service';
 import { WorkerService, WorkerProfile } from '../../../services/worker.service';
 import {
+  ClientVerificationService,
+  ClientVerification,
+} from '../../../services/client-verification.service';
+import {
   AlertController,
   ToastController,
   ModalController,
@@ -72,6 +76,14 @@ export class AdminDashboardPage implements OnInit {
   filteredClients: UserProfile[] = [];
   selectedClient: UserProfile | null = null;
   isClientModalOpen: boolean = false;
+
+  // Client Verification Properties
+  pendingVerifications: any[] = [];
+  isLoadingVerifications: boolean = false;
+  selectedVerification: any = null;
+  isVerificationModalOpen: boolean = false;
+  reviewNotes: string = '';
+  isProcessingVerification: boolean = false;
 
   // Analytics refresh
   isRefreshingAnalytics: boolean = false;
@@ -365,6 +377,7 @@ export class AdminDashboardPage implements OnInit {
     private authService: AuthService,
     private dashboardService: DashboardService,
     private workerService: WorkerService,
+    private clientVerificationService: ClientVerificationService,
     private alertController: AlertController,
     private toastController: ToastController,
     private modalController: ModalController
@@ -382,6 +395,7 @@ export class AdminDashboardPage implements OnInit {
     this.loadVerifiedWorkers();
     this.loadServices();
     this.loadClients();
+    this.loadPendingVerifications();
     this.initializeIconPicker();
   }
 
@@ -394,6 +408,7 @@ export class AdminDashboardPage implements OnInit {
       dashboard: 'Dashboard Overview',
       workers: 'Worker Management',
       clients: 'Client Management',
+      'client-verifications': 'Client Verifications',
       bookings: 'Booking Management',
       reports: 'Reports & Disputes',
       services: 'Services Management',
@@ -934,6 +949,7 @@ export class AdminDashboardPage implements OnInit {
       icon: ['', Validators.required],
       color: ['#3B82F6', Validators.required],
       isActive: [true],
+      requiresCertificate: [false],
     });
   }
 
@@ -970,6 +986,7 @@ export class AdminDashboardPage implements OnInit {
       icon: service.icon,
       color: service.color,
       isActive: service.isActive,
+      requiresCertificate: service.requiresCertificate || false,
     });
 
     this.subServices = [...(service.services || [])];
@@ -983,6 +1000,7 @@ export class AdminDashboardPage implements OnInit {
       icon: '',
       color: '#3B82F6',
       isActive: true,
+      requiresCertificate: false,
     });
 
     this.subServices = [];
@@ -1034,6 +1052,7 @@ export class AdminDashboardPage implements OnInit {
         icon: formValue.icon,
         color: formValue.color,
         isActive: formValue.isActive,
+        requiresCertificate: formValue.requiresCertificate || false,
         services: this.subServices.filter((s) => s.trim() !== ''),
         requirements: this.requirements.filter((r) => r.trim() !== ''),
       };
@@ -1245,6 +1264,125 @@ export class AdminDashboardPage implements OnInit {
 
   getInactiveServicesCount(): number {
     return this.serviceCategories.filter((service) => !service.isActive).length;
+  }
+
+  // Client Verification Management Methods
+
+  async loadPendingVerifications() {
+    this.isLoadingVerifications = true;
+    try {
+      this.pendingVerifications =
+        await this.clientVerificationService.getPendingVerifications();
+      console.log('Loaded pending verifications:', this.pendingVerifications);
+    } catch (error) {
+      console.error('Error loading pending verifications:', error);
+      this.showToast('Error loading pending verifications', 'danger');
+    }
+    this.isLoadingVerifications = false;
+  }
+
+  viewVerificationDetails(verification: ClientVerification) {
+    this.selectedVerification = verification;
+    this.isVerificationModalOpen = true;
+    this.reviewNotes = '';
+  }
+
+  closeVerificationModal() {
+    this.isVerificationModalOpen = false;
+    this.selectedVerification = null;
+    this.reviewNotes = '';
+  }
+
+  async approveVerification() {
+    if (!this.selectedVerification) return;
+
+    const alert = await this.alertController.create({
+      header: 'Approve Verification',
+      message: `Are you sure you want to approve ${this.selectedVerification.userName}'s verification?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Approve',
+          handler: async () => {
+            await this.processVerificationAction('approve');
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  async rejectVerification() {
+    if (!this.selectedVerification) return;
+
+    if (!this.reviewNotes.trim()) {
+      this.showToast('Please provide a reason for rejection', 'warning');
+      return;
+    }
+
+    const alert = await this.alertController.create({
+      header: 'Reject Verification',
+      message: `Are you sure you want to reject ${this.selectedVerification.userName}'s verification?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Reject',
+          role: 'destructive',
+          handler: async () => {
+            await this.processVerificationAction('reject');
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  private async processVerificationAction(action: 'approve' | 'reject') {
+    if (!this.selectedVerification) return;
+
+    this.isProcessingVerification = true;
+    try {
+      const currentUser = this.authService.getCurrentUserProfile();
+      if (!currentUser) {
+        throw new Error('Admin user not found');
+      }
+
+      if (action === 'approve') {
+        await this.clientVerificationService.approveVerification(
+          this.selectedVerification.id!,
+          currentUser.uid,
+          this.reviewNotes
+        );
+        this.showToast(
+          `${this.selectedVerification.userName}'s verification approved successfully`,
+          'success'
+        );
+      } else {
+        await this.clientVerificationService.rejectVerification(
+          this.selectedVerification.id!,
+          currentUser.uid,
+          this.reviewNotes
+        );
+        this.showToast(
+          `${this.selectedVerification.userName}'s verification rejected`,
+          'warning'
+        );
+      }
+
+      // Refresh the list
+      await this.loadPendingVerifications();
+      this.closeVerificationModal();
+    } catch (error) {
+      console.error(`Error ${action}ing verification:`, error);
+      this.showToast(`Failed to ${action} verification`, 'danger');
+    }
+    this.isProcessingVerification = false;
   }
 
   private async showToast(

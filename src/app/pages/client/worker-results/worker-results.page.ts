@@ -23,6 +23,16 @@ interface ServicePrice {
   maxPrice: number;
 }
 
+interface SubServicePrice {
+  subServiceName: string;
+  price: number;
+}
+
+interface ServiceWithPricing {
+  categoryName: string;
+  subServices: SubServicePrice[];
+}
+
 interface WorkerProfile {
   uid: string;
   fullName: string;
@@ -32,6 +42,8 @@ interface WorkerProfile {
   skills: string[];
   services: string[];
   priceRange: string;
+  servicePrices?: ServicePrice[]; // Legacy pricing
+  serviceWithPricing?: ServiceWithPricing[]; // New detailed pricing
   location: {
     latitude: number;
     longitude: number;
@@ -47,6 +59,7 @@ interface BookingData {
   id: string;
   clientId: string;
   neededService: string;
+  specificService?: string;
   scheduleDate: any;
   priceRange: number;
   minBudget: number;
@@ -303,6 +316,83 @@ export class WorkerResultsPage implements OnInit {
     return priceMatch;
   }
 
+  /**
+   * Get specific pricing for a worker's service/sub-service
+   */
+  getWorkerSpecificPrice(workerData: any): string {
+    if (!this.booking) return 'Contact for pricing';
+
+    const neededService = this.booking.neededService;
+    const specificService = this.booking.specificService;
+
+    // Check new detailed pricing first
+    if (workerData.serviceWithPricing) {
+      const categoryPricing = workerData.serviceWithPricing.find(
+        (category: ServiceWithPricing) =>
+          category.categoryName === neededService
+      );
+
+      if (categoryPricing && specificService) {
+        const subServicePricing = categoryPricing.subServices.find(
+          (sub: SubServicePrice) => sub.subServiceName === specificService
+        );
+
+        if (subServicePricing && subServicePricing.price > 0) {
+          return `₱${subServicePricing.price.toLocaleString()}`;
+        }
+      }
+    }
+
+    // Fallback to legacy pricing (range)
+    if (workerData.servicePrices) {
+      const matchingService = workerData.servicePrices.find(
+        (servicePrice: ServicePrice) => {
+          return (
+            servicePrice.name.toLowerCase() === neededService.toLowerCase()
+          );
+        }
+      );
+
+      if (matchingService) {
+        if (matchingService.minPrice === matchingService.maxPrice) {
+          return `₱${matchingService.minPrice.toLocaleString()}`;
+        } else {
+          return `₱${matchingService.minPrice.toLocaleString()} - ₱${matchingService.maxPrice.toLocaleString()}`;
+        }
+      }
+    }
+
+    return 'Contact for pricing';
+  }
+
+  /**
+   * Check if worker has specific pricing for the requested service
+   */
+  hasSpecificPricing(workerData: any): boolean {
+    if (!this.booking) return false;
+
+    const neededService = this.booking.neededService;
+    const specificService = this.booking.specificService;
+
+    // Check new detailed pricing
+    if (workerData.serviceWithPricing && specificService) {
+      const categoryPricing = workerData.serviceWithPricing.find(
+        (category: ServiceWithPricing) =>
+          category.categoryName === neededService
+      );
+
+      if (categoryPricing) {
+        const subServicePricing = categoryPricing.subServices.find(
+          (sub: SubServicePrice) => sub.subServiceName === specificService
+        );
+
+        return subServicePricing && subServicePricing.price > 0;
+      }
+    }
+
+    return false;
+  }
+
   getWorkerPhotoUrl(workerData: any, userData: any): string {
     // Priority order for worker photos:
     // 1. Base64 profilePhotoData from workers collection (highest quality)
@@ -468,7 +558,7 @@ export class WorkerResultsPage implements OnInit {
         workerId: worker.uid,
         workerName: worker.fullName,
         workerPhone: worker.phoneNumber,
-        status: 'pending'
+        status: 'pending',
       });
 
       // Update booking with worker information

@@ -6,7 +6,11 @@ import {
   AlertController,
 } from '@ionic/angular';
 import { AuthService, UserProfile } from '../../services/auth.service';
-import { BookingService, BookingData, NewBookingData } from '../../services/booking.service';
+import {
+  BookingService,
+  BookingData,
+  NewBookingData,
+} from '../../services/booking.service';
 
 @Component({
   selector: 'app-my-bookings',
@@ -188,7 +192,9 @@ export class MyBookingsPage implements OnInit {
   }
 
   // Helper methods to handle different booking formats
-  isNewBooking(booking: BookingData | NewBookingData): booking is NewBookingData {
+  isNewBooking(
+    booking: BookingData | NewBookingData
+  ): booking is NewBookingData {
     return 'serviceName' in booking && 'workerName' in booking;
   }
 

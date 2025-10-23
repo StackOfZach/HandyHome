@@ -105,6 +105,7 @@ export interface ServiceCategory {
   isActive: boolean;
   services: string[];
   requirements?: string[];
+  requiresCertificate?: boolean; // Whether this service requires certificate upload during worker interview
   averagePrice?: number; // Optional - can be set by system defaults
   estimatedDuration?: number; // Optional - can be set by system defaults
 }

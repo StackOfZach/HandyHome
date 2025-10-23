@@ -28,6 +28,16 @@ import {
 import { MapPickerComponent } from '../../../components/map-picker/map-picker.component';
 
 // Interfaces
+export interface SubServicePrice {
+  subServiceName: string;
+  price: number;
+}
+
+export interface ServiceWithPricing {
+  categoryName: string;
+  subServices: SubServicePrice[];
+}
+
 export interface ServicePrice {
   name: string;
   minPrice: number;
@@ -45,7 +55,8 @@ export interface WorkerProfile {
     lng: number;
   };
   skills?: string[];
-  servicePrices?: ServicePrice[]; // Service pricing information
+  servicePrices?: ServicePrice[]; // Legacy - Service pricing information
+  serviceWithPricing?: ServiceWithPricing[]; // New - Detailed sub-service pricing
   workRadius?: number;
   availableDays?: string[];
   idPhotoUrl?: string;
@@ -115,23 +126,15 @@ export class InterviewPage implements OnInit, OnDestroy {
   // Certificate related
   selectedSkills: string[] = [];
   certificatePreviews: { [skillName: string]: string } = {};
-  certificateRequirements: { [skillName: string]: string } = {
-    'House Cleaning': 'Cleaning certification or training certificate',
-    Plumbing: 'Plumbing license or trade certification',
-    'Electrical Work': 'Electrical license or certification',
-    Carpentry: 'Carpentry certification or trade certificate',
-    Painting: 'Painting certification or portfolio of work',
-    Gardening: 'Landscaping or gardening certification',
-    'Appliance Repair': 'Appliance repair certification or technical training',
-    'AC Maintenance': 'HVAC certification or air conditioning license',
-    'Pest Control': 'Pest control license or certification',
-    'Home Security': 'Security system installation certification',
-    'Moving Services': 'Moving company certification or insurance',
-    'General Handyman': 'General trade certification or portfolio',
-  };
 
-  // Service pricing
+  // Service pricing - Legacy
   servicePrices: { [skillName: string]: { min: number; max: number } } = {};
+
+  // Sub-service management
+  selectedServicesWithSubs: { [categoryName: string]: string[] } = {};
+  serviceSubCategoryPricing: {
+    [categoryName: string]: { [subService: string]: number };
+  } = {};
 
   private subscriptions = new Subscription();
 
@@ -408,31 +411,13 @@ export class InterviewPage implements OnInit, OnDestroy {
         return true;
 
       case 3:
-        // Validate certificates and pricing for selected skills
+        // Validate certificates for selected skills that require them
         const selectedSkills = this.skillsForm.get('skills')?.value || [];
         for (const skill of selectedSkills) {
-          if (!this.certificateForm.get(skill)?.value) {
+          // Only validate certificate if the service requires it
+          const requiresCertificate = this.doesSkillRequireCertificate(skill);
+          if (requiresCertificate && !this.certificateForm.get(skill)?.value) {
             this.showErrorToast(`Please upload certificate for ${skill}`);
-            return false;
-          }
-
-          const minPrice = this.certificateForm.get(skill + '_minPrice')?.value;
-          const maxPrice = this.certificateForm.get(skill + '_maxPrice')?.value;
-
-          if (!minPrice || minPrice <= 0) {
-            this.showErrorToast(`Please set minimum price for ${skill}`);
-            return false;
-          }
-
-          if (!maxPrice || maxPrice <= 0) {
-            this.showErrorToast(`Please set maximum price for ${skill}`);
-            return false;
-          }
-
-          if (Number(minPrice) >= Number(maxPrice)) {
-            this.showErrorToast(
-              `Maximum price must be greater than minimum price for ${skill}`
-            );
             return false;
           }
         }
@@ -493,51 +478,20 @@ export class InterviewPage implements OnInit, OnDestroy {
           break;
 
         case 3:
-          // Save certificate data and pricing
+          // Save certificate data only
           const certificateData = this.certificateForm.value;
 
-          // Extract certificates (non-pricing fields)
+          // Extract certificates only (remove any pricing fields if they exist)
           const certificates: any = {};
-          const servicePrices: any[] = [];
-
           Object.keys(certificateData).forEach((key) => {
-            if (key.endsWith('_minPrice') || key.endsWith('_maxPrice')) {
-              // Handle pricing data
-              const skillName = key
-                .replace('_minPrice', '')
-                .replace('_maxPrice', '');
-              const existingPrice = servicePrices.find(
-                (p) => p.name === skillName
-              );
-
-              if (!existingPrice) {
-                servicePrices.push({
-                  name: skillName,
-                  minPrice: 0,
-                  maxPrice: 0,
-                });
-              }
-
-              const priceEntry = servicePrices.find(
-                (p) => p.name === skillName
-              );
-              if (key.endsWith('_minPrice')) {
-                priceEntry.minPrice = Number(certificateData[key]) || 0;
-              } else {
-                priceEntry.maxPrice = Number(certificateData[key]) || 0;
-              }
-            } else {
-              // Handle certificate files
+            if (!key.endsWith('_minPrice') && !key.endsWith('_maxPrice')) {
+              // Handle certificate files only
               certificates[key] = certificateData[key];
             }
           });
 
           updateData.certificates = certificates;
-          updateData.servicePrices = servicePrices;
-          console.log(
-            'Saving Step 3 data (certificates and pricing):',
-            updateData
-          );
+          console.log('Saving Step 3 data (certificates only):', updateData);
           break;
 
         case 4:
@@ -713,11 +667,17 @@ export class InterviewPage implements OnInit, OnDestroy {
     if (index > -1) {
       // Remove skill
       currentSkills.splice(index, 1);
+      // Remove sub-services and pricing for this skill
+      delete this.selectedServicesWithSubs[skill];
+      delete this.serviceSubCategoryPricing[skill];
     } else {
       // Check if we can add more skills (limit to 3)
       if (currentSkills.length < 3) {
         // Add skill
         currentSkills.push(skill);
+        // Initialize sub-services array for this skill
+        this.selectedServicesWithSubs[skill] = [];
+        this.serviceSubCategoryPricing[skill] = {};
       } else {
         // Show toast message when limit is reached
         this.showToast(
@@ -758,6 +718,82 @@ export class InterviewPage implements OnInit, OnDestroy {
   }
 
   /**
+   * Get sub-services for a given service category
+   */
+  getSubServicesForCategory(categoryName: string): string[] {
+    const category = this.serviceCategories.find(
+      (cat) => cat.name === categoryName
+    );
+    return category?.services || [];
+  }
+
+  /**
+   * Toggle sub-service selection for a category
+   */
+  toggleSubService(categoryName: string, subService: string) {
+    if (!this.selectedServicesWithSubs[categoryName]) {
+      this.selectedServicesWithSubs[categoryName] = [];
+    }
+
+    const subServices = this.selectedServicesWithSubs[categoryName];
+    const index = subServices.indexOf(subService);
+
+    if (index > -1) {
+      // Remove sub-service
+      subServices.splice(index, 1);
+      // Remove pricing for this sub-service
+      if (this.serviceSubCategoryPricing[categoryName]) {
+        delete this.serviceSubCategoryPricing[categoryName][subService];
+      }
+    } else {
+      // Add sub-service
+      subServices.push(subService);
+      // Initialize pricing for this sub-service
+      if (!this.serviceSubCategoryPricing[categoryName]) {
+        this.serviceSubCategoryPricing[categoryName] = {};
+      }
+      this.serviceSubCategoryPricing[categoryName][subService] = 0;
+    }
+  }
+
+  /**
+   * Check if sub-service is selected
+   */
+  isSubServiceSelected(categoryName: string, subService: string): boolean {
+    return (
+      this.selectedServicesWithSubs[categoryName]?.includes(subService) || false
+    );
+  }
+
+  /**
+   * Update pricing for a specific sub-service
+   */
+  updateSubServicePrice(
+    categoryName: string,
+    subService: string,
+    price: number
+  ) {
+    if (!this.serviceSubCategoryPricing[categoryName]) {
+      this.serviceSubCategoryPricing[categoryName] = {};
+    }
+    this.serviceSubCategoryPricing[categoryName][subService] = price;
+  }
+
+  /**
+   * Get pricing for a specific sub-service
+   */
+  getSubServicePrice(categoryName: string, subService: string): number {
+    return this.serviceSubCategoryPricing[categoryName]?.[subService] || 0;
+  }
+
+  /**
+   * Get all selected sub-services for a category
+   */
+  getSelectedSubServices(categoryName: string): string[] {
+    return this.selectedServicesWithSubs[categoryName] || [];
+  }
+
+  /**
    * Toggle day availability
    */
   toggleDay(day: string) {
@@ -771,6 +807,32 @@ export class InterviewPage implements OnInit, OnDestroy {
     }
 
     this.skillsForm.patchValue({ availableDays: currentDays });
+  }
+
+  /**
+   * Check if a skill requires certificate upload
+   */
+  doesSkillRequireCertificate(skill: string): boolean {
+    const serviceCategory = this.serviceCategories.find(
+      (cat) => cat.name === skill
+    );
+    return serviceCategory?.requiresCertificate || false;
+  }
+
+  /**
+   * Get skills that require certificates from selected skills
+   */
+  getSkillsWithCertificateRequirement(): string[] {
+    return this.selectedSkills.filter((skill) =>
+      this.doesSkillRequireCertificate(skill)
+    );
+  }
+
+  /**
+   * Check if any selected skill requires certificate
+   */
+  hasSkillsRequiringCertificate(): boolean {
+    return this.getSkillsWithCertificateRequirement().length > 0;
   }
 
   /**
@@ -796,25 +858,23 @@ export class InterviewPage implements OnInit, OnDestroy {
 
     // Create form controls for each selected skill
     this.selectedSkills.forEach((skill) => {
-      const existingValue = this.certificatePreviews[skill] || null;
-      certificateControls[skill] = [existingValue, Validators.required];
+      // Check if this service requires certificate
+      const serviceCategory = this.serviceCategories.find(
+        (cat) => cat.name === skill
+      );
+      const requiresCertificate = serviceCategory?.requiresCertificate || false;
 
-      // Add pricing controls for each skill
-      certificateControls[skill + '_minPrice'] = [
-        this.servicePrices[skill]?.min || '',
-        [Validators.required, Validators.min(1)],
-      ];
-      certificateControls[skill + '_maxPrice'] = [
-        this.servicePrices[skill]?.max || '',
-        [Validators.required, Validators.min(1)],
-      ];
+      // Only add certificate control if service requires it
+      if (requiresCertificate) {
+        const existingValue = this.certificatePreviews[skill] || null;
+        certificateControls[skill] = [existingValue, Validators.required];
+      }
     });
 
-    // Remove certificates and pricing for unselected skills
+    // Remove certificates for unselected skills
     Object.keys(this.certificatePreviews).forEach((skill) => {
       if (!this.selectedSkills.includes(skill)) {
         delete this.certificatePreviews[skill];
-        delete this.servicePrices[skill];
       }
     });
 
@@ -870,10 +930,13 @@ export class InterviewPage implements OnInit, OnDestroy {
    * Get certificate requirement text for a skill
    */
   getCertificateRequirement(skillName: string): string {
-    return (
-      this.certificateRequirements[skillName] ||
-      'Valid certification or license for this service'
+    const serviceCategory = this.serviceCategories.find(
+      (cat) => cat.name === skillName
     );
+    if (serviceCategory?.requiresCertificate) {
+      return 'Valid certification, license, or training certificate required for this service';
+    }
+    return 'No certificate required for this service';
   }
 
   /**
@@ -883,63 +946,6 @@ export class InterviewPage implements OnInit, OnDestroy {
     delete this.certificatePreviews[skillName];
     this.certificateForm.get(skillName)?.setValue(null);
     this.showSuccessToast(`Certificate for ${skillName} removed`);
-  }
-
-  /**
-   * Update service pricing
-   */
-  updateServicePrice(
-    skillName: string,
-    type: 'min' | 'max',
-    value: string | number | null | undefined
-  ) {
-    // Convert value to number, default to 0 if invalid
-    const numericValue =
-      typeof value === 'string'
-        ? parseFloat(value) || 0
-        : typeof value === 'number'
-        ? value
-        : 0;
-
-    if (!this.servicePrices[skillName]) {
-      this.servicePrices[skillName] = { min: 0, max: 0 };
-    }
-    this.servicePrices[skillName][type] = numericValue;
-
-    // Validate that max is greater than min
-    if (
-      type === 'min' &&
-      this.servicePrices[skillName].max > 0 &&
-      numericValue >= this.servicePrices[skillName].max
-    ) {
-      this.showErrorToast('Minimum price must be less than maximum price');
-      return;
-    }
-    if (
-      type === 'max' &&
-      this.servicePrices[skillName].min > 0 &&
-      numericValue <= this.servicePrices[skillName].min
-    ) {
-      this.showErrorToast('Maximum price must be greater than minimum price');
-      return;
-    }
-  }
-
-  /**
-   * Get service price for a skill
-   */
-  getServicePrice(skillName: string): { min: number; max: number } {
-    return this.servicePrices[skillName] || { min: 0, max: 0 };
-  }
-
-  /**
-   * Get service pricing keys that have been set
-   */
-  getServicePricingKeys(): string[] {
-    return Object.keys(this.servicePrices).filter(
-      (skill) =>
-        this.servicePrices[skill].min > 0 || this.servicePrices[skill].max > 0
-    );
   }
 
   /**
@@ -1069,7 +1075,7 @@ export class InterviewPage implements OnInit, OnDestroy {
         profilePhotoData: this.verificationForm.get('profilePhoto')?.value,
       };
 
-      // Add service pricing data
+      // Add service pricing data (legacy format for backward compatibility)
       const servicePricesArray: ServicePrice[] = [];
       Object.keys(this.servicePrices).forEach((skillName) => {
         const pricing = this.servicePrices[skillName];
@@ -1084,6 +1090,34 @@ export class InterviewPage implements OnInit, OnDestroy {
 
       if (servicePricesArray.length > 0) {
         finalSubmissionData.servicePrices = servicePricesArray;
+      }
+
+      // Add new sub-service pricing data
+      const serviceWithPricingArray: ServiceWithPricing[] = [];
+      Object.keys(this.serviceSubCategoryPricing).forEach((categoryName) => {
+        const subServicePricing = this.serviceSubCategoryPricing[categoryName];
+        const subServices: SubServicePrice[] = [];
+
+        Object.keys(subServicePricing).forEach((subServiceName) => {
+          const price = subServicePricing[subServiceName];
+          if (price > 0) {
+            subServices.push({
+              subServiceName,
+              price,
+            });
+          }
+        });
+
+        if (subServices.length > 0) {
+          serviceWithPricingArray.push({
+            categoryName,
+            subServices,
+          });
+        }
+      });
+
+      if (serviceWithPricingArray.length > 0) {
+        finalSubmissionData.serviceWithPricing = serviceWithPricingArray;
       }
 
       // Add custom skill if provided

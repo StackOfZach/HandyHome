@@ -27,6 +27,13 @@ const routes: Routes = [
         (m) => m.SignupPageModule
       ),
   },
+  {
+    path: 'pages/auth/client-verification',
+    loadChildren: () =>
+      import(
+        './pages/auth/client-verification/client-verification.module'
+      ).then((m) => m.ClientVerificationPageModule),
+  },
   // Client Dashboard - Protected Route
   {
     path: 'pages/client/dashboard',

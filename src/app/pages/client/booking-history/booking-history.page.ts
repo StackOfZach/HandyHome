@@ -192,17 +192,17 @@ export class BookingHistoryPage implements OnInit {
       if (!timestamp) {
         return null;
       }
-      
+
       // If it's a Firestore timestamp
       if (timestamp?.toDate && typeof timestamp.toDate === 'function') {
         return timestamp.toDate();
       }
-      
+
       // If it's already a Date
       if (timestamp instanceof Date) {
         return timestamp;
       }
-      
+
       // If it's a string or number, try to convert
       const date = new Date(timestamp);
       return isNaN(date.getTime()) ? null : date;
@@ -218,20 +218,20 @@ export class BookingHistoryPage implements OnInit {
     if (!date) {
       return 'Not scheduled';
     }
-    
+
     try {
       if (format === 'full') {
-        return date.toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        return date.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
         });
       } else {
-        return date.toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'short', 
-          day: 'numeric' 
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
         });
       }
     } catch (error) {

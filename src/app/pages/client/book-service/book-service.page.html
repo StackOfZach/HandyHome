@@ -8,67 +8,155 @@
   >
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-4">
-        <button
-          (click)="goBack()"
-          class="p-2 rounded-full bg-transparent"
-        >
+        <button (click)="goBack()" class="p-2 rounded-full bg-transparent">
           <ion-icon name="chevron-back" class="text-white text-xl"></ion-icon>
         </button>
         <h1 class="text-white text-2xl font-bold">Book a Service</h1>
       </div>
       <div class="flex items-center space-x-3">
         <div class="p-2 rounded-full bg-white/20">
-          <ion-icon name="calendar-outline" class="text-white text-xl"></ion-icon>
+          <ion-icon
+            name="calendar-outline"
+            class="text-white text-xl"
+          ></ion-icon>
         </div>
       </div>
     </div>
     <!-- Subtitle -->
-    <p class="text-white/90 text-sm mt-2 ml-14">Find the perfect worker for your needs</p>
+    <p class="text-white/90 text-sm mt-2 ml-14">
+      Find the perfect worker for your needs
+    </p>
   </div>
   <div class="px-6 pb-24">
     <!-- Main Form Card -->
-    <div class="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card">
+    <div
+      class="bg-white rounded-3xl shadow-2xl p-8 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card"
+    >
       <!-- Decorative gradient overlay -->
-      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"></div>
-      
+      <div
+        class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"
+      ></div>
+
       <!-- Service Selection -->
       <div class="mb-8">
-        <label class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg">
-          <div class="w-10 h-10 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation">
-            <ion-icon name="construct-outline" class="text-white text-lg"></ion-icon>
+        <label
+          class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg"
+        >
+          <div
+            class="w-10 h-10 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation"
+          >
+            <ion-icon
+              name="construct-outline"
+              class="text-white text-lg"
+            ></ion-icon>
           </div>
           What service do you need?
         </label>
         <div class="relative">
           <select
             [(ngModel)]="selectedService"
+            (ngModelChange)="onServiceChange()"
             class="w-full border-2 border-gray-200 rounded-2xl p-5 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 bg-white shadow-sm text-gray-700 font-medium appearance-none"
             [class.border-red-400]="!selectedService && showValidation"
             [class.bg-red-50]="!selectedService && showValidation"
           >
             <option value="" disabled>Choose your service</option>
-            <option *ngFor="let service of services" [value]="service.name">
-              {{ service.name }}
+            <option
+              *ngFor="let category of serviceCategories"
+              [value]="category.name"
+            >
+              {{ category.name }}
             </option>
           </select>
-          <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
-            <ion-icon name="chevron-down" class="text-gray-400 text-lg"></ion-icon>
+          <div
+            class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none"
+          >
+            <ion-icon
+              name="chevron-down"
+              class="text-gray-400 text-lg"
+            ></ion-icon>
           </div>
         </div>
         <div
           *ngIf="!selectedService && showValidation"
           class="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center animate-pulse"
         >
-          <ion-icon name="alert-circle" class="text-red-500 mr-2 text-lg"></ion-icon>
-          <p class="text-red-600 text-sm font-medium">Please select a service to continue</p>
+          <ion-icon
+            name="alert-circle"
+            class="text-red-500 mr-2 text-lg"
+          ></ion-icon>
+          <p class="text-red-600 text-sm font-medium">
+            Please select a service to continue
+          </p>
+        </div>
+      </div>
+
+      <!-- Sub-Service Selection -->
+      <div
+        *ngIf="selectedService && availableSubServices.length > 0"
+        class="mb-8"
+      >
+        <label
+          class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg"
+        >
+          <div
+            class="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation"
+          >
+            <ion-icon name="list-outline" class="text-white text-lg"></ion-icon>
+          </div>
+          Specific service needed
+        </label>
+        <div class="relative">
+          <select
+            [(ngModel)]="selectedSubService"
+            class="w-full border-2 border-gray-200 rounded-2xl p-5 focus:ring-4 focus:ring-green-400/30 focus:border-green-500 transition-all duration-300 bg-white shadow-sm text-gray-700 font-medium appearance-none"
+            [class.border-red-400]="!selectedSubService && showValidation"
+            [class.bg-red-50]="!selectedSubService && showValidation"
+          >
+            <option value="" disabled>Choose specific service</option>
+            <option
+              *ngFor="let subService of availableSubServices"
+              [value]="subService"
+            >
+              {{ subService }}
+            </option>
+          </select>
+          <div
+            class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none"
+          >
+            <ion-icon
+              name="chevron-down"
+              class="text-gray-400 text-lg"
+            ></ion-icon>
+          </div>
+        </div>
+        <div
+          *ngIf="!selectedSubService && showValidation"
+          class="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center animate-pulse"
+        >
+          <ion-icon
+            name="alert-circle"
+            class="text-red-500 mr-2 text-lg"
+          ></ion-icon>
+          <p class="text-red-600 text-sm font-medium">
+            Please select a specific service to continue
+          </p>
         </div>
       </div>
 
       <!-- Modern Calendar Section -->
       <div class="mb-8">
-        <label class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg">
-          <div class="w-10 h-10 bg-gradient-to-r from-handy-yellow-500 to-handy-yellow-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation" style="animation-delay: 0.5s;">
-            <ion-icon name="calendar-outline" class="text-white text-lg"></ion-icon>
+        <label
+          class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg"
+        >
+          <div
+            class="w-10 h-10 bg-gradient-to-r from-handy-yellow-500 to-handy-yellow-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation"
+            style="animation-delay: 0.5s"
+          >
+            <ion-icon
+              name="calendar-outline"
+              class="text-white text-lg"
+            ></ion-icon>
           </div>
           When do you need it?
         </label>
@@ -83,31 +171,44 @@
             [min]="minDate"
             [max]="maxDate"
             class="custom-datetime w-full"
-            style="--color: #1e293b; --background: transparent;"
+            style="--color: #1e293b; --background: transparent"
           ></ion-datetime>
         </div>
         <div
           *ngIf="!selectedDateTime && showValidation"
           class="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center animate-pulse"
         >
-          <ion-icon name="alert-circle" class="text-red-500 mr-2 text-lg"></ion-icon>
-          <p class="text-red-600 text-sm font-medium">Please select your preferred date and time</p>
+          <ion-icon
+            name="alert-circle"
+            class="text-red-500 mr-2 text-lg"
+          ></ion-icon>
+          <p class="text-red-600 text-sm font-medium">
+            Please select your preferred date and time
+          </p>
         </div>
       </div>
 
       <!-- Service Location -->
       <div class="mb-8">
-        <label class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg">
-          <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation" style="animation-delay: 0.5s;">
-            <ion-icon name="location-outline" class="text-white text-lg"></ion-icon>
+        <label
+          class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg"
+        >
+          <div
+            class="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation"
+            style="animation-delay: 0.5s"
+          >
+            <ion-icon
+              name="location-outline"
+              class="text-white text-lg"
+            ></ion-icon>
           </div>
           Where do you need the service?
         </label>
-        
+
         <!-- Location Options -->
         <div class="space-y-4">
           <!-- Choose Saved Location -->
-          <div 
+          <div
             class="p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-md"
             [class.border-handy-blue-500]="locationType === 'saved'"
             [class.bg-handy-blue-50]="locationType === 'saved'"
@@ -115,24 +216,38 @@
             (click)="selectLocationType('saved')"
           >
             <div class="flex items-center space-x-4">
-              <div class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                <ion-icon name="bookmark-outline" class="text-white text-xl"></ion-icon>
+              <div
+                class="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg"
+              >
+                <ion-icon
+                  name="bookmark-outline"
+                  class="text-white text-xl"
+                ></ion-icon>
               </div>
               <div class="flex-1">
-                <h4 class="font-bold text-handy-navy-800 text-lg">Saved Locations</h4>
-                <p class="text-gray-600 text-sm">Choose from your saved addresses</p>
+                <h4 class="font-bold text-handy-navy-800 text-lg">
+                  Saved Locations
+                </h4>
+                <p class="text-gray-600 text-sm">
+                  Choose from your saved addresses
+                </p>
               </div>
-              <div class="w-6 h-6 border-2 rounded-full flex items-center justify-center"
-                   [class.border-handy-blue-500]="locationType === 'saved'"
-                   [class.bg-handy-blue-500]="locationType === 'saved'"
-                   [class.border-gray-300]="locationType !== 'saved'">
-                <div *ngIf="locationType === 'saved'" class="w-3 h-3 bg-white rounded-full"></div>
+              <div
+                class="w-6 h-6 border-2 rounded-full flex items-center justify-center"
+                [class.border-handy-blue-500]="locationType === 'saved'"
+                [class.bg-handy-blue-500]="locationType === 'saved'"
+                [class.border-gray-300]="locationType !== 'saved'"
+              >
+                <div
+                  *ngIf="locationType === 'saved'"
+                  class="w-3 h-3 bg-white rounded-full"
+                ></div>
               </div>
             </div>
           </div>
 
           <!-- Use Current Location -->
-          <div 
+          <div
             class="p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-md"
             [class.border-handy-blue-500]="locationType === 'current'"
             [class.bg-handy-blue-50]="locationType === 'current'"
@@ -140,24 +255,38 @@
             (click)="selectLocationType('current')"
           >
             <div class="flex items-center space-x-4">
-              <div class="w-12 h-12 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <ion-icon name="navigate-circle-outline" class="text-white text-xl"></ion-icon>
+              <div
+                class="w-12 h-12 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 rounded-xl flex items-center justify-center shadow-lg"
+              >
+                <ion-icon
+                  name="navigate-circle-outline"
+                  class="text-white text-xl"
+                ></ion-icon>
               </div>
               <div class="flex-1">
-                <h4 class="font-bold text-handy-navy-800 text-lg">Use Current Location</h4>
-                <p class="text-gray-600 text-sm">We'll automatically detect your location</p>
+                <h4 class="font-bold text-handy-navy-800 text-lg">
+                  Use Current Location
+                </h4>
+                <p class="text-gray-600 text-sm">
+                  We'll automatically detect your location
+                </p>
               </div>
-              <div class="w-6 h-6 border-2 rounded-full flex items-center justify-center"
-                   [class.border-handy-blue-500]="locationType === 'current'"
-                   [class.bg-handy-blue-500]="locationType === 'current'"
-                   [class.border-gray-300]="locationType !== 'current'">
-                <div *ngIf="locationType === 'current'" class="w-3 h-3 bg-white rounded-full"></div>
+              <div
+                class="w-6 h-6 border-2 rounded-full flex items-center justify-center"
+                [class.border-handy-blue-500]="locationType === 'current'"
+                [class.bg-handy-blue-500]="locationType === 'current'"
+                [class.border-gray-300]="locationType !== 'current'"
+              >
+                <div
+                  *ngIf="locationType === 'current'"
+                  class="w-3 h-3 bg-white rounded-full"
+                ></div>
               </div>
             </div>
           </div>
 
           <!-- Enter Custom Address -->
-          <div 
+          <div
             class="p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-md"
             [class.border-handy-blue-500]="locationType === 'custom'"
             [class.bg-handy-blue-50]="locationType === 'custom'"
@@ -165,24 +294,39 @@
             (click)="selectLocationType('custom')"
           >
             <div class="flex items-center space-x-4">
-              <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <ion-icon name="home-outline" class="text-white text-xl"></ion-icon>
+              <div
+                class="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg"
+              >
+                <ion-icon
+                  name="home-outline"
+                  class="text-white text-xl"
+                ></ion-icon>
               </div>
               <div class="flex-1">
-                <h4 class="font-bold text-handy-navy-800 text-lg">Enter Address</h4>
+                <h4 class="font-bold text-handy-navy-800 text-lg">
+                  Enter Address
+                </h4>
                 <p class="text-gray-600 text-sm">Type your specific address</p>
               </div>
-              <div class="w-6 h-6 border-2 rounded-full flex items-center justify-center"
-                   [class.border-handy-blue-500]="locationType === 'custom'"
-                   [class.bg-handy-blue-500]="locationType === 'custom'"
-                   [class.border-gray-300]="locationType !== 'custom'">
-                <div *ngIf="locationType === 'custom'" class="w-3 h-3 bg-white rounded-full"></div>
+              <div
+                class="w-6 h-6 border-2 rounded-full flex items-center justify-center"
+                [class.border-handy-blue-500]="locationType === 'custom'"
+                [class.bg-handy-blue-500]="locationType === 'custom'"
+                [class.border-gray-300]="locationType !== 'custom'"
+              >
+                <div
+                  *ngIf="locationType === 'custom'"
+                  class="w-3 h-3 bg-white rounded-full"
+                ></div>
               </div>
             </div>
           </div>
 
           <!-- Custom Address Input -->
-          <div *ngIf="locationType === 'custom'" class="mt-4 space-y-4 animate-fade-in">
+          <div
+            *ngIf="locationType === 'custom'"
+            class="mt-4 space-y-4 animate-fade-in"
+          >
             <div class="relative">
               <input
                 type="text"
@@ -193,10 +337,13 @@
                 [class.bg-red-50]="locationType === 'custom' && !customAddress && showValidation"
               />
               <div class="absolute inset-y-0 right-0 flex items-center pr-4">
-                <ion-icon name="location" class="text-gray-400 text-lg"></ion-icon>
+                <ion-icon
+                  name="location"
+                  class="text-gray-400 text-lg"
+                ></ion-icon>
               </div>
             </div>
-            
+
             <!-- Address Details -->
             <div class="grid grid-cols-2 gap-4">
               <input
@@ -215,21 +362,41 @@
           </div>
 
           <!-- Saved Locations Selection -->
-          <div *ngIf="locationType === 'saved'" class="mt-4 space-y-4 animate-fade-in">
+          <div
+            *ngIf="locationType === 'saved'"
+            class="mt-4 space-y-4 animate-fade-in"
+          >
             <!-- Loading State -->
             <div *ngIf="loadingSavedLocations" class="text-center py-8">
-              <ion-spinner name="crescent" class="text-handy-blue-500 mb-4"></ion-spinner>
-              <p class="text-gray-600 text-sm">Loading your saved locations...</p>
+              <ion-spinner
+                name="crescent"
+                class="text-handy-blue-500 mb-4"
+              ></ion-spinner>
+              <p class="text-gray-600 text-sm">
+                Loading your saved locations...
+              </p>
             </div>
 
             <!-- No Saved Locations -->
-            <div *ngIf="!loadingSavedLocations && savedLocations.length === 0" class="text-center py-8">
-              <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <ion-icon name="location-outline" class="text-gray-400 text-2xl"></ion-icon>
+            <div
+              *ngIf="!loadingSavedLocations && savedLocations.length === 0"
+              class="text-center py-8"
+            >
+              <div
+                class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              >
+                <ion-icon
+                  name="location-outline"
+                  class="text-gray-400 text-2xl"
+                ></ion-icon>
               </div>
-              <h4 class="font-bold text-gray-700 text-lg mb-2">No Saved Locations</h4>
-              <p class="text-gray-500 text-sm mb-4">You don't have any saved locations yet</p>
-              <button 
+              <h4 class="font-bold text-gray-700 text-lg mb-2">
+                No Saved Locations
+              </h4>
+              <p class="text-gray-500 text-sm mb-4">
+                You don't have any saved locations yet
+              </p>
+              <button
                 (click)="selectLocationType('custom')"
                 class="text-handy-blue-600 font-bold text-sm underline hover:text-handy-blue-800 transition-colors"
               >
@@ -238,9 +405,12 @@
             </div>
 
             <!-- Saved Locations List -->
-            <div *ngIf="!loadingSavedLocations && savedLocations.length > 0" class="space-y-3">
-              <div 
-                *ngFor="let location of savedLocations" 
+            <div
+              *ngIf="!loadingSavedLocations && savedLocations.length > 0"
+              class="space-y-3"
+            >
+              <div
+                *ngFor="let location of savedLocations"
                 class="p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-md"
                 [class.border-handy-blue-500]="selectedSavedLocationId === location.id"
                 [class.bg-handy-blue-50]="selectedSavedLocationId === location.id"
@@ -248,33 +418,57 @@
                 (click)="selectSavedLocation(location)"
               >
                 <div class="flex items-start space-x-4">
-                  <div class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                  <div
+                    class="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
+                  >
                     <ion-icon name="home" class="text-white text-lg"></ion-icon>
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between mb-1">
-                      <h4 class="font-bold text-handy-navy-800 text-base">{{ location.contactPerson }}</h4>
-                      <div *ngIf="location.isDefault" class="bg-handy-yellow-100 text-handy-yellow-800 text-xs font-bold px-2 py-1 rounded-full">
+                      <h4 class="font-bold text-handy-navy-800 text-base">
+                        {{ location.contactPerson }}
+                      </h4>
+                      <div
+                        *ngIf="location.isDefault"
+                        class="bg-handy-yellow-100 text-handy-yellow-800 text-xs font-bold px-2 py-1 rounded-full"
+                      >
                         DEFAULT
                       </div>
                     </div>
-                    <p class="text-gray-600 text-sm mb-2 line-clamp-2">{{ location.fullAddress }}</p>
+                    <p class="text-gray-600 text-sm mb-2 line-clamp-2">
+                      {{ location.fullAddress }}
+                    </p>
                     <div class="flex items-center space-x-3">
                       <div class="flex items-center space-x-1">
-                        <ion-icon name="person-outline" class="text-gray-400 text-xs"></ion-icon>
-                        <span class="text-gray-500 text-xs">{{ location.contactPerson }}</span>
+                        <ion-icon
+                          name="person-outline"
+                          class="text-gray-400 text-xs"
+                        ></ion-icon>
+                        <span class="text-gray-500 text-xs"
+                          >{{ location.contactPerson }}</span
+                        >
                       </div>
                       <div class="flex items-center space-x-1">
-                        <ion-icon name="call-outline" class="text-gray-400 text-xs"></ion-icon>
-                        <span class="text-gray-500 text-xs">{{ location.phoneNumber }}</span>
+                        <ion-icon
+                          name="call-outline"
+                          class="text-gray-400 text-xs"
+                        ></ion-icon>
+                        <span class="text-gray-500 text-xs"
+                          >{{ location.phoneNumber }}</span
+                        >
                       </div>
                     </div>
                   </div>
-                  <div class="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0"
-                       [class.border-handy-blue-500]="selectedSavedLocationId === location.id"
-                       [class.bg-handy-blue-500]="selectedSavedLocationId === location.id"
-                       [class.border-gray-300]="selectedSavedLocationId !== location.id">
-                    <div *ngIf="selectedSavedLocationId === location.id" class="w-3 h-3 bg-white rounded-full"></div>
+                  <div
+                    class="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0"
+                    [class.border-handy-blue-500]="selectedSavedLocationId === location.id"
+                    [class.bg-handy-blue-500]="selectedSavedLocationId === location.id"
+                    [class.border-gray-300]="selectedSavedLocationId !== location.id"
+                  >
+                    <div
+                      *ngIf="selectedSavedLocationId === location.id"
+                      class="w-3 h-3 bg-white rounded-full"
+                    ></div>
                   </div>
                 </div>
               </div>
@@ -282,25 +476,41 @@
           </div>
 
           <!-- Current Location Display -->
-          <div *ngIf="locationType === 'current' && currentLocationAddress" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-2xl">
+          <div
+            *ngIf="locationType === 'current' && currentLocationAddress"
+            class="mt-4 p-4 bg-green-50 border border-green-200 rounded-2xl"
+          >
             <div class="flex items-center space-x-3">
-              <ion-icon name="checkmark-circle" class="text-green-600 text-lg"></ion-icon>
+              <ion-icon
+                name="checkmark-circle"
+                class="text-green-600 text-lg"
+              ></ion-icon>
               <div>
-                <p class="font-bold text-green-800 text-sm">Location Detected</p>
-                <p class="text-green-700 text-sm">{{ currentLocationAddress }}</p>
+                <p class="font-bold text-green-800 text-sm">
+                  Location Detected
+                </p>
+                <p class="text-green-700 text-sm">
+                  {{ currentLocationAddress }}
+                </p>
               </div>
             </div>
           </div>
 
           <!-- Location Error -->
-          <div *ngIf="locationType === 'current' && locationError" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-2xl">
+          <div
+            *ngIf="locationType === 'current' && locationError"
+            class="mt-4 p-4 bg-red-50 border border-red-200 rounded-2xl"
+          >
             <div class="flex items-center space-x-3">
-              <ion-icon name="alert-circle" class="text-red-600 text-lg"></ion-icon>
+              <ion-icon
+                name="alert-circle"
+                class="text-red-600 text-lg"
+              ></ion-icon>
               <div>
                 <p class="font-bold text-red-800 text-sm">Location Error</p>
                 <p class="text-red-700 text-sm">{{ locationError }}</p>
-                <button 
-                  (click)="getCurrentLocation()" 
+                <button
+                  (click)="getCurrentLocation()"
                   class="mt-2 text-handy-blue-600 font-bold text-sm underline hover:text-handy-blue-800 transition-colors"
                 >
                   Try Again
@@ -315,22 +525,37 @@
           *ngIf="!isValidLocation() && showValidation"
           class="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center animate-pulse"
         >
-          <ion-icon name="alert-circle" class="text-red-500 mr-2 text-lg"></ion-icon>
-          <p class="text-red-600 text-sm font-medium">Please select a service location</p>
+          <ion-icon
+            name="alert-circle"
+            class="text-red-500 mr-2 text-lg"
+          ></ion-icon>
+          <p class="text-red-600 text-sm font-medium">
+            Please select a service location
+          </p>
         </div>
       </div>
 
       <!-- Budget Range -->
       <div class="mb-8">
-        <label class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg">
-          <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation" style="animation-delay: 1s;">
-            <ion-icon name="wallet-outline" class="text-white text-lg"></ion-icon>
+        <label
+          class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg"
+        >
+          <div
+            class="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation"
+            style="animation-delay: 1s"
+          >
+            <ion-icon
+              name="wallet-outline"
+              class="text-white text-lg"
+            ></ion-icon>
           </div>
           What's your budget range?
         </label>
         <div class="grid grid-cols-2 gap-4">
           <div class="relative">
-            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+            <div
+              class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none"
+            >
               <span class="text-gray-500 font-semibold">₱</span>
             </div>
             <input
@@ -343,7 +568,9 @@
             />
           </div>
           <div class="relative">
-            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+            <div
+              class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none"
+            >
               <span class="text-gray-500 font-semibold">₱</span>
             </div>
             <input
@@ -360,16 +587,29 @@
           *ngIf="(!minBudget || !maxBudget) && showValidation"
           class="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center animate-pulse"
         >
-          <ion-icon name="alert-circle" class="text-red-500 mr-2 text-lg"></ion-icon>
-          <p class="text-red-600 text-sm font-medium">Please enter both minimum and maximum budget</p>
+          <ion-icon
+            name="alert-circle"
+            class="text-red-500 mr-2 text-lg"
+          ></ion-icon>
+          <p class="text-red-600 text-sm font-medium">
+            Please enter both minimum and maximum budget
+          </p>
         </div>
       </div>
 
       <!-- Additional Details -->
       <div class="mb-8">
-        <label class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg">
-          <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation" style="animation-delay: 1.5s;">
-            <ion-icon name="document-text-outline" class="text-white text-lg"></ion-icon>
+        <label
+          class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg"
+        >
+          <div
+            class="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-lg float-animation"
+            style="animation-delay: 1.5s"
+          >
+            <ion-icon
+              name="document-text-outline"
+              class="text-white text-lg"
+            ></ion-icon>
           </div>
           Additional details
           <span class="text-gray-500 text-sm font-normal ml-2">(optional)</span>
@@ -382,7 +622,10 @@
             class="w-full border-2 border-gray-200 rounded-2xl p-5 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 resize-none shadow-sm font-medium"
           ></textarea>
           <div class="absolute bottom-3 right-3">
-            <ion-icon name="create-outline" class="text-gray-300 text-lg"></ion-icon>
+            <ion-icon
+              name="create-outline"
+              class="text-gray-300 text-lg"
+            ></ion-icon>
           </div>
         </div>
       </div>
@@ -394,8 +637,10 @@
         class="w-full bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white py-6 rounded-2xl mt-6 shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 font-bold text-lg flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-xl relative overflow-hidden pulse-button"
       >
         <!-- Button gradient overlay -->
-        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 animate-pulse"></div>
-        
+        <div
+          class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 animate-pulse"
+        ></div>
+
         <div class="flex items-center space-x-3 relative z-10">
           <div class="w-6 h-6 flex items-center justify-center">
             <ion-icon
@@ -409,7 +654,10 @@
               class="w-6 h-6"
             ></ion-spinner>
           </div>
-          <span>{{ isLoading ? 'Finding Perfect Workers...' : 'Find Available Workers' }}</span>
+          <span
+            >{{ isLoading ? 'Finding Perfect Workers...' : 'Find Available
+            Workers' }}</span
+          >
         </div>
       </button>
     </div>
@@ -420,8 +668,13 @@
       <div
         class="bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-3xl p-6 flex items-center space-x-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
       >
-        <div class="w-14 h-14 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
-          <ion-icon name="shield-checkmark" class="text-white text-2xl"></ion-icon>
+        <div
+          class="w-14 h-14 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg"
+        >
+          <ion-icon
+            name="shield-checkmark"
+            class="text-white text-2xl"
+          ></ion-icon>
         </div>
         <div class="flex-1">
           <h3 class="font-bold text-emerald-800 text-lg">Verified Workers</h3>
@@ -429,8 +682,13 @@
             All our workers are background-checked and verified
           </p>
         </div>
-        <div class="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center">
-          <ion-icon name="checkmark" class="text-emerald-600 text-lg"></ion-icon>
+        <div
+          class="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center"
+        >
+          <ion-icon
+            name="checkmark"
+            class="text-emerald-600 text-lg"
+          ></ion-icon>
         </div>
       </div>
 
@@ -438,7 +696,9 @@
       <div
         class="bg-gradient-to-r from-handy-blue-50 to-cyan-50 border-2 border-handy-blue-200 rounded-3xl p-6 flex items-center space-x-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
       >
-        <div class="w-14 h-14 bg-gradient-to-r from-handy-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
+        <div
+          class="w-14 h-14 bg-gradient-to-r from-handy-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg"
+        >
           <ion-icon name="time-outline" class="text-white text-2xl"></ion-icon>
         </div>
         <div class="flex-1">
@@ -447,7 +707,9 @@
             Get responses from qualified workers within 30 minutes
           </p>
         </div>
-        <div class="w-8 h-8 bg-handy-blue-500/20 rounded-full flex items-center justify-center">
+        <div
+          class="w-8 h-8 bg-handy-blue-500/20 rounded-full flex items-center justify-center"
+        >
           <ion-icon name="flash" class="text-handy-blue-600 text-lg"></ion-icon>
         </div>
       </div>
@@ -456,17 +718,26 @@
       <div
         class="bg-gradient-to-r from-handy-yellow-50 to-orange-50 border-2 border-handy-yellow-200 rounded-3xl p-6 flex items-center space-x-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
       >
-        <div class="w-14 h-14 bg-gradient-to-r from-handy-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+        <div
+          class="w-14 h-14 bg-gradient-to-r from-handy-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg"
+        >
           <ion-icon name="star" class="text-white text-2xl"></ion-icon>
         </div>
         <div class="flex-1">
-          <h3 class="font-bold text-handy-yellow-800 text-lg">Quality Guarantee</h3>
+          <h3 class="font-bold text-handy-yellow-800 text-lg">
+            Quality Guarantee
+          </h3>
           <p class="text-handy-yellow-700 text-sm mt-1">
             100% satisfaction guaranteed or your money back
           </p>
         </div>
-        <div class="w-8 h-8 bg-handy-yellow-500/20 rounded-full flex items-center justify-center">
-          <ion-icon name="thumbs-up" class="text-handy-yellow-600 text-lg"></ion-icon>
+        <div
+          class="w-8 h-8 bg-handy-yellow-500/20 rounded-full flex items-center justify-center"
+        >
+          <ion-icon
+            name="thumbs-up"
+            class="text-handy-yellow-600 text-lg"
+          ></ion-icon>
         </div>
       </div>
     </div>

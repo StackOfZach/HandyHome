@@ -6,8 +6,8 @@ import { ActiveBookingsPage } from './active-bookings.page';
 const routes: Routes = [
   {
     path: '',
-    component: ActiveBookingsPage
-  }
+    component: ActiveBookingsPage,
+  },
 ];
 
 @NgModule({

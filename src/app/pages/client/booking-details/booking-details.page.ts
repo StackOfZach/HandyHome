@@ -152,7 +152,9 @@ export class BookingDetailsPage implements OnInit {
     if (this.isNewBooking(this.booking)) {
       return this.booking.serviceName;
     }
-    return this.booking.title || this.booking.neededService || 'Service Request';
+    return (
+      this.booking.title || this.booking.neededService || 'Service Request'
+    );
   }
 
   getBookingWorkerName(): string | null {

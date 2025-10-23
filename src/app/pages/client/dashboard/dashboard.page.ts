@@ -346,31 +346,31 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
     this.ads = [
       {
         id: '1',
-        imageUrl: 'assets/ads/cleaning-special.jpg',
+        imageUrl: 'assets/ads/5.png',
         actionUrl: '/book-service?category=cleaning',
         altText: 'Special 20% discount on home cleaning services',
       },
       {
         id: '2',
-        imageUrl: 'assets/ads/gardening-service.jpg',
+        imageUrl: 'assets/ads/6.png',
         actionUrl: '/book-service?category=gardening',
         altText: 'New professional gardening service available',
       },
       {
         id: '3',
-        imageUrl: 'assets/ads/premium-membership.jpg',
+        imageUrl: 'assets/ads/7.png',
         actionUrl: '/premium',
         altText: 'Premium membership with exclusive benefits',
       },
       {
         id: '4',
-        imageUrl: 'assets/ads/referral-program.jpg',
+        imageUrl: 'assets/ads/8.png',
         actionUrl: '/referral',
         altText: 'Refer friends and earn rewards',
       },
       {
         id: '5',
-        imageUrl: 'assets/ads/quick-booking.jpg',
+        imageUrl: 'assets/ads/5.png',
         actionUrl: '/quick-booking',
         altText: 'Quick booking for immediate service needs',
       },

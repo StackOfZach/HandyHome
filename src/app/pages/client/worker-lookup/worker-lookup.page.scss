@@ -53,17 +53,18 @@
 
 /* Floating Animation for Icons */
 @keyframes float {
-  0%, 100% { 
-    transform: translateY(0px) rotate(0deg); 
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
   }
-  25% { 
-    transform: translateY(-8px) rotate(2deg); 
+  25% {
+    transform: translateY(-8px) rotate(2deg);
   }
-  50% { 
-    transform: translateY(-5px) rotate(-1deg); 
+  50% {
+    transform: translateY(-5px) rotate(-1deg);
   }
-  75% { 
-    transform: translateY(-10px) rotate(1deg); 
+  75% {
+    transform: translateY(-10px) rotate(1deg);
   }
 }
 
@@ -79,13 +80,18 @@
 }
 
 .enhanced-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
   transition: left 0.5s;
 }
 
@@ -154,13 +160,18 @@
 }
 
 .progress-shimmer::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
   animation: shimmer 2s infinite;
 }
 
@@ -171,7 +182,7 @@
 }
 
 .search-icon-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -10px;
   left: -10px;
@@ -218,7 +229,8 @@
     transform: scale(0.33);
     opacity: 1;
   }
-  80%, 100% {
+  80%,
+  100% {
     transform: scale(1.5);
     opacity: 0;
   }
@@ -283,22 +295,32 @@
 }
 
 /* Staggered Animation Delays */
-.stagger-1 { animation-delay: 0.1s; }
-.stagger-2 { animation-delay: 0.2s; }
-.stagger-3 { animation-delay: 0.3s; }
-.stagger-4 { animation-delay: 0.4s; }
-.stagger-5 { animation-delay: 0.5s; }
+.stagger-1 {
+  animation-delay: 0.1s;
+}
+.stagger-2 {
+  animation-delay: 0.2s;
+}
+.stagger-3 {
+  animation-delay: 0.3s;
+}
+.stagger-4 {
+  animation-delay: 0.4s;
+}
+.stagger-5 {
+  animation-delay: 0.5s;
+}
 
 /* Responsive Design */
 @media (max-width: 640px) {
   .float-animation {
     animation-duration: 4s;
   }
-  
+
   .enhanced-card:hover {
     transform: translateY(-4px) scale(1.01);
   }
-  
+
   .search-icon-container {
     transform: scale(0.9);
   }

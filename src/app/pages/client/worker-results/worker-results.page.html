@@ -26,7 +26,9 @@
       </div>
     </div>
     <!-- Subtitle -->
-    <p class="text-white/90 text-sm mt-2 ml-14">Choose the perfect worker for your needs</p>
+    <p class="text-white/90 text-sm mt-2 ml-14">
+      Choose the perfect worker for your needs
+    </p>
   </div>
   <div class="px-6 pb-24">
     <!-- Enhanced Service Info Header -->
@@ -35,26 +37,45 @@
       class="bg-white rounded-3xl p-6 mb-6 shadow-2xl border border-white/20 relative overflow-hidden enhanced-card animate-fade-in"
     >
       <!-- Decorative gradient overlay -->
-      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"></div>
-      
+      <div
+        class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-handy-blue-500 via-handy-yellow-500 to-handy-blue-500"
+      ></div>
+
       <div class="flex items-center space-x-4 mb-4">
         <div
           class="w-14 h-14 bg-gradient-to-br from-handy-blue-500 to-handy-blue-600 rounded-2xl flex items-center justify-center shadow-lg float-animation"
         >
-          <ion-icon name="construct-outline" class="text-white text-xl"></ion-icon>
+          <ion-icon
+            name="construct-outline"
+            class="text-white text-xl"
+          ></ion-icon>
         </div>
         <div class="flex-1">
           <h3 class="font-bold text-handy-navy-800 text-xl mb-2">
             {{ booking.neededService }}
           </h3>
           <div class="flex items-center space-x-4 text-sm text-handy-navy-600">
-            <div class="flex items-center space-x-2 bg-handy-blue-50 px-3 py-2 rounded-full">
-              <ion-icon name="calendar-outline" class="text-handy-blue-600 text-sm"></ion-icon>
-              <span class="font-semibold">{{ booking.scheduleDate?.toDate() | date:'fullDate' }}</span>
+            <div
+              class="flex items-center space-x-2 bg-handy-blue-50 px-3 py-2 rounded-full"
+            >
+              <ion-icon
+                name="calendar-outline"
+                class="text-handy-blue-600 text-sm"
+              ></ion-icon>
+              <span class="font-semibold"
+                >{{ booking.scheduleDate?.toDate() | date:'fullDate' }}</span
+              >
             </div>
-            <div class="flex items-center space-x-2 bg-handy-yellow-50 px-3 py-2 rounded-full">
-              <ion-icon name="wallet-outline" class="text-handy-yellow-600 text-sm"></ion-icon>
-              <span class="font-semibold">₱{{ booking.priceRange | number }}</span>
+            <div
+              class="flex items-center space-x-2 bg-handy-yellow-50 px-3 py-2 rounded-full"
+            >
+              <ion-icon
+                name="wallet-outline"
+                class="text-handy-yellow-600 text-sm"
+              ></ion-icon>
+              <span class="font-semibold"
+                >₱{{ booking.priceRange | number }}</span
+              >
             </div>
           </div>
         </div>
@@ -67,12 +88,19 @@
       class="bg-white rounded-3xl p-6 mb-6 shadow-2xl border border-white/20 relative overflow-hidden enhanced-card animate-slide-up"
     >
       <!-- Decorative gradient overlay -->
-      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-500"></div>
-      
+      <div
+        class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-indigo-500 to-purple-500"
+      ></div>
+
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-            <ion-icon name="options-outline" class="text-white text-lg"></ion-icon>
+          <div
+            class="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg"
+          >
+            <ion-icon
+              name="options-outline"
+              class="text-white text-lg"
+            ></ion-icon>
           </div>
           <h4 class="font-bold text-handy-navy-800 text-lg">Filters</h4>
         </div>
@@ -86,9 +114,16 @@
 
       <!-- Distance Filter -->
       <div class="mb-6">
-        <label class="block text-sm font-bold text-handy-navy-800 mb-4 flex items-center">
-          <div class="w-8 h-8 bg-gradient-to-r from-handy-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
-            <ion-icon name="location-outline" class="text-white text-sm"></ion-icon>
+        <label
+          class="block text-sm font-bold text-handy-navy-800 mb-4 flex items-center"
+        >
+          <div
+            class="w-8 h-8 bg-gradient-to-r from-handy-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3 shadow-md"
+          >
+            <ion-icon
+              name="location-outline"
+              class="text-white text-sm"
+            ></ion-icon>
           </div>
           Max Distance: {{ filters.maxDistance }}km
         </label>
@@ -107,8 +142,12 @@
 
       <!-- Rating Filter -->
       <div class="mb-6">
-        <label class="block text-sm font-bold text-handy-navy-800 mb-4 flex items-center">
-          <div class="w-8 h-8 bg-gradient-to-r from-handy-yellow-500 to-orange-500 rounded-lg flex items-center justify-center mr-3 shadow-md">
+        <label
+          class="block text-sm font-bold text-handy-navy-800 mb-4 flex items-center"
+        >
+          <div
+            class="w-8 h-8 bg-gradient-to-r from-handy-yellow-500 to-orange-500 rounded-lg flex items-center justify-center mr-3 shadow-md"
+          >
             <ion-icon name="star-outline" class="text-white text-sm"></ion-icon>
           </div>
           Minimum Rating
@@ -130,9 +169,16 @@
 
       <!-- Sort Options -->
       <div>
-        <label class="block text-sm font-bold text-handy-navy-800 mb-4 flex items-center">
-          <div class="w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center mr-3 shadow-md">
-            <ion-icon name="swap-vertical-outline" class="text-white text-sm"></ion-icon>
+        <label
+          class="block text-sm font-bold text-handy-navy-800 mb-4 flex items-center"
+        >
+          <div
+            class="w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-600 rounded-lg flex items-center justify-center mr-3 shadow-md"
+          >
+            <ion-icon
+              name="swap-vertical-outline"
+              class="text-white text-sm"
+            ></ion-icon>
           </div>
           Sort By
         </label>
@@ -167,11 +213,20 @@
           class="w-24 h-24 bg-gradient-to-br from-handy-blue-500 via-handy-blue-600 to-handy-yellow-500 rounded-full mx-auto flex items-center justify-center shadow-2xl mb-6 relative overflow-hidden"
         >
           <!-- Shimmer effect -->
-          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 animate-pulse"></div>
-          <ion-spinner name="crescent" class="w-10 h-10 text-white relative z-10"></ion-spinner>
+          <div
+            class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 animate-pulse"
+          ></div>
+          <ion-spinner
+            name="crescent"
+            class="w-10 h-10 text-white relative z-10"
+          ></ion-spinner>
         </div>
-        <h3 class="text-handy-navy-800 font-bold text-xl mb-2 gradient-text">Finding workers...</h3>
-        <p class="text-handy-navy-600 text-sm">Searching for the best matches in your area</p>
+        <h3 class="text-handy-navy-800 font-bold text-xl mb-2 gradient-text">
+          Finding workers...
+        </h3>
+        <p class="text-handy-navy-600 text-sm">
+          Searching for the best matches in your area
+        </p>
       </div>
     </div>
 
@@ -185,9 +240,12 @@
       >
         <ion-icon name="people-outline" class="text-white text-4xl"></ion-icon>
       </div>
-      <h3 class="text-2xl font-bold text-handy-navy-800 mb-4">No workers found</h3>
+      <h3 class="text-2xl font-bold text-handy-navy-800 mb-4">
+        No workers found
+      </h3>
       <p class="text-handy-navy-600 mb-8 leading-relaxed px-4">
-        Try adjusting your filters or check back later for more available workers in your area.
+        Try adjusting your filters or check back later for more available
+        workers in your area.
       </p>
       <button
         (click)="toggleFilters()"
@@ -204,20 +262,33 @@
       class="space-y-6 animate-slide-up"
     >
       <!-- Results Header -->
-      <div class="flex items-center justify-between mb-6 bg-white rounded-2xl p-4 shadow-lg">
+      <div
+        class="flex items-center justify-between mb-6 bg-white rounded-2xl p-4 shadow-lg"
+      >
         <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-            <ion-icon name="people-outline" class="text-white text-lg"></ion-icon>
+          <div
+            class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg"
+          >
+            <ion-icon
+              name="people-outline"
+              class="text-white text-lg"
+            ></ion-icon>
           </div>
           <div>
             <p class="text-handy-navy-800 font-bold text-lg">
-              {{ filteredWorkers.length }} worker{{ filteredWorkers.length !== 1 ? 's' : '' }} available
+              {{ filteredWorkers.length }} worker{{ filteredWorkers.length !== 1
+              ? 's' : '' }} available
             </p>
             <p class="text-handy-navy-600 text-sm">Ready to help you today</p>
           </div>
         </div>
-        <div class="flex items-center space-x-2 text-xs text-handy-navy-500 bg-handy-blue-50 px-3 py-2 rounded-full">
-          <ion-icon name="funnel-outline" class="text-handy-blue-600"></ion-icon>
+        <div
+          class="flex items-center space-x-2 text-xs text-handy-navy-500 bg-handy-blue-50 px-3 py-2 rounded-full"
+        >
+          <ion-icon
+            name="funnel-outline"
+            class="text-handy-blue-600"
+          ></ion-icon>
           <span class="font-semibold">{{ filters.sortBy }}</span>
         </div>
       </div>
@@ -229,8 +300,10 @@
         [style.animation-delay.ms]="i * 100"
       >
         <!-- Decorative gradient overlay -->
-        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-handy-blue-500 to-handy-yellow-500"></div>
-        
+        <div
+          class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-handy-blue-500 to-handy-yellow-500"
+        ></div>
+
         <div class="flex items-start space-x-4">
           <!-- Enhanced Worker Avatar -->
           <div class="flex-shrink-0 relative">
@@ -245,10 +318,15 @@
               <div
                 class="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-600 border-3 border-white rounded-full flex items-center justify-center shadow-lg"
               >
-                <ion-icon name="checkmark" class="text-white text-sm"></ion-icon>
+                <ion-icon
+                  name="checkmark"
+                  class="text-white text-sm"
+                ></ion-icon>
               </div>
               <!-- Online indicator -->
-              <div class="absolute -top-1 -left-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full animate-pulse"></div>
+              <div
+                class="absolute -top-1 -left-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full animate-pulse"
+              ></div>
             </div>
           </div>
 
@@ -263,14 +341,18 @@
                 class="flex items-center space-x-1"
                 *ngIf="worker.rating > 0; else noRating"
               >
-                <div class="flex items-center space-x-1 bg-yellow-50 px-2 py-1 rounded-full">
+                <div
+                  class="flex items-center space-x-1 bg-yellow-50 px-2 py-1 rounded-full"
+                >
                   <ion-icon
                     *ngFor="let star of getStarRating(worker.rating)"
                     [name]="star === 'star' ? 'star' : 'star-outline'"
                     [class]="star === 'star' ? 'text-yellow-400' : 'text-gray-300'"
                     class="text-sm"
                   ></ion-icon>
-                  <span class="text-xs text-handy-navy-600 ml-1 font-bold">({{ worker.reviewCount }})</span>
+                  <span class="text-xs text-handy-navy-600 ml-1 font-bold"
+                    >({{ worker.reviewCount }})</span
+                  >
                 </div>
               </div>
               <ng-template #noRating>
@@ -307,22 +389,49 @@
 
             <!-- Enhanced Distance and Location Info -->
             <div class="grid grid-cols-2 gap-4 mb-6">
-              <div class="flex items-center space-x-2 bg-handy-blue-50 px-3 py-2 rounded-xl">
-                <div class="w-6 h-6 bg-handy-blue-500 rounded-lg flex items-center justify-center">
-                  <ion-icon name="location-outline" class="text-white text-xs"></ion-icon>
+              <div
+                class="flex items-center space-x-2 bg-handy-blue-50 px-3 py-2 rounded-xl"
+              >
+                <div
+                  class="w-6 h-6 bg-handy-blue-500 rounded-lg flex items-center justify-center"
+                >
+                  <ion-icon
+                    name="location-outline"
+                    class="text-white text-xs"
+                  ></ion-icon>
                 </div>
                 <div>
                   <p class="text-xs text-handy-blue-600 font-bold">Distance</p>
-                  <p class="text-sm font-bold text-handy-navy-800">{{ worker.distance }}km</p>
+                  <p class="text-sm font-bold text-handy-navy-800">
+                    {{ worker.distance }}km
+                  </p>
                 </div>
               </div>
-              <div class="flex items-center space-x-2 bg-handy-yellow-50 px-3 py-2 rounded-xl">
-                <div class="w-6 h-6 bg-handy-yellow-500 rounded-lg flex items-center justify-center">
-                  <ion-icon name="wallet-outline" class="text-white text-xs"></ion-icon>
+              <div
+                class="flex items-center space-x-2 bg-handy-yellow-50 px-3 py-2 rounded-xl"
+              >
+                <div
+                  class="w-6 h-6 bg-handy-yellow-500 rounded-lg flex items-center justify-center"
+                >
+                  <ion-icon
+                    name="wallet-outline"
+                    class="text-white text-xs"
+                  ></ion-icon>
                 </div>
                 <div>
-                  <p class="text-xs text-handy-yellow-600 font-bold">Rate</p>
-                  <p class="text-sm font-bold text-handy-navy-800">{{ worker.priceRange }}</p>
+                  <p class="text-xs text-handy-yellow-600 font-bold">
+                    {{ hasSpecificPricing(worker) ? 'Specific Rate' : 'Rate
+                    Range' }}
+                  </p>
+                  <p class="text-sm font-bold text-handy-navy-800">
+                    {{ getWorkerSpecificPrice(worker) }}
+                  </p>
+                  <p
+                    *ngIf="hasSpecificPricing(worker)"
+                    class="text-xs text-green-600 font-medium"
+                  >
+                    For {{ booking?.specificService }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -334,8 +443,13 @@
                 class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl hover:scale-105 transition-all duration-300 flex items-center space-x-2 relative overflow-hidden"
               >
                 <!-- Button shimmer effect -->
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 animate-pulse"></div>
-                <ion-icon name="calendar-outline" class="text-white text-lg relative z-10"></ion-icon>
+                <div
+                  class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 animate-pulse"
+                ></div>
+                <ion-icon
+                  name="calendar-outline"
+                  class="text-white text-lg relative z-10"
+                ></ion-icon>
                 <span class="relative z-10">Book Worker</span>
               </button>
             </div>

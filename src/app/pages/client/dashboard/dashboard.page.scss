@@ -225,14 +225,13 @@
     > div {
       height: 192px; // Fixed height for all ad cards (h-48 = 192px)
       min-height: 192px;
-      border-radius: 1rem;
       overflow: hidden;
     }
 
     // Image styling
     img {
       transition: transform 0.3s ease;
-      object-fit: cover;
+      object-fit: contain;
       width: 100%;
       height: 100%;
     }

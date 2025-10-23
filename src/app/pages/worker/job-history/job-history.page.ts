@@ -570,7 +570,11 @@ export class JobHistoryPage implements OnInit, OnDestroy {
     if ('categoryName' in job) {
       return (job as QuickBookingData).categoryName;
     }
-    return (job as BookingData).category || (job as BookingData).neededService || 'Service';
+    return (
+      (job as BookingData).category ||
+      (job as BookingData).neededService ||
+      'Service'
+    );
   }
 
   getJobType(job: BookingData | QuickBookingData): string {

@@ -13,8 +13,8 @@ import { ActiveBookingsPage } from './active-bookings.page';
     CommonModule,
     FormsModule,
     IonicModule,
-    ActiveBookingsPageRoutingModule
+    ActiveBookingsPageRoutingModule,
   ],
-  declarations: [ActiveBookingsPage]
+  declarations: [ActiveBookingsPage],
 })
 export class ActiveBookingsPageModule {}

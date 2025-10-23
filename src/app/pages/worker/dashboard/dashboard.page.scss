@@ -60,13 +60,214 @@
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-// Enhanced card hover effects
-.job-card {
+// Enhanced booking card styles
+.booking-card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #f97316, #dc2626);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  &:hover::before {
+    transform: scaleX(1);
+  }
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px) scale(1.01);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+}
+
+// Quick booking notification pulse
+.quick-booking-pulse {
+  animation: quickBookingPulse 2s infinite;
+}
+
+@keyframes quickBookingPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(249, 115, 22, 0);
+  }
+}
+
+// Enhanced compact profile card
+.profile-summary-card {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #059669, #047857);
+    opacity: 0.8;
+  }
+}
+
+// Enhanced compact stats cards
+.stats-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    transition: left 0.5s;
+  }
+
+  &:hover::after {
+    left: 100%;
+  }
+
+  &:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Compact profile picture enhancement
+.profile-picture-compact {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Compact verification badge animation
+.verification-badge-compact {
+  animation: badgeGlowCompact 2s ease-in-out infinite alternate;
+}
+
+@keyframes badgeGlowCompact {
+  from {
+    box-shadow: 0 0 3px rgba(16, 185, 129, 0.5);
+  }
+  to {
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+  }
+}
+
+// Compact status indicator pulse
+.status-indicator-compact {
+  animation: statusPulseCompact 2s ease-in-out infinite;
+}
+
+@keyframes statusPulseCompact {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+// Quick action button enhancements
+.quick-action-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transition: width 0.6s, height 0.6s, top 0.6s, left 0.6s;
+    transform: translate(-50%, -50%);
+  }
+
+  &:active::before {
+    width: 300px;
+    height: 300px;
+    top: 50%;
+    left: 50%;
+  }
+
+  &:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+}
+
+// Enhanced notification styles
+.notification-item {
+  transition: all 0.2s ease-in-out;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.3s ease;
+  }
+
+  &:hover::before {
+    transform: scaleY(1);
+  }
+
+  &:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// Mobile responsive improvements
+@media (max-width: 768px) {
+  .booking-card {
+    margin: 0.5rem 0;
+    padding: 1rem;
+  }
+
+  .quick-action-btn {
+    padding: 0.75rem;
+  }
+
+  .stats-card {
+    padding: 0.75rem;
   }
 }
 
