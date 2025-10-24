@@ -32,6 +32,7 @@ export interface WorkerProfile {
   servicePrices?: ServicePrice[]; // New field for service pricing
   workRadius?: number;
   availableDays?: string[];
+  timeAvailability?: { [key: string]: { startTime: string; endTime: string } };
   idPhotoUrl?: string;
   profilePhotoUrl?: string;
   idPhotoData?: string; // Base64 image data for temporary storage

@@ -28,7 +28,7 @@ export class SignupPage implements OnInit {
         email: ['', [Validators.required, Validators.email]],
         phone: [
           '',
-          [Validators.required, Validators.pattern(/^\+?[\d\s-()]+$/)],
+          [Validators.required, Validators.pattern(/^[0-9]{11}$/), Validators.minLength(11), Validators.maxLength(11)],
         ],
         password: ['', [Validators.required, Validators.minLength(6)]],
         confirmPassword: ['', [Validators.required]],

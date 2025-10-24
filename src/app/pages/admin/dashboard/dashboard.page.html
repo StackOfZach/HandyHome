@@ -1284,12 +1284,32 @@
                   </span>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                  <span
-                    *ngFor="let subService of service.services.slice(0, 3)"
-                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200 hover:from-blue-100 hover:to-indigo-100 transition-colors"
+                  <div
+                    *ngFor="let subService of service.services.slice(0, 3); let i = index"
+                    class="inline-flex flex-col items-start"
                   >
-                    {{ subService }}
-                  </span>
+                    <span
+                      class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200 hover:from-blue-100 hover:to-indigo-100 transition-colors"
+                    >
+                      {{ subService }}
+                    </span>
+                    <span
+                      *ngIf="service.servicesPricing && service.servicesPricing[i]"
+                      class="text-xs text-gray-500 mt-1 px-2 py-0.5 bg-green-50 text-green-600 rounded-full border border-green-200"
+                    >
+                      {{ service.servicesPricing[i] === 'per_hour' ? 'Per Hour' : 'Per Day' }}
+                    </span>
+                    <span
+                      *ngIf="service.servicesQuickBookingPricing && service.servicesQuickBookingPricing[i] !== undefined && service.servicesQuickBookingPricing[i] > 0"
+                      class="text-xs text-gray-500 mt-1 px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full border border-purple-200"
+                    >
+                      ₱{{ service.servicesQuickBookingPricing[i] | number:'1.2-2' }}
+                      <span class="ml-1 text-purple-500">
+                        {{ service.servicesQuickBookingUnit && service.servicesQuickBookingUnit[i] ? 
+                           (service.servicesQuickBookingUnit[i] === 'per_hour' ? '/hr' : '/day') : '/hr' }}
+                      </span>
+                    </span>
+                  </div>
                   <span
                     *ngIf="service.services.length > 3"
                     class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 border border-indigo-200 cursor-pointer hover:from-indigo-200 hover:to-purple-200 transition-colors"
@@ -2767,29 +2787,90 @@
                 <div class="space-y-3 max-h-48 overflow-y-auto">
                   <div
                     *ngFor="let subService of subServices; let i = index"
-                    class="flex items-center space-x-3 bg-white border border-gray-200 p-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                    class="bg-white border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                   >
-                    <div class="bg-blue-100 p-1 rounded">
-                      <ion-icon
-                        name="chevron-forward"
-                        class="text-blue-600 text-xs"
-                      ></ion-icon>
+                    <div class="flex items-center space-x-3 mb-3">
+                      <div class="bg-blue-100 p-1 rounded">
+                        <ion-icon
+                          name="chevron-forward"
+                          class="text-blue-600 text-xs"
+                        ></ion-icon>
+                      </div>
+                      <input
+                        type="text"
+                        [(ngModel)]="subServices[i]"
+                        [ngModelOptions]="{standalone: true}"
+                        placeholder="e.g., Socket Installation"
+                        class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-sm"
+                      />
+                      <button
+                        type="button"
+                        (click)="removeSubService(i)"
+                        class="text-red-600 hover:bg-red-100 p-2 rounded-lg transition-all duration-200"
+                        title="Remove sub-service"
+                      >
+                        <ion-icon name="trash-outline" class="text-sm"></ion-icon>
+                      </button>
                     </div>
-                    <input
-                      type="text"
-                      [(ngModel)]="subServices[i]"
-                      [ngModelOptions]="{standalone: true}"
-                      placeholder="e.g., Socket Installation"
-                      class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-sm"
-                    />
-                    <button
-                      type="button"
-                      (click)="removeSubService(i)"
-                      class="text-red-600 hover:bg-red-100 p-2 rounded-lg transition-all duration-200"
-                      title="Remove sub-service"
-                    >
-                      <ion-icon name="trash-outline" class="text-sm"></ion-icon>
-                    </button>
+                    
+                    <!-- Unit Pricing Dropdown -->
+                    <div class="flex items-center space-x-3 ml-8 mb-3">
+                      <div class="bg-green-100 p-1 rounded">
+                        <ion-icon
+                          name="time-outline"
+                          class="text-green-600 text-xs"
+                        ></ion-icon>
+                      </div>
+                      <label class="text-sm font-medium text-gray-700 min-w-0 flex-shrink-0">
+                        Unit Pricing:
+                      </label>
+                      <select
+                        [(ngModel)]="servicesPricing[i]"
+                        [ngModelOptions]="{standalone: true}"
+                        (ngModelChange)="updateServicePricing(i, $event)"
+                        class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all duration-200 bg-gray-50 focus:bg-white text-sm"
+                      >
+                        <option value="per_hour">Per Hour</option>
+                        <option value="per_day">Per Day</option>
+                      </select>
+                    </div>
+                    
+                    <!-- Quick Booking Pricing Input -->
+                    <div class="flex items-center space-x-3 ml-8">
+                      <div class="bg-purple-100 p-1 rounded">
+                        <ion-icon
+                          name="flash-outline"
+                          class="text-purple-600 text-xs"
+                        ></ion-icon>
+                      </div>
+                      <label class="text-sm font-medium text-gray-700 min-w-0 flex-shrink-0">
+                        Quick Booking:
+                      </label>
+                      <div class="flex-1 flex space-x-2">
+                        <div class="relative flex-1">
+                          <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">₱</span>
+                          <input
+                            type="number"
+                            [(ngModel)]="servicesQuickBookingPricing[i]"
+                            [ngModelOptions]="{standalone: true}"
+                            (ngModelChange)="updateQuickBookingPricing(i, $event)"
+                            placeholder="0.00"
+                            min="0"
+                            step="0.01"
+                            class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white text-sm"
+                          />
+                        </div>
+                        <select
+                          [(ngModel)]="servicesQuickBookingUnit[i]"
+                          [ngModelOptions]="{standalone: true}"
+                          (ngModelChange)="updateQuickBookingUnit(i, $event)"
+                          class="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-200 bg-gray-50 focus:bg-white text-sm min-w-0 flex-shrink-0"
+                        >
+                          <option value="per_hour">Per Hour</option>
+                          <option value="per_day">Per Day</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
 
                   <div

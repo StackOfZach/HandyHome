@@ -24,8 +24,8 @@ import {
   ServiceCategory,
 } from '../../../services/dashboard.service';
 
-// Components
-import { MapPickerComponent } from '../../../components/map-picker/map-picker.component';
+// Components - MapPickerComponent COMMENTED OUT
+// import { MapPickerComponent } from '../../../components/map-picker/map-picker.component';
 
 // Interfaces
 export interface SubServicePrice {
@@ -59,6 +59,7 @@ export interface WorkerProfile {
   serviceWithPricing?: ServiceWithPricing[]; // New - Detailed sub-service pricing
   workRadius?: number;
   availableDays?: string[];
+  timeAvailability?: { [key: string]: { startTime: string; endTime: string } };
   idPhotoUrl?: string;
   profilePhotoUrl?: string;
   idPhotoData?: string; // Base64 image data for temporary storage
@@ -80,7 +81,7 @@ export interface WorkerProfile {
   templateUrl: './interview.page.html',
   styleUrls: ['./interview.page.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, IonicModule, MapPickerComponent],
+  imports: [CommonModule, ReactiveFormsModule, IonicModule], // MapPickerComponent removed
 })
 export class InterviewPage implements OnInit, OnDestroy {
   currentStep = 1;
@@ -99,9 +100,9 @@ export class InterviewPage implements OnInit, OnDestroy {
   isLoading = false;
   isSaving = false;
 
-  // Map related
-  mapReady = false;
-  selectedLocation: { lat: number; lng: number } | null = null;
+  // Map related - COMMENTED OUT
+  // mapReady = false;
+  // selectedLocation: { lat: number; lng: number } | null = null;
 
   // Skills and services
   serviceCategories: ServiceCategory[] = [];
@@ -118,6 +119,9 @@ export class InterviewPage implements OnInit, OnDestroy {
     { value: 'saturday', label: 'Saturday', icon: 'calendar' },
     { value: 'sunday', label: 'Sunday', icon: 'calendar' },
   ];
+
+  // Time availability for each day
+  timeAvailability: { [key: string]: { startTime: string; endTime: string } } = {};
 
   // Photo previews
   idPhotoPreview: string | null = null;
@@ -167,11 +171,11 @@ export class InterviewPage implements OnInit, OnDestroy {
     // Step 1: Personal Information
     this.personalInfoForm = this.fb.group({
       fullAddress: ['', [Validators.required, Validators.minLength(10)]],
-      phone: ['', [Validators.required, Validators.pattern(/^[0-9]{10,11}$/)]],
+      phone: ['', [Validators.required, Validators.pattern(/^[0-9]{11}$/), Validators.minLength(11), Validators.maxLength(11)]],
       emergencyContact: ['', [Validators.required]],
       emergencyPhone: [
         '',
-        [Validators.required, Validators.pattern(/^[0-9]{10,11}$/)],
+        [Validators.required, Validators.pattern(/^[0-9]{11}$/), Validators.minLength(11), Validators.maxLength(11)],
       ],
     });
 
@@ -237,6 +241,12 @@ export class InterviewPage implements OnInit, OnDestroy {
             status: 'pending_verification',
             createdAt: new Date(),
           };
+          
+          // Populate the phone number in the form from registration data
+          console.log('Populating phone from registration:', userProfile.phone);
+          this.personalInfoForm.patchValue({
+            phone: userProfile.phone || ''
+          });
         }
       }
     } catch (error) {
@@ -302,6 +312,11 @@ export class InterviewPage implements OnInit, OnDestroy {
       availableDays: profile.availableDays || [],
     });
 
+    // Load time availability
+    if (profile.timeAvailability) {
+      this.timeAvailability = { ...profile.timeAvailability };
+    }
+
     // Update selected skills for certificate form
     this.selectedSkills = profile.skills || [];
     this.updateCertificateForm();
@@ -341,10 +356,10 @@ export class InterviewPage implements OnInit, OnDestroy {
       });
     }
 
-    // Set selected location
-    if (profile.location) {
-      this.selectedLocation = profile.location;
-    }
+    // Set selected location - COMMENTED OUT
+    // if (profile.location) {
+    //   this.selectedLocation = profile.location;
+    // }
 
     console.log('Populated forms with profile data:', profile);
   }
@@ -387,10 +402,11 @@ export class InterviewPage implements OnInit, OnDestroy {
           this.showValidationErrors(this.personalInfoForm);
           return false;
         }
-        if (!this.selectedLocation) {
-          this.showErrorToast('Please pin your location on the map');
-          return false;
-        }
+        // Location validation - COMMENTED OUT
+        // if (!this.selectedLocation) {
+        //   this.showErrorToast('Please pin your location on the map');
+        //   return false;
+        // }
         return true;
 
       case 2:
@@ -455,7 +471,7 @@ export class InterviewPage implements OnInit, OnDestroy {
           const personalData = this.personalInfoForm.value;
           updateData.fullAddress = personalData.fullAddress;
           updateData.phone = personalData.phone;
-          updateData.location = this.selectedLocation!;
+          // updateData.location = this.selectedLocation!; // COMMENTED OUT
           updateData.emergencyContact = personalData.emergencyContact;
           updateData.emergencyPhone = personalData.emergencyPhone;
           console.log('Saving Step 1 data:', updateData);
@@ -466,6 +482,7 @@ export class InterviewPage implements OnInit, OnDestroy {
           updateData.skills = [...(skillsData.skills || [])];
           updateData.workRadius = skillsData.workRadius;
           updateData.availableDays = [...(skillsData.availableDays || [])];
+          updateData.timeAvailability = { ...this.timeAvailability };
 
           // Add custom skill if provided
           if (skillsData.customSkill && skillsData.customSkill.trim()) {
@@ -524,11 +541,11 @@ export class InterviewPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Handle map location selection
+   * Handle map location selection - COMMENTED OUT
    */
-  onLocationSelected(location: { lat: number; lng: number }) {
-    this.selectedLocation = location;
-  }
+  // onLocationSelected(location: { lat: number; lng: number }) {
+  //   this.selectedLocation = location;
+  // }
 
   /**
    * Get progress percentage
@@ -600,10 +617,11 @@ export class InterviewPage implements OnInit, OnDestroy {
       return false;
     }
 
-    if (!this.selectedLocation) {
-      console.error('Location not selected');
-      return false;
-    }
+    // Location validation - COMMENTED OUT
+    // if (!this.selectedLocation) {
+    //   console.error('Location not selected');
+    //   return false;
+    // }
 
     // Check skills and availability
     if (!this.skillsForm.valid) {
@@ -651,7 +669,7 @@ export class InterviewPage implements OnInit, OnDestroy {
         hasIdPhoto: !!this.idPhotoPreview,
         hasProfilePhoto: !!this.profilePhotoPreview,
       },
-      location: this.selectedLocation,
+      // location: this.selectedLocation, // COMMENTED OUT
       workerProfile: this.workerProfile,
       currentStep: this.currentStep,
     };
@@ -787,6 +805,23 @@ export class InterviewPage implements OnInit, OnDestroy {
   }
 
   /**
+   * Get unit pricing for a specific sub-service from service categories
+   */
+  getSubServiceUnit(categoryName: string, subService: string): string {
+    const category = this.serviceCategories.find(cat => cat.name === categoryName);
+    if (!category || !category.services || !category.servicesPricing) {
+      return 'hour'; // Default fallback
+    }
+    
+    const subServiceIndex = category.services.indexOf(subService);
+    if (subServiceIndex === -1 || !category.servicesPricing[subServiceIndex]) {
+      return 'hour'; // Default fallback
+    }
+    
+    return category.servicesPricing[subServiceIndex] === 'per_hour' ? 'hour' : 'day';
+  }
+
+  /**
    * Get all selected sub-services for a category
    */
   getSelectedSubServices(categoryName: string): string[] {
@@ -801,9 +836,16 @@ export class InterviewPage implements OnInit, OnDestroy {
     const dayIndex = currentDays.indexOf(day);
 
     if (dayIndex > -1) {
+      // Remove day and its time availability
       currentDays.splice(dayIndex, 1);
+      delete this.timeAvailability[day];
     } else {
+      // Add day with default time availability
       currentDays.push(day);
+      this.timeAvailability[day] = {
+        startTime: '08:00',
+        endTime: '17:00'
+      };
     }
 
     this.skillsForm.patchValue({ availableDays: currentDays });
@@ -1063,11 +1105,12 @@ export class InterviewPage implements OnInit, OnDestroy {
         phone: this.personalInfoForm.get('phone')?.value,
         emergencyContact: this.personalInfoForm.get('emergencyContact')?.value,
         emergencyPhone: this.personalInfoForm.get('emergencyPhone')?.value,
-        location: this.selectedLocation!,
+        // location: this.selectedLocation!, // COMMENTED OUT
 
         skills: this.skillsForm.get('skills')?.value || [],
         workRadius: this.skillsForm.get('workRadius')?.value || 5,
         availableDays: this.skillsForm.get('availableDays')?.value || [],
+        timeAvailability: { ...this.timeAvailability },
 
         certificates: this.certificateForm.value || {},
 
@@ -1182,5 +1225,22 @@ export class InterviewPage implements OnInit, OnDestroy {
       position: 'bottom',
     });
     await toast.present();
+  }
+
+  /**
+   * Update time availability for a specific day
+   */
+  updateTimeAvailability(day: string, timeType: 'startTime' | 'endTime', value: string) {
+    if (!this.timeAvailability[day]) {
+      this.timeAvailability[day] = { startTime: '08:00', endTime: '17:00' };
+    }
+    this.timeAvailability[day][timeType] = value;
+  }
+
+  /**
+   * Get time availability for a day
+   */
+  getTimeAvailability(day: string): { startTime: string; endTime: string } {
+    return this.timeAvailability[day] || { startTime: '08:00', endTime: '17:00' };
   }
 }

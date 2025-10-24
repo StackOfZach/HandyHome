@@ -27,6 +27,9 @@ export interface ServiceCategory {
   serviceChargeRate: number;
   estimatedDuration: number;
   services: string[];
+  servicesPricing?: string[]; // Unit pricing for each sub-service ('per_hour' or 'per_day')
+  servicesQuickBookingPricing?: number[]; // Quick booking pricing for each sub-service
+  servicesQuickBookingUnit?: string[]; // Unit pricing for quick booking ('per_hour' or 'per_day')
   isActive: boolean;
   createdAt: any;
 }

@@ -37,6 +37,20 @@ export class UpdateProfilePage implements OnInit {
   selectedPhoto: string | null = null;
   isLoading = false;
 
+  // Time availability for each day
+  timeAvailability: { [key: string]: { startTime: string; endTime: string } } = {};
+
+  // Available days list
+  availableDays = [
+    { value: 'monday', label: 'Monday', icon: 'calendar' },
+    { value: 'tuesday', label: 'Tuesday', icon: 'calendar' },
+    { value: 'wednesday', label: 'Wednesday', icon: 'calendar' },
+    { value: 'thursday', label: 'Thursday', icon: 'calendar' },
+    { value: 'friday', label: 'Friday', icon: 'calendar' },
+    { value: 'saturday', label: 'Saturday', icon: 'calendar' },
+    { value: 'sunday', label: 'Sunday', icon: 'calendar' },
+  ];
+
   constructor(
     private router: Router,
     private formBuilder: FormBuilder,
@@ -77,6 +91,10 @@ export class UpdateProfilePage implements OnInit {
         this.workerProfile = await this.workerService.getWorkerProfile(
           profile.uid
         );
+        // Make sure service categories are loaded before populating form
+        if (this.serviceCategories.length === 0) {
+          await this.loadServiceCategories();
+        }
         this.populateForm();
       }
     });
@@ -122,11 +140,19 @@ export class UpdateProfilePage implements OnInit {
       (this.workerProfile as any).serviceWithPricing.forEach(
         (svc: ServiceWithPricing) => {
           const subServicesControls: any[] = [];
-          svc.subServices.forEach((s: SubServicePrice) => {
+          
+          // Find the corresponding service category to get unit information
+          const category = this.serviceCategories.find(c => c.name === svc.categoryName);
+          
+          svc.subServices.forEach((s: SubServicePrice, subIndex: number) => {
+            // Get the unit for this sub-service from the category
+            const unit = category?.servicesPricing?.[subIndex] || 'per_hour';
+            
             subServicesControls.push(
               this.formBuilder.group({
                 subServiceName: [s.subServiceName, Validators.required],
                 price: [s.price || 0, [Validators.required, Validators.min(0)]],
+                unit: [unit] // Add unit information (read-only for workers)
               })
             );
           });
@@ -161,6 +187,11 @@ export class UpdateProfilePage implements OnInit {
 
     if (this.workerProfile.profilePhotoData) {
       this.selectedPhoto = this.workerProfile.profilePhotoData;
+    }
+
+    // Load time availability
+    if (this.workerProfile.timeAvailability) {
+      this.timeAvailability = { ...this.workerProfile.timeAvailability };
     }
   }
 
@@ -210,11 +241,15 @@ export class UpdateProfilePage implements OnInit {
       (c) => c.name === categoryName
     );
     if (category && category.services && category.services.length) {
-      category.services.forEach((sub) => {
+      category.services.forEach((sub, subIndex) => {
+        // Get the unit for this sub-service from the category
+        const unit = category.servicesPricing?.[subIndex] || 'per_hour';
+        
         subServicesControls.push(
           this.formBuilder.group({
             subServiceName: [sub, Validators.required],
             price: [0, [Validators.required, Validators.min(0)]],
+            unit: [unit] // Add unit information (read-only for workers)
           })
         );
       });
@@ -270,6 +305,91 @@ export class UpdateProfilePage implements OnInit {
     return this.getAvailableSkills().length > 0;
   }
 
+  /**
+   * Toggle day availability and manage time availability
+   */
+  toggleDay(dayValue: string, isSelected: boolean) {
+    if (isSelected) {
+      // Add day with default time availability if not exists
+      if (!this.timeAvailability[dayValue]) {
+        this.timeAvailability[dayValue] = {
+          startTime: '08:00',
+          endTime: '17:00'
+        };
+      }
+    } else {
+      // Remove day's time availability
+      delete this.timeAvailability[dayValue];
+    }
+  }
+
+  /**
+   * Check if day is selected
+   */
+  isDaySelected(dayValue: string): boolean {
+    const dayIndex = this.availableDays.findIndex(d => d.value === dayValue);
+    if (dayIndex === -1) return false;
+    
+    const daysArray = this.profileForm.get('availableDays') as FormArray;
+    return daysArray.at(dayIndex)?.value || false;
+  }
+
+  /**
+   * Get selected days
+   */
+  getSelectedDays(): string[] {
+    const selectedDays: string[] = [];
+    const daysArray = this.profileForm.get('availableDays') as FormArray;
+    
+    daysArray.controls.forEach((control, index) => {
+      if (control.value) {
+        selectedDays.push(this.availableDays[index].value);
+      }
+    });
+    
+    return selectedDays;
+  }
+
+  /**
+   * Update time availability for a specific day
+   */
+  updateTimeAvailability(day: string, timeType: 'startTime' | 'endTime', value: string) {
+    if (!this.timeAvailability[day]) {
+      this.timeAvailability[day] = { startTime: '08:00', endTime: '17:00' };
+    }
+    this.timeAvailability[day][timeType] = value;
+  }
+
+  /**
+   * Get time availability for a day
+   */
+  getTimeAvailability(day: string): { startTime: string; endTime: string } {
+    return this.timeAvailability[day] || { startTime: '08:00', endTime: '17:00' };
+  }
+
+  /**
+   * Handle day checkbox change
+   */
+  onDayChange(dayIndex: number, event: any) {
+    const dayValue = this.availableDays[dayIndex].value;
+    const isSelected = event.detail.checked;
+    this.toggleDay(dayValue, isSelected);
+  }
+
+  /**
+   * Get display unit for pricing (convert 'per_hour' to '/hour')
+   */
+  getDisplayUnit(unit: string): string {
+    switch (unit) {
+      case 'per_hour':
+        return '/hour';
+      case 'per_day':
+        return '/day';
+      default:
+        return '/hour';
+    }
+  }
+
   async saveProfile() {
     if (this.profileForm.valid && this.userProfile) {
       const loading = await this.loadingController.create({
@@ -307,6 +427,7 @@ export class UpdateProfilePage implements OnInit {
             (skill: string) => skill.trim() !== ''
           ),
           availableDays: selectedDays,
+          timeAvailability: { ...this.timeAvailability },
           emergencyContact: formValue.emergencyContact,
           emergencyPhone: formValue.emergencyPhone,
           bio: formValue.bio,

@@ -104,6 +104,9 @@ export interface ServiceCategory {
   color: string;
   isActive: boolean;
   services: string[];
+  servicesPricing?: string[]; // Unit pricing for each sub-service ('per_hour' or 'per_day')
+  servicesQuickBookingPricing?: number[]; // Quick booking pricing for each sub-service
+  servicesQuickBookingUnit?: string[]; // Unit pricing for quick booking ('per_hour' or 'per_day')
   requirements?: string[];
   requiresCertificate?: boolean; // Whether this service requires certificate upload during worker interview
   averagePrice?: number; // Optional - can be set by system defaults

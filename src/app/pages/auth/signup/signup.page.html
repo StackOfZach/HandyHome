@@ -168,7 +168,10 @@
                 id="phone"
                 type="tel"
                 formControlName="phone"
-                placeholder="Enter your phone number"
+                placeholder="Enter your 11-digit phone number"
+                maxlength="11"
+                pattern="[0-9]*"
+                inputmode="numeric"
                 class="p-3 border-2 border-gray-200 rounded-xl w-full shadow-sm focus:ring-3 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300 text-handy-navy-700 placeholder-gray-400 bg-white/70"
                 [class.border-red-400]="signupForm.get('phone')?.invalid && signupForm.get('phone')?.touched"
               />

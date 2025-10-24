@@ -155,9 +155,88 @@
             >
               <ion-checkbox
                 [formControlName]="i"
+                (ionChange)="onDayChange(i, $event)"
                 color="primary"
               ></ion-checkbox>
               <span class="text-sm text-gray-700">{{ getDayName(i) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time Availability Section -->
+        <div *ngIf="getSelectedDays().length > 0" class="mt-6">
+          <div class="flex items-center space-x-2 mb-4">
+            <ion-icon name="time-outline" class="text-indigo-600 text-xl"></ion-icon>
+            <h4 class="text-lg font-semibold text-gray-800">Time Availability</h4>
+          </div>
+          <p class="text-sm text-gray-600 mb-4">
+            Set your working hours for each selected day
+          </p>
+
+          <div class="space-y-4">
+            <div
+              *ngFor="let day of availableDays"
+              class="bg-gray-50 rounded-xl p-4 border border-gray-200"
+              [class.hidden]="!isDaySelected(day.value)"
+            >
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-3">
+                  <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                  <span class="font-semibold text-gray-800">{{ day.label }}</span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <!-- Start Time -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <ion-icon name="play-circle" class="text-green-600 mr-1"></ion-icon>
+                    Start Time
+                  </label>
+                  <ion-input
+                    type="time"
+                    [value]="getTimeAvailability(day.value).startTime"
+                    (ionInput)="updateTimeAvailability(day.value, 'startTime', $event.detail.value!)"
+                    fill="outline"
+                    class="w-full border rounded-xl"
+                  ></ion-input>
+                </div>
+
+                <!-- End Time -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <ion-icon name="stop-circle" class="text-red-500 mr-1"></ion-icon>
+                    End Time
+                  </label>
+                  <ion-input
+                    type="time"
+                    [value]="getTimeAvailability(day.value).endTime"
+                    (ionInput)="updateTimeAvailability(day.value, 'endTime', $event.detail.value!)"
+                    fill="outline"
+                    class="w-full border rounded-xl"
+                  ></ion-input>
+                </div>
+              </div>
+
+              <!-- Time Duration Display -->
+              <div class="mt-3 text-center">
+                <div class="inline-flex items-center space-x-2 bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                  <ion-icon name="time" class="text-blue-600"></ion-icon>
+                  <span>
+                    {{ getTimeAvailability(day.value).startTime }} - {{ getTimeAvailability(day.value).endTime }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time Availability Tip -->
+          <div class="bg-blue-50 rounded-xl p-4 border border-blue-200 mt-4">
+            <div class="flex items-center space-x-2">
+              <ion-icon name="information-circle" class="text-blue-500"></ion-icon>
+              <p class="text-sm text-blue-800">
+                <strong>Tip:</strong> You can set different working hours for each day. Standard business hours (8 AM - 5 PM) are set by default.
+              </p>
             </div>
           </div>
         </div>
@@ -275,16 +354,34 @@
                   <label class="text-sm font-medium text-gray-700"
                     >{{ subCtrl.get('subServiceName')?.value }}</label
                   >
+                  <div class="text-xs text-gray-500 mt-1">
+                    Unit: {{ getDisplayUnit(subCtrl.get('unit')?.value) }}
+                  </div>
                 </div>
-                <div class="w-40 flex items-center space-x-2">
+                <div class="w-48 flex items-center space-x-2">
                   <span class="text-sm text-gray-500">₱</span>
                   <ion-input
                     formControlName="price"
                     type="number"
-                    class="text-right"
+                    class="text-right flex-1"
                     min="0"
+                    step="0.01"
+                    placeholder="0.00"
                   ></ion-input>
+                  <span class="text-sm text-gray-600 font-medium min-w-0">
+                    {{ getDisplayUnit(subCtrl.get('unit')?.value) }}
+                  </span>
                 </div>
+              </div>
+              
+              <!-- Price Preview -->
+              <div 
+                *ngIf="subCtrl.get('price')?.value > 0" 
+                class="mt-2 text-right"
+              >
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  ₱{{ subCtrl.get('price')?.value | number:'1.2-2' }}{{ getDisplayUnit(subCtrl.get('unit')?.value) }}
+                </span>
               </div>
             </div>
             <div

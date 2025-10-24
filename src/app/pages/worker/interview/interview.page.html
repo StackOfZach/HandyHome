@@ -179,11 +179,10 @@
 
         <!-- Phone Number -->
         <div class="space-y-3">
-          <label
-            class="flex items-center text-sm font-semibold text-gray-800 space-x-2"
-          >
+          <label class="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
             <ion-icon name="call" class="text-indigo-600"></ion-icon>
             <span>Phone Number *</span>
+            <span class="text-xs text-gray-500 font-normal">(From Registration)</span>
           </label>
           <div class="relative group">
             <ion-input
@@ -191,7 +190,8 @@
               type="tel"
               placeholder="09123456789"
               fill="outline"
-              class="w-full transition-all duration-200 rounded-xl"
+              readonly="true"
+              class="w-full transition-all duration-200 rounded-xl bg-gray-50 cursor-not-allowed"
               [class.ion-invalid]="personalInfoForm.get('phone')?.invalid && personalInfoForm.get('phone')?.touched"
               [class.border-green-300]="personalInfoForm.get('phone')?.valid && personalInfoForm.get('phone')?.touched"
             >
@@ -212,8 +212,7 @@
           >
             <ion-icon name="alert-circle" class="mr-2 text-red-500"></ion-icon>
             <span
-              >Please enter a valid Philippine mobile number (10-11
-              digits)</span
+              >Phone number is locked from registration (11 digits required)</span
             >
           </div>
         </div>
@@ -284,7 +283,10 @@
               <ion-input
                 formControlName="emergencyPhone"
                 type="tel"
-                placeholder="09123456789"
+                placeholder="Enter 11-digit phone number"
+                maxlength="11"
+                pattern="[0-9]*"
+                inputmode="numeric"
                 fill="outline"
                 class="w-full transition-all duration-200 rounded-xl bg-white"
                 [class.ion-invalid]="personalInfoForm.get('emergencyPhone')?.invalid && personalInfoForm.get('emergencyPhone')?.touched"
@@ -310,7 +312,7 @@
                 class="mr-2 text-red-500"
               ></ion-icon>
               <span
-                >Please enter a valid phone number for your emergency
+                >Please enter a valid 11-digit phone number for your emergency
                 contact</span
               >
             </div>
@@ -319,7 +321,8 @@
       </form>
     </div>
 
-    <!-- Map Section -->
+    <!-- Map Section - COMMENTED OUT -->
+    <!--
     <div
       class="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition-all duration-300"
     >
@@ -339,7 +342,7 @@
         </div>
       </div>
 
-      <!-- Map Container -->
+     
       <div class="relative">
         <div
           class="h-80 rounded-2xl overflow-hidden border-2 transition-all duration-300 shadow-lg"
@@ -353,7 +356,7 @@
           </app-map-picker>
         </div>
 
-        <!-- Map Instructions -->
+        
         <div
           *ngIf="!selectedLocation"
           class="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
@@ -373,7 +376,7 @@
         </div>
       </div>
 
-      <!-- Location Status -->
+      
       <div class="mt-6">
         <div
           *ngIf="selectedLocation"
@@ -414,7 +417,9 @@
         </div>
       </div>
     </div>
-  </div>
+--->
+  </div> 
+  
 
   <!-- Step 2: Skills & Services -->
   <div *ngIf="currentStep === 2" class="p-6 space-y-6 relative z-10">
@@ -723,6 +728,9 @@
                       min="0"
                       step="50"
                     ></ion-input>
+                    <span class="text-sm text-gray-500 font-medium">
+                      /{{ getSubServiceUnit(category, subService) }}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -902,6 +910,84 @@
                     >{{ getSelectedDays().length }} day{{
                     getSelectedDays().length > 1 ? 's' : '' }} selected</span
                   >
+                </div>
+              </div>
+            </div>
+
+            <!-- Time Availability Section -->
+            <div *ngIf="getSelectedDays().length > 0" class="mt-6">
+              <div class="flex items-center space-x-2 mb-4">
+                <ion-icon name="time-outline" class="text-green-600 text-xl"></ion-icon>
+                <h4 class="text-lg font-semibold text-gray-800">Time Availability</h4>
+              </div>
+              <p class="text-sm text-gray-600 mb-4">
+                Set your working hours for each selected day
+              </p>
+
+              <div class="space-y-4">
+                <div
+                  *ngFor="let day of availableDays"
+                  class="bg-white rounded-xl p-4 border border-green-200"
+                  [class.hidden]="!isDaySelected(day.value)"
+                >
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center space-x-3">
+                      <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span class="font-semibold text-gray-800">{{ day.label }}</span>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-4">
+                    <!-- Start Time -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <ion-icon name="play-circle" class="text-green-600 mr-1"></ion-icon>
+                        Start Time
+                      </label>
+                      <ion-input
+                        type="time"
+                        [value]="getTimeAvailability(day.value).startTime"
+                        (ionInput)="updateTimeAvailability(day.value, 'startTime', $event.detail.value!)"
+                        fill="outline"
+                        class="w-full"
+                      ></ion-input>
+                    </div>
+
+                    <!-- End Time -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <ion-icon name="stop-circle" class="text-red-500 mr-1"></ion-icon>
+                        End Time
+                      </label>
+                      <ion-input
+                        type="time"
+                        [value]="getTimeAvailability(day.value).endTime"
+                        (ionInput)="updateTimeAvailability(day.value, 'endTime', $event.detail.value!)"
+                        fill="outline"
+                        class="w-full"
+                      ></ion-input>
+                    </div>
+                  </div>
+
+                  <!-- Time Duration Display -->
+                  <div class="mt-3 text-center">
+                    <div class="inline-flex items-center space-x-2 bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                      <ion-icon name="time" class="text-blue-600"></ion-icon>
+                      <span>
+                        {{ getTimeAvailability(day.value).startTime }} - {{ getTimeAvailability(day.value).endTime }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Time Availability Tip -->
+              <div class="bg-blue-50 rounded-xl p-4 border border-blue-200 mt-4">
+                <div class="flex items-center space-x-2">
+                  <ion-icon name="information-circle" class="text-blue-500"></ion-icon>
+                  <p class="text-sm text-blue-800">
+                    <strong>Tip:</strong> You can set different working hours for each day. Standard business hours (8 AM - 5 PM) are set by default.
+                  </p>
                 </div>
               </div>
             </div>
@@ -1546,7 +1632,7 @@
                     <div>
                       <p class="font-medium text-gray-700">{{ subService }}</p>
                       <p class="text-sm text-gray-500">
-                        ₱{{ getSubServicePrice(category, subService) }}
+                        ₱{{ getSubServicePrice(category, subService) }}/{{ getSubServiceUnit(category, subService) }}
                       </p>
                     </div>
                   </div>

@@ -420,11 +420,10 @@
                 </div>
                 <div>
                   <p class="text-xs text-handy-yellow-600 font-bold">
-                    {{ hasSpecificPricing(worker) ? 'Specific Rate' : 'Rate
-                    Range' }}
+                    Rate
                   </p>
                   <p class="text-sm font-bold text-handy-navy-800">
-                    {{ getWorkerSpecificPrice(worker) }}
+                    {{ getWorkerSpecificPriceWithUnit(worker) }}
                   </p>
                   <p
                     *ngIf="hasSpecificPricing(worker)"

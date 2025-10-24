@@ -67,6 +67,9 @@ export class AdminDashboardPage implements OnInit {
   selectedService: ServiceCategory | null = null;
   serviceForm!: FormGroup;
   subServices: string[] = [];
+  servicesPricing: string[] = [];
+  servicesQuickBookingPricing: number[] = [];
+  servicesQuickBookingUnit: string[] = [];
   requirements: string[] = [];
 
   // Client Management Properties
@@ -990,6 +993,24 @@ export class AdminDashboardPage implements OnInit {
     });
 
     this.subServices = [...(service.services || [])];
+    this.servicesPricing = [...(service.servicesPricing || [])];
+    this.servicesQuickBookingPricing = [...(service.servicesQuickBookingPricing || [])];
+    this.servicesQuickBookingUnit = [...(service.servicesQuickBookingUnit || [])];
+    
+    // Ensure arrays match subServices length
+    while (this.servicesPricing.length < this.subServices.length) {
+      this.servicesPricing.push('per_hour');
+    }
+    while (this.servicesQuickBookingPricing.length < this.subServices.length) {
+      this.servicesQuickBookingPricing.push(0);
+    }
+    while (this.servicesQuickBookingUnit.length < this.subServices.length) {
+      this.servicesQuickBookingUnit.push('per_hour');
+    }
+    this.servicesPricing = this.servicesPricing.slice(0, this.subServices.length);
+    this.servicesQuickBookingPricing = this.servicesQuickBookingPricing.slice(0, this.subServices.length);
+    this.servicesQuickBookingUnit = this.servicesQuickBookingUnit.slice(0, this.subServices.length);
+    
     this.requirements = [...(service.requirements || [])];
   }
 
@@ -1004,6 +1025,9 @@ export class AdminDashboardPage implements OnInit {
     });
 
     this.subServices = [];
+    this.servicesPricing = [];
+    this.servicesQuickBookingPricing = [];
+    this.servicesQuickBookingUnit = [];
     this.requirements = [];
   }
 
@@ -1019,10 +1043,16 @@ export class AdminDashboardPage implements OnInit {
 
   addSubService() {
     this.subServices.push('');
+    this.servicesPricing.push('per_hour'); // Default to per hour pricing
+    this.servicesQuickBookingPricing.push(0); // Default to 0 for quick booking pricing
+    this.servicesQuickBookingUnit.push('per_hour'); // Default to per hour for quick booking unit
   }
 
   removeSubService(index: number) {
     this.subServices.splice(index, 1);
+    this.servicesPricing.splice(index, 1);
+    this.servicesQuickBookingPricing.splice(index, 1);
+    this.servicesQuickBookingUnit.splice(index, 1);
   }
 
   addRequirement() {
@@ -1031,6 +1061,18 @@ export class AdminDashboardPage implements OnInit {
 
   removeRequirement(index: number) {
     this.requirements.splice(index, 1);
+  }
+
+  updateServicePricing(index: number, pricing: string) {
+    this.servicesPricing[index] = pricing;
+  }
+
+  updateQuickBookingPricing(index: number, price: number) {
+    this.servicesQuickBookingPricing[index] = price;
+  }
+
+  updateQuickBookingUnit(index: number, unit: string) {
+    this.servicesQuickBookingUnit[index] = unit;
   }
 
   async saveService() {
@@ -1054,6 +1096,9 @@ export class AdminDashboardPage implements OnInit {
         isActive: formValue.isActive,
         requiresCertificate: formValue.requiresCertificate || false,
         services: this.subServices.filter((s) => s.trim() !== ''),
+        servicesPricing: this.servicesPricing.slice(0, this.subServices.filter((s) => s.trim() !== '').length),
+        servicesQuickBookingPricing: this.servicesQuickBookingPricing.slice(0, this.subServices.filter((s) => s.trim() !== '').length),
+        servicesQuickBookingUnit: this.servicesQuickBookingUnit.slice(0, this.subServices.filter((s) => s.trim() !== '').length),
         requirements: this.requirements.filter((r) => r.trim() !== ''),
       };
 
