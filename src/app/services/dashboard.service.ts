@@ -14,6 +14,7 @@ import {
   deleteDoc,
   DocumentData,
   QuerySnapshot,
+  Timestamp,
 } from '@angular/fire/firestore';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { UserProfile } from './auth.service';
@@ -118,7 +119,14 @@ export interface NotificationData {
   userId: string;
   title: string;
   message: string;
-  type: 'booking' | 'promotion' | 'reminder' | 'system' | 'worker_update';
+  type:
+    | 'booking'
+    | 'promotion'
+    | 'reminder'
+    | 'system'
+    | 'worker_update'
+    | 'worker_found'
+    | 'booking_update';
   priority: 'low' | 'medium' | 'high';
   isRead: boolean;
   actionUrl?: string;
@@ -127,10 +135,11 @@ export interface NotificationData {
     bookingId?: string;
     workerId?: string;
     promoCode?: string;
+    bookingType?: string;
   };
-  createdAt: Date;
-  readAt?: Date;
-  expiresAt?: Date;
+  createdAt: Date | Timestamp;
+  readAt?: Date | Timestamp;
+  expiresAt?: Date | Timestamp;
 }
 
 @Injectable({

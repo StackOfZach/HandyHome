@@ -334,13 +334,16 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     const basePrice = booking.pricing?.basePrice || 0;
     const platformFee = booking.pricing?.serviceCharge || 0;
     const transportationFee = 50; // Fixed transportation fee
-    const total = booking.pricing?.total || (basePrice + platformFee + transportationFee);
+    const total =
+      booking.pricing?.total || basePrice + platformFee + transportationFee;
     const workerEarning = basePrice + transportationFee; // Worker gets base price + transportation, platform keeps the fee
 
     this.quickBookingNotification = {
       id: booking.id,
       title: 'Quick Booking Alert!',
-      message: `${booking.subService || booking.categoryName} needed at ${booking.location?.address || 'Unknown location'}`,
+      message: `${booking.subService || booking.categoryName} needed at ${
+        booking.location?.address || 'Unknown location'
+      }`,
       bookingId: booking.id,
       categoryName: booking.categoryName,
       subService: booking.subService,
@@ -543,18 +546,22 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
     try {
       console.log('Loading worker stats from database...');
-      
+
       // Fetch completed jobs from both quickbookings and bookings collections
       const [quickBookingStats, regularBookingStats] = await Promise.all([
         this.getQuickBookingStats(),
-        this.getRegularBookingStats()
+        this.getRegularBookingStats(),
       ]);
 
       // Combine stats from both collections
-      const totalJobsCompleted = quickBookingStats.jobsCompleted + regularBookingStats.jobsCompleted;
-      const totalRatings = quickBookingStats.totalRating + regularBookingStats.totalRating;
-      const totalRatingCount = quickBookingStats.ratingCount + regularBookingStats.ratingCount;
-      const averageRating = totalRatingCount > 0 ? totalRatings / totalRatingCount : 0;
+      const totalJobsCompleted =
+        quickBookingStats.jobsCompleted + regularBookingStats.jobsCompleted;
+      const totalRatings =
+        quickBookingStats.totalRating + regularBookingStats.totalRating;
+      const totalRatingCount =
+        quickBookingStats.ratingCount + regularBookingStats.ratingCount;
+      const averageRating =
+        totalRatingCount > 0 ? totalRatings / totalRatingCount : 0;
 
       console.log('📊 Combined Stats Calculation:');
       console.log('- Quick bookings:', quickBookingStats);
@@ -571,7 +578,7 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
       };
 
       console.log('✅ Final worker stats loaded:', this.workerStats);
-      
+
       // Force UI update
       this.generateBookingSlides();
     } catch (error) {
@@ -585,8 +592,13 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     }
   }
 
-  private async getQuickBookingStats(): Promise<{jobsCompleted: number, totalRating: number, ratingCount: number}> {
-    if (!this.userProfile?.uid) return {jobsCompleted: 0, totalRating: 0, ratingCount: 0};
+  private async getQuickBookingStats(): Promise<{
+    jobsCompleted: number;
+    totalRating: number;
+    ratingCount: number;
+  }> {
+    if (!this.userProfile?.uid)
+      return { jobsCompleted: 0, totalRating: 0, ratingCount: 0 };
 
     try {
       const quickBookingsRef = collection(this.firestore, 'quickbookings');
@@ -604,28 +616,38 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         jobsCompleted++;
-        
+
         console.log('Quick booking data:', {
           id: doc.id,
           status: data['status'],
           rating: data['rating'],
           clientRating: data['clientRating'],
           workerRating: data['workerRating'],
-          feedback: data['feedback']
+          feedback: data['feedback'],
         });
-        
+
         // Check for rating in multiple possible fields
         let rating = null;
         if (data['rating'] && typeof data['rating'] === 'number') {
           rating = data['rating'];
-        } else if (data['clientRating'] && typeof data['clientRating'] === 'number') {
+        } else if (
+          data['clientRating'] &&
+          typeof data['clientRating'] === 'number'
+        ) {
           rating = data['clientRating'];
-        } else if (data['workerRating'] && typeof data['workerRating'] === 'number') {
+        } else if (
+          data['workerRating'] &&
+          typeof data['workerRating'] === 'number'
+        ) {
           rating = data['workerRating'];
-        } else if (data['feedback'] && data['feedback']['rating'] && typeof data['feedback']['rating'] === 'number') {
+        } else if (
+          data['feedback'] &&
+          data['feedback']['rating'] &&
+          typeof data['feedback']['rating'] === 'number'
+        ) {
           rating = data['feedback']['rating'];
         }
-        
+
         if (rating && rating > 0 && rating <= 5) {
           totalRating += rating;
           ratingCount++;
@@ -633,16 +655,25 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
         }
       });
 
-      console.log(`Quick bookings stats: ${jobsCompleted} jobs, ${ratingCount} ratings, avg rating: ${ratingCount > 0 ? (totalRating/ratingCount).toFixed(2) : 0}`);
-      return {jobsCompleted, totalRating, ratingCount};
+      console.log(
+        `Quick bookings stats: ${jobsCompleted} jobs, ${ratingCount} ratings, avg rating: ${
+          ratingCount > 0 ? (totalRating / ratingCount).toFixed(2) : 0
+        }`
+      );
+      return { jobsCompleted, totalRating, ratingCount };
     } catch (error) {
       console.error('Error fetching quick booking stats:', error);
-      return {jobsCompleted: 0, totalRating: 0, ratingCount: 0};
+      return { jobsCompleted: 0, totalRating: 0, ratingCount: 0 };
     }
   }
 
-  private async getRegularBookingStats(): Promise<{jobsCompleted: number, totalRating: number, ratingCount: number}> {
-    if (!this.userProfile?.uid) return {jobsCompleted: 0, totalRating: 0, ratingCount: 0};
+  private async getRegularBookingStats(): Promise<{
+    jobsCompleted: number;
+    totalRating: number;
+    ratingCount: number;
+  }> {
+    if (!this.userProfile?.uid)
+      return { jobsCompleted: 0, totalRating: 0, ratingCount: 0 };
 
     try {
       const bookingsRef = collection(this.firestore, 'bookings');
@@ -660,28 +691,38 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         jobsCompleted++;
-        
+
         console.log('Regular booking data:', {
           id: doc.id,
           status: data['status'],
           rating: data['rating'],
           clientRating: data['clientRating'],
           workerRating: data['workerRating'],
-          feedback: data['feedback']
+          feedback: data['feedback'],
         });
-        
+
         // Check for rating in multiple possible fields
         let rating = null;
         if (data['rating'] && typeof data['rating'] === 'number') {
           rating = data['rating'];
-        } else if (data['clientRating'] && typeof data['clientRating'] === 'number') {
+        } else if (
+          data['clientRating'] &&
+          typeof data['clientRating'] === 'number'
+        ) {
           rating = data['clientRating'];
-        } else if (data['workerRating'] && typeof data['workerRating'] === 'number') {
+        } else if (
+          data['workerRating'] &&
+          typeof data['workerRating'] === 'number'
+        ) {
           rating = data['workerRating'];
-        } else if (data['feedback'] && data['feedback']['rating'] && typeof data['feedback']['rating'] === 'number') {
+        } else if (
+          data['feedback'] &&
+          data['feedback']['rating'] &&
+          typeof data['feedback']['rating'] === 'number'
+        ) {
           rating = data['feedback']['rating'];
         }
-        
+
         if (rating && rating > 0 && rating <= 5) {
           totalRating += rating;
           ratingCount++;
@@ -689,11 +730,15 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
         }
       });
 
-      console.log(`Regular bookings stats: ${jobsCompleted} jobs, ${ratingCount} ratings, avg rating: ${ratingCount > 0 ? (totalRating/ratingCount).toFixed(2) : 0}`);
-      return {jobsCompleted, totalRating, ratingCount};
+      console.log(
+        `Regular bookings stats: ${jobsCompleted} jobs, ${ratingCount} ratings, avg rating: ${
+          ratingCount > 0 ? (totalRating / ratingCount).toFixed(2) : 0
+        }`
+      );
+      return { jobsCompleted, totalRating, ratingCount };
     } catch (error) {
       console.error('Error fetching regular booking stats:', error);
-      return {jobsCompleted: 0, totalRating: 0, ratingCount: 0};
+      return { jobsCompleted: 0, totalRating: 0, ratingCount: 0 };
     }
   }
 
@@ -1062,20 +1107,20 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
       this.showToast('Job ID not available', 'danger');
       return;
     }
-    
+
     console.log('Navigating to job details:', {
       jobId: job.id,
       jobTitle: job.title,
       jobStatus: job.status,
-      jobData: job
+      jobData: job,
     });
-    
+
     // Navigate to worker booking details page
     // Try 'quick' first since most active jobs are likely from quick bookings
     this.router.navigate(['/pages/worker/worker-booking-details'], {
-      queryParams: { 
-        bookingId: job.id, 
-        type: 'quick' // Changed to 'quick' as most active jobs are from quick bookings
+      queryParams: {
+        bookingId: job.id,
+        type: 'quick', // Changed to 'quick' as most active jobs are from quick bookings
       },
     });
   }
@@ -1199,10 +1244,13 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
       this.showToast('Quick booking accepted successfully!', 'success');
       this.dismissQuickNotification();
-      
+
       // Navigate to worker booking details page
       this.router.navigate(['/pages/worker/worker-booking-details'], {
-        queryParams: { bookingId: this.quickBookingNotification.bookingId, type: 'quick' },
+        queryParams: {
+          bookingId: this.quickBookingNotification.bookingId,
+          type: 'quick',
+        },
       });
     } catch (error) {
       console.error('Error accepting quick booking:', error);
@@ -1237,20 +1285,23 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     console.log('🔍 Navigating to Quick Booking History...');
     console.log('- Current user:', this.userProfile?.uid);
     console.log('- User role:', this.userProfile?.role);
-    
+
     if (!this.userProfile?.uid) {
       console.warn('⚠️ No user profile found, cannot navigate');
       this.showToast('Please log in to view booking history', 'danger');
       return;
     }
-    
+
     console.log('✅ Navigating to /pages/worker/quick-booking-history');
-    this.router.navigate(['/pages/worker/quick-booking-history']).then(success => {
-      console.log('Navigation result:', success);
-    }).catch(error => {
-      console.error('Navigation error:', error);
-      this.showToast('Navigation failed. Please try again.', 'danger');
-    });
+    this.router
+      .navigate(['/pages/worker/quick-booking-history'])
+      .then((success) => {
+        console.log('Navigation result:', success);
+      })
+      .catch((error) => {
+        console.error('Navigation error:', error);
+        this.showToast('Navigation failed. Please try again.', 'danger');
+      });
   }
 
   async logout() {
@@ -1418,5 +1469,45 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   updateProfile() {
     console.log('Navigating to update profile');
     this.router.navigate(['/pages/worker/update-profile']);
+  }
+
+  // Helper methods for notification booking data
+  hasBookingData(notification: WorkerNotification): boolean {
+    // Check if notification has any additional booking data
+    const notificationWithData = notification as any;
+    return !!(
+      notificationWithData.clientName ||
+      notificationWithData.subService ||
+      notificationWithData.schedule
+    );
+  }
+
+  getBookingDataValue(
+    notification: WorkerNotification,
+    field: string
+  ): string | null {
+    // Safely get booking data value from notification
+    const notificationWithData = notification as any;
+    return notificationWithData[field] || null;
+  }
+
+  formatNotificationSchedule(notification: WorkerNotification): string {
+    // Format schedule data from notification
+    const schedule = (notification as any).schedule;
+    if (!schedule) return 'Not scheduled';
+
+    if (typeof schedule === 'string') {
+      return schedule;
+    }
+
+    if (schedule.date && schedule.time) {
+      return `${schedule.date} at ${schedule.time}`;
+    }
+
+    if (schedule.date) {
+      return schedule.date;
+    }
+
+    return 'Not scheduled';
   }
 }

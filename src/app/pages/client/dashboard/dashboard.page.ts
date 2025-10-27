@@ -12,6 +12,19 @@ import { QuickBookingService } from '../../../services/quick-booking.service';
 import { Subscription, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { register } from 'swiper/element/bundle';
+import {
+  Firestore,
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  Timestamp,
+  doc,
+  updateDoc,
+} from '@angular/fire/firestore';
+import { ToastController } from '@ionic/angular';
 
 export interface Booking {
   id: string;
@@ -73,13 +86,21 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
   ads: Ad[] = [];
   isLoading = true;
 
+  // Notification system
+  showNotificationModal = false;
+  unreadCount = 0;
+  clientNotifications: NotificationData[] = [];
+
   private subscriptions: Subscription[] = [];
+  private notifiedBookingIds = new Set<string>();
 
   constructor(
     private authService: AuthService,
     private dashboardService: DashboardService,
     private quickBookingService: QuickBookingService,
-    private router: Router
+    private router: Router,
+    private firestore: Firestore,
+    private toastController: ToastController
   ) {
     // Register Swiper web components
     register();
@@ -92,6 +113,7 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
       this.userProfile = profile;
       if (profile) {
         this.loadDashboardData();
+        this.setupBookingNotificationsMonitoring();
       }
     });
     this.subscriptions.push(profileSub);
@@ -165,8 +187,8 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
       // Load recent workers
       await this.loadRecentWorkers();
 
-      // Load notifications
-      this.loadNotifications();
+      // Load dashboard notifications
+      this.loadDashboardNotifications();
 
       this.isLoading = false;
     } catch (error) {
@@ -233,7 +255,7 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
     }
   }
 
-  private loadNotifications() {
+  private loadDashboardNotifications() {
     if (!this.userProfile?.uid) return;
 
     const notificationsSub = this.dashboardService
@@ -390,5 +412,306 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
     // Replace with a fallback image when the original fails to load
     event.target.src = 'assets/ads/fallback-ad.jpg';
     console.log(`Failed to load ad image: ${ad.imageUrl}`);
+  }
+
+  // Notification methods
+  private setupBookingNotificationsMonitoring() {
+    if (!this.userProfile?.uid) return;
+
+    // Monitor both bookings and quickbookings collections
+    const bookingsRef = collection(this.firestore, 'bookings');
+    const quickBookingsRef = collection(this.firestore, 'quickbookings');
+
+    // Query for bookings where clientId matches and status changed to 'accepted'
+    const bookingsQuery = query(
+      bookingsRef,
+      where('clientId', '==', this.userProfile.uid),
+      where('status', 'in', ['accepted', 'on-the-way', 'in-progress'])
+    );
+
+    // Query for quick bookings
+    const quickBookingsQuery = query(
+      quickBookingsRef,
+      where('clientId', '==', this.userProfile.uid),
+      where('status', 'in', ['accepted', 'on-the-way', 'in-progress'])
+    );
+
+    // Listen for booking changes
+    const unsubscribeBookings = onSnapshot(
+      bookingsQuery,
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'modified' || change.type === 'added') {
+            const bookingData = change.doc.data();
+            const bookingId = change.doc.id;
+
+            // Check if we've already notified about this status change
+            const notificationKey = `${bookingId}-${bookingData['status']}`;
+            if (this.notifiedBookingIds.has(notificationKey)) {
+              return;
+            }
+
+            // Only notify if status is accepted or in-progress
+            if (
+              bookingData['status'] === 'accepted' ||
+              bookingData['status'] === 'in-progress'
+            ) {
+              this.notifiedBookingIds.add(notificationKey);
+              this.createBookingAcceptedNotification(
+                bookingData,
+                bookingId,
+                'booking'
+              );
+            }
+          }
+        });
+      },
+      (error) => {
+        console.error('Error monitoring bookings:', error);
+      }
+    );
+
+    // Listen for quick booking changes
+    const unsubscribeQuickBookings = onSnapshot(
+      quickBookingsQuery,
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'modified' || change.type === 'added') {
+            const bookingData = change.doc.data();
+            const bookingId = change.doc.id;
+
+            // Check if we've already notified about this status change
+            const notificationKey = `${bookingId}-${bookingData['status']}`;
+            if (this.notifiedBookingIds.has(notificationKey)) {
+              return;
+            }
+
+            // Only notify if status is accepted or in-progress
+            if (
+              bookingData['status'] === 'accepted' ||
+              bookingData['status'] === 'in-progress'
+            ) {
+              this.notifiedBookingIds.add(notificationKey);
+              this.createBookingAcceptedNotification(
+                bookingData,
+                bookingId,
+                'quick'
+              );
+            }
+          }
+        });
+      },
+      (error) => {
+        console.error('Error monitoring quick bookings:', error);
+      }
+    );
+
+    // Store unsubscribe functions
+    this.subscriptions.push({ unsubscribe: unsubscribeBookings } as any);
+    this.subscriptions.push({ unsubscribe: unsubscribeQuickBookings } as any);
+  }
+
+  private async createBookingAcceptedNotification(
+    booking: any,
+    bookingId: string,
+    type: string
+  ) {
+    try {
+      // Helper function to remove undefined values
+      const removeUndefined = (obj: any): any => {
+        const cleaned: any = {};
+        for (const key in obj) {
+          if (obj[key] !== undefined) {
+            cleaned[key] = obj[key];
+          }
+        }
+        return cleaned;
+      };
+
+      const notificationRef = collection(
+        this.firestore,
+        `users/${this.userProfile!.uid}/notifications`
+      );
+
+      const workerName =
+        booking.assignedWorkerName ||
+        booking.workerDetails?.name ||
+        booking.workerName ||
+        'Worker';
+
+      const serviceName =
+        booking.categoryName ||
+        booking.neededService ||
+        booking.subService ||
+        'Service';
+
+      const notificationData = {
+        title: '🎉 Your booking has been accepted!',
+        message: `${workerName} has accepted your ${serviceName} booking.`,
+        userId: this.userProfile!.uid,
+        type: 'worker_found' as const,
+        priority: 'high' as const,
+        isRead: false,
+        createdAt: Timestamp.now(),
+        metadata: {
+          bookingId: bookingId,
+          bookingType: type,
+          workerId: booking.assignedWorker,
+          workerName: workerName,
+        },
+        ...removeUndefined({
+          bookingData: {
+            clientName: booking.clientName,
+            categoryName: booking.categoryName || booking.neededService,
+            subService: booking.subService || booking.specificService,
+            schedule: booking.scheduledDate,
+            scheduleTime: booking.scheduledTime,
+            location: booking.location,
+            notes: booking.notes || booking.additionalNotes,
+            workerName: workerName,
+          },
+        }),
+      };
+
+      await addDoc(notificationRef, notificationData);
+      console.log('✅ Created booking accepted notification:', bookingId);
+
+      // Update unread count
+      this.unreadCount++;
+    } catch (error) {
+      console.error('Error creating booking accepted notification:', error);
+    }
+  }
+
+  openNotificationModal() {
+    this.showNotificationModal = true;
+    document.body.style.overflow = 'hidden';
+
+    // Load client notifications for the modal
+    this.loadClientNotificationsForModal();
+  }
+
+  closeNotificationModal(event?: Event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.showNotificationModal = false;
+    document.body.style.overflow = '';
+  }
+
+  private async loadClientNotificationsForModal() {
+    if (!this.userProfile?.uid) return;
+
+    const notificationsRef = collection(
+      this.firestore,
+      `users/${this.userProfile.uid}/notifications`
+    );
+    const q = query(notificationsRef, orderBy('createdAt', 'desc'));
+
+    try {
+      onSnapshot(q, (snapshot) => {
+        this.clientNotifications = snapshot.docs.map(
+          (doc) =>
+            ({
+              id: doc.id,
+              ...doc.data(),
+            } as NotificationData)
+        );
+
+        this.unreadCount = this.clientNotifications.filter(
+          (n) => !n.isRead
+        ).length;
+      });
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  }
+
+  async markNotificationAsRead(notificationId: string) {
+    if (!this.userProfile?.uid) return;
+
+    try {
+      const notificationRef = doc(
+        this.firestore,
+        `users/${this.userProfile.uid}/notifications/${notificationId}`
+      );
+      await updateDoc(notificationRef, { isRead: true });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  }
+
+  async onNotificationClick(notification: NotificationData) {
+    // Mark as read
+    if (!notification.isRead && notification.id) {
+      await this.markNotificationAsRead(notification.id);
+    }
+
+    // Navigate based on notification type
+    if (notification.metadata?.bookingId) {
+      const metadata = notification.metadata as any;
+      const bookingType = metadata.bookingType || 'booking';
+
+      if (bookingType === 'quick') {
+        this.router.navigate(['/pages/quick-booking-details'], {
+          queryParams: { bookingId: notification.metadata.bookingId },
+        });
+      } else {
+        // Navigate to booking details
+        this.router.navigate(['/pages/book-service'], {
+          queryParams: { bookingId: notification.metadata.bookingId },
+        });
+      }
+
+      this.closeNotificationModal();
+    }
+  }
+
+  getNotificationIcon(type: string): string {
+    switch (type) {
+      case 'worker_found':
+      case 'booking':
+        return 'checkmark-circle';
+      case 'booking_update':
+        return 'information-circle';
+      case 'payment':
+        return 'card';
+      case 'promotion':
+        return 'gift';
+      default:
+        return 'notifications';
+    }
+  }
+
+  getNotificationDate(date: Date | Timestamp): Date {
+    if (date instanceof Date) {
+      return date;
+    } else if (date && typeof (date as any).toDate === 'function') {
+      return (date as Timestamp).toDate();
+    }
+    return new Date();
+  }
+
+  getTimeAgo(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) {
+      return 'Just now';
+    } else if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays}d ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
   }
 }

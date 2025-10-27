@@ -24,16 +24,20 @@
             <div class="flex-1">
               <p class="font-bold text-sm">🚨 Quick Booking Alert!</p>
               <p class="text-xs text-orange-100">
-                {{ quickBookingNotification.subService }} - {{ quickBookingNotification.clientDetails.name }}
+                {{ quickBookingNotification.subService }} - {{
+                quickBookingNotification.clientDetails.name }}
               </p>
             </div>
           </div>
           <div class="text-right">
             <p class="text-xs text-orange-100">You'll earn</p>
-            <p class="font-bold text-lg text-white">₱{{ quickBookingNotification.pricing.workerEarning.toLocaleString() }}</p>
+            <p class="font-bold text-lg text-white">
+              ₱{{
+              quickBookingNotification.pricing.workerEarning.toLocaleString() }}
+            </p>
           </div>
         </div>
-        
+
         <!-- Location -->
         <div class="mb-3">
           <div class="flex items-center text-xs text-orange-100">
@@ -41,26 +45,39 @@
             <span>{{ quickBookingNotification.clientLocation }}</span>
           </div>
         </div>
-        
+
         <!-- Price Breakdown -->
         <div class="bg-white/10 rounded-lg p-2 mb-3">
           <p class="text-xs font-semibold text-white mb-1">Price Breakdown:</p>
           <div class="grid grid-cols-2 gap-1 text-xs text-orange-100">
             <span>Base Price:</span>
-            <span class="text-right">₱{{ quickBookingNotification.pricing.basePrice.toLocaleString() }}</span>
+            <span class="text-right"
+              >₱{{ quickBookingNotification.pricing.basePrice.toLocaleString()
+              }}</span
+            >
             <span>Platform Fee:</span>
-            <span class="text-right">₱{{ quickBookingNotification.pricing.platformFee.toLocaleString() }}</span>
+            <span class="text-right"
+              >₱{{ quickBookingNotification.pricing.platformFee.toLocaleString()
+              }}</span
+            >
             <span>Transportation:</span>
-            <span class="text-right">₱{{ quickBookingNotification.pricing.transportationFee.toLocaleString() }}</span>
+            <span class="text-right"
+              >₱{{
+              quickBookingNotification.pricing.transportationFee.toLocaleString()
+              }}</span
+            >
             <div class="col-span-2 border-t border-white/20 pt-1 mt-1">
               <div class="flex justify-between font-semibold text-white">
                 <span>Total:</span>
-                <span>₱{{ quickBookingNotification.pricing.total.toLocaleString() }}</span>
+                <span
+                  >₱{{ quickBookingNotification.pricing.total.toLocaleString()
+                  }}</span
+                >
               </div>
             </div>
           </div>
         </div>
-        
+
         <!-- Action Buttons -->
         <div class="flex space-x-2">
           <button
@@ -264,9 +281,42 @@
                   </span>
                 </div>
               </div>
-              <p class="text-sm text-gray-600 leading-relaxed mb-2">
+              <p
+                class="text-sm text-gray-600 leading-relaxed mb-2 whitespace-pre-line"
+              >
                 {{ notification.message }}
               </p>
+
+              <!-- Show booking details if available -->
+              <div
+                *ngIf="hasBookingData(notification)"
+                class="mt-2 bg-blue-50 rounded-lg p-2 border border-blue-200"
+              >
+                <p class="text-xs font-semibold text-blue-800 mb-1">
+                  Booking Details:
+                </p>
+                <div class="space-y-1 text-xs text-blue-700">
+                  <p *ngIf="getBookingDataValue(notification, 'clientName')">
+                    <ion-icon name="person-outline" class="mr-1"></ion-icon>
+                    Client: {{ getBookingDataValue(notification, 'clientName')
+                    }}
+                  </p>
+                  <p *ngIf="getBookingDataValue(notification, 'categoryName')">
+                    <ion-icon name="briefcase-outline" class="mr-1"></ion-icon>
+                    Service: {{ getBookingDataValue(notification,
+                    'categoryName') }}
+                  </p>
+                  <p *ngIf="getBookingDataValue(notification, 'subService')">
+                    <ion-icon name="construct-outline" class="mr-1"></ion-icon>
+                    Details: {{ getBookingDataValue(notification, 'subService')
+                    }}
+                  </p>
+                  <p *ngIf="getBookingDataValue(notification, 'schedule')">
+                    <ion-icon name="calendar-outline" class="mr-1"></ion-icon>
+                    Schedule: {{ formatNotificationSchedule(notification) }}
+                  </p>
+                </div>
+              </div>
 
               <!-- Action buttons for job requests -->
               <div
@@ -513,7 +563,7 @@
             <span class="text-xs text-emerald-100 mt-1">Review requests</span>
           </button>
         </div>
-        
+
         <!-- Additional Quick Actions Row -->
         <div class="grid grid-cols-1 gap-4">
           <button
@@ -526,7 +576,9 @@
               <ion-icon name="time-outline" class="text-2xl"></ion-icon>
             </div>
             <span class="font-semibold text-sm">Quick Booking History</span>
-            <span class="text-xs text-purple-100 mt-1">View completed quick bookings</span>
+            <span class="text-xs text-purple-100 mt-1"
+              >View completed quick bookings</span
+            >
           </button>
         </div>
       </div>
@@ -684,16 +736,17 @@
         No Quick Bookings Available
       </h3>
       <p class="text-gray-600 text-sm mb-6 max-w-md mx-auto leading-relaxed">
-        No quick bookings are available at the moment. Make sure your
-        availability is ON and location tracking is active to receive new
-        booking notifications.
+        The system is automatically monitoring for new quick bookings in
+        real-time. Make sure your availability is ON and location tracking is
+        active to receive instant booking notifications when they become
+        available.
       </p>
       <button
         (click)="refreshAvailableBookings()"
         class="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center mx-auto"
       >
         <ion-icon name="refresh" class="mr-2"></ion-icon>
-        Check for Quick Bookings
+        Refresh List
       </button>
     </div>
 
