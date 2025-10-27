@@ -3,7 +3,22 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 import { LoadingController, ToastController } from '@ionic/angular';
 import { Geolocation } from '@capacitor/geolocation';
-import { ServiceCategory } from '../select-category/select-category.page';
+// Import and extend ServiceCategory interface
+export interface ServiceCategory {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  description: string;
+  averagePrice: number;
+  serviceChargeRate: number;
+  estimatedDuration: number; // in minutes
+  services: string[];
+  servicesQuickBookingPricing?: number[]; // Array of prices for quick booking
+  servicesQuickBookingUnit?: string[]; // Array of units (per_hour, per_day, etc.)
+  isActive: boolean;
+  createdAt: any;
+}
 
 export interface LocationData {
   latitude: number;
@@ -208,6 +223,65 @@ export class SelectLocationPage implements OnInit {
       position: 'top',
     });
     await toast.present();
+  }
+
+  // Helper method to get service price from servicesQuickBookingPricing
+  getServicePrice(serviceIndex: number): number {
+    if (this.category?.servicesQuickBookingPricing && 
+        this.category.servicesQuickBookingPricing[serviceIndex] !== undefined) {
+      return this.category.servicesQuickBookingPricing[serviceIndex];
+    }
+    // Fallback to average price
+    return this.category?.averagePrice || 0;
+  }
+
+  // Helper method to get formatted unit from servicesQuickBookingUnit
+  getServiceUnit(serviceIndex: number): string {
+    if (this.category?.servicesQuickBookingUnit && 
+        this.category.servicesQuickBookingUnit[serviceIndex]) {
+      const unit = this.category.servicesQuickBookingUnit[serviceIndex];
+      // Convert unit format: per_hour -> /hr, per_day -> /day, etc.
+      switch (unit.toLowerCase()) {
+        case 'per_hour':
+          return '/hr';
+        case 'per_day':
+          return '/day';
+        case 'per_week':
+          return '/week';
+        case 'per_month':
+          return '/month';
+        case 'per_project':
+        case 'per_job':
+          return '';
+        default:
+          return `/${unit.replace('per_', '')}`;
+      }
+    }
+    return '/hr'; // Default fallback
+  }
+
+  // Helper method to get price with unit for a specific service
+  getServicePriceWithUnit(service: string): string {
+    const serviceIndex = this.category?.services.indexOf(service) || 0;
+    const price = this.getServicePrice(serviceIndex);
+    const unit = this.getServiceUnit(serviceIndex);
+    return `₱${price.toLocaleString()}${unit}`;
+  }
+
+  // Helper method to get selected service price
+  getSelectedServicePrice(): number {
+    if (!this.selectedService || !this.category) return 0;
+    const serviceIndex = this.category.services.indexOf(this.selectedService);
+    return this.getServicePrice(serviceIndex);
+  }
+
+  // Helper method to get minimum price for category display
+  getCategoryMinimumPrice(): number {
+    if (this.category?.servicesQuickBookingPricing && 
+        this.category.servicesQuickBookingPricing.length > 0) {
+      return Math.min(...this.category.servicesQuickBookingPricing);
+    }
+    return this.category?.averagePrice || 0;
   }
 
   // Helper method to format price

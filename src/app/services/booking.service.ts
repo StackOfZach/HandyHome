@@ -31,10 +31,13 @@ export interface BookingData {
   id?: string;
   clientId: string;
   clientName?: string;
+  clientPhotoUrl?: string;
   title?: string;
   description?: string;
   category?: string;
   neededService?: string;
+  subService?: string;
+  specificService?: string;
   schedule?: {
     date: string;
     time: string;
@@ -100,6 +103,7 @@ export interface NewBookingData {
   clientId: string;
   serviceId: string;
   serviceName: string;
+  specificService?: string;
   date: Date;
   time: string;
   duration: number;

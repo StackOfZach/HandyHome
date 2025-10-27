@@ -75,7 +75,7 @@
         <!-- Service & Worker Details -->
         <div class="flex-1 min-w-0">
           <h2 class="font-bold text-handy-navy-800 text-lg leading-tight">
-            {{ getBookingTitle() }}
+            {{ getFullServiceTitle() }}
           </h2>
           <p *ngIf="worker" class="text-handy-blue-600 text-sm font-medium">
             {{ worker.fullName }}
@@ -230,6 +230,26 @@
       </h3>
 
       <div class="grid grid-cols-2 gap-3 text-sm">
+        <!-- Service Details -->
+        <div class="col-span-2 mb-3">
+          <div class="flex items-start">
+            <ion-icon
+              name="construct-outline"
+              class="mr-2 text-handy-blue-500 text-base mt-0.5"
+            ></ion-icon>
+            <div class="flex-1">
+              <p class="text-xs text-gray-500">Service Requested</p>
+              <p class="font-medium text-handy-navy-800 mb-1">
+                {{ getBookingTitle() }}
+              </p>
+              <p *ngIf="getSpecificService()" class="text-sm text-handy-blue-600 bg-handy-blue-50 px-2 py-1 rounded-md inline-block">
+                <ion-icon name="arrow-forward-outline" class="mr-1 text-xs"></ion-icon>
+                {{ getSpecificService() }}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Date & Time -->
         <div *ngIf="getBookingDate() && getBookingTime()" class="col-span-2">
           <div class="flex items-center">

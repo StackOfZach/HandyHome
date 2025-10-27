@@ -63,9 +63,9 @@
               {{ category.name }}
             </h2>
             <div class="flex items-center text-xs text-handy-navy-500 mt-1">
-              <span>{{ formatPrice(category.averagePrice) }}</span>
+              <span>from {{ formatPrice(getCategoryMinimumPrice()) }}</span>
               <span class="mx-2">•</span>
-              <span>{{ category.estimatedDuration }}min</span>
+              <span>{{ category.services.length }} services</span>
             </div>
           </div>
           <!-- Top accent border -->
@@ -90,8 +90,8 @@
             name="serviceSelection"
           >
             <ion-item
-              *ngFor="let service of category.services"
-              class="border-b border-gray-100 last:border-b-0 min-h-[50px]"
+              *ngFor="let service of category.services; let i = index"
+              class="border-b border-gray-100 last:border-b-0 min-h-[60px]"
               button="false"
             >
               <ion-radio
@@ -100,10 +100,20 @@
                 name="service-radio"
               ></ion-radio>
               <ion-label class="ml-2">
-                <h4 class="font-medium text-handy-navy-800 text-sm">
-                  {{ service }}
-                </h4>
-                <p class="text-xs text-handy-navy-500">Professional service</p>
+                <div class="flex justify-between items-center w-full">
+                  <div class="flex-1">
+                    <h4 class="font-medium text-handy-navy-800 text-sm">
+                      {{ service }}
+                    </h4>
+                    <p class="text-xs text-handy-navy-500">Professional service</p>
+                  </div>
+                  <div class="text-right ml-3">
+                    <p class="font-bold text-handy-navy-800 text-sm">
+                      {{ getServicePriceWithUnit(service) }}
+                    </p>
+                    <p class="text-xs text-handy-navy-500">starting price</p>
+                  </div>
+                </div>
               </ion-label>
             </ion-item>
           </ion-radio-group>
@@ -203,15 +213,15 @@
             >
           </div>
           <div class="flex justify-between">
-            <span class="text-handy-navy-600">Duration:</span>
+            <span class="text-handy-navy-600">Starting Price:</span>
             <span class="font-medium text-handy-navy-800"
-              >{{ category.estimatedDuration }}min</span
+              >{{ getServicePriceWithUnit(selectedService) }}</span
             >
           </div>
           <div class="flex justify-between">
-            <span class="text-handy-navy-600">Price:</span>
-            <span class="font-medium text-handy-navy-800"
-              >{{ formatPrice(category.averagePrice) }}</span
+            <span class="text-handy-navy-600">Location:</span>
+            <span class="font-medium text-handy-navy-800 truncate ml-2"
+              >{{ selectedLocation.city || 'Selected' }}</span
             >
           </div>
         </div>

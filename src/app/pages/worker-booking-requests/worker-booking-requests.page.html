@@ -1,55 +1,50 @@
 <ion-content [fullscreen]="true" class="bg-gray-50">
-  <!-- HandyHome Gradient Header -->
+  <!-- Enhanced HandyHome Header -->
   <div
-    class="bg-handy-blue text-white p-4 rounded-b-3xl flex items-center justify-between shadow-lg relative overflow-hidden"
+    class="bg-gradient-to-br from-handy-blue-600 via-handy-blue-500 to-handy-navy-800 text-white p-6 rounded-b-3xl shadow-2xl relative overflow-hidden"
   >
-    <!-- Background Pattern -->
-    <div class="absolute inset-0 opacity-10">
-      <div
-        class="absolute top-2 left-4 w-8 h-8 border-2 border-white rounded-full"
-      ></div>
-      <div
-        class="absolute top-8 right-8 w-4 h-4 border border-white rounded-full"
-      ></div>
-      <div
-        class="absolute bottom-4 left-12 w-6 h-6 border border-white rounded-full"
-      ></div>
+    <!-- Enhanced Background Pattern -->
+    <div class="absolute inset-0 opacity-15">
+      <div class="absolute top-4 left-6 w-12 h-12 border-2 border-white rounded-full animate-pulse"></div>
+      <div class="absolute top-12 right-12 w-6 h-6 border border-white rounded-full floating-animation"></div>
+      <div class="absolute bottom-6 left-16 w-8 h-8 border border-white rounded-full"></div>
+      <div class="absolute top-1/2 right-6 w-4 h-4 bg-handy-yellow-400 rounded-full animate-ping"></div>
     </div>
 
-    <button
-      (click)="goBack()"
-      class="p-2 rounded-xl hover:bg-white/20 transition-all duration-200 relative z-10"
-    >
-      <ion-icon name="arrow-back" size="large"></ion-icon>
-    </button>
-
-    <div class="flex flex-col items-center relative z-10">
-      <div class="flex items-center space-x-2 mb-1">
-        <ion-icon
-          name="briefcase"
-          class="text-handy-yellow-400 floating-animation text-xl"
-        ></ion-icon>
-        <h1 class="text-xl font-bold">Booking Requests</h1>
-      </div>
-      <p class="text-xs text-blue-100">Manage your service requests</p>
-    </div>
-
-    <div class="flex items-center space-x-2 relative z-10">
-      <ion-badge
-        class="bg-handy-yellow-500 text-handy-navy-800 font-bold animate-pulse"
-        *ngIf="bookings.length > 0"
-      >
-        {{bookings.length}}
-      </ion-badge>
+    <!-- Header Content -->
+    <div class="flex items-center justify-between relative z-10">
       <button
-        class="p-2 rounded-xl hover:bg-white/20 transition-all duration-200"
+        (click)="goBack()"
+        class="p-3 rounded-2xl bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm border border-white/20"
       >
-        <ion-icon
-          name="notifications"
-          size="large"
-          class="text-handy-yellow-400"
-        ></ion-icon>
+        <ion-icon name="arrow-back" size="large" class="text-white"></ion-icon>
       </button>
+
+      <div class="flex flex-col items-center">
+        <div class="flex items-center space-x-3 mb-2">
+          <div class="w-10 h-10 bg-handy-yellow-400 rounded-xl flex items-center justify-center shadow-lg">
+            <ion-icon name="clipboard" class="text-handy-navy-800 text-xl font-bold"></ion-icon>
+          </div>
+          <h1 class="text-2xl font-bold tracking-tight">Booking Requests</h1>
+        </div>
+        <p class="text-sm text-blue-100 font-medium">Review and manage incoming requests</p>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <div class="relative">
+          <ion-badge
+            class="bg-handy-yellow-500 text-handy-navy-800 font-bold text-sm px-3 py-1 animate-bounce"
+            *ngIf="bookings.length > 0"
+          >
+            {{bookings.length}} New
+          </ion-badge>
+        </div>
+        <button
+          class="p-3 rounded-2xl bg-white/10 hover:bg-white/20 transition-all duration-300 backdrop-blur-sm border border-white/20"
+        >
+          <ion-icon name="notifications" size="large" class="text-handy-yellow-400"></ion-icon>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -63,7 +58,7 @@
       <div class="relative">
         <ion-spinner
           name="crescent"
-          class="text-handy-blue-500 mb-4"
+          class="loading-spinner text-handy-blue-500 mb-4"
           size="large"
         ></ion-spinner>
         <div
@@ -107,235 +102,128 @@
       </div>
     </div>
 
-    <!-- Enhanced Booking Cards -->
-    <div *ngIf="!loading && bookings.length > 0" class="space-y-4">
+    <!-- Compact Booking Request Cards -->
+    <div *ngIf="!loading && bookings.length > 0" class="space-y-3">
       <div
         *ngFor="let booking of bookings"
-        class="bg-white p-5 rounded-2xl shadow-md border border-handy-blue-100 hover:shadow-xl hover:border-handy-blue-200 transition-all duration-300 transform hover:-translate-y-1 hover:bg-gradient-to-br hover:from-white hover:to-handy-blue-50"
+        class="booking-card bg-white rounded-2xl shadow-md border border-handy-blue-100 hover:shadow-lg hover:border-handy-blue-300 transition-all duration-300 transform hover:-translate-y-1 overflow-hidden"
       >
-        <!-- Enhanced Client Info Section -->
-        <div class="flex items-center space-x-4 mb-5">
-          <div class="relative">
-            <!-- Icon Avatar -->
-            <div
-              class="w-14 h-14 rounded-full border-3 border-handy-yellow-400 bg-gradient-to-br from-handy-blue-500 to-handy-navy-800 flex items-center justify-center shadow-md"
-            >
-              <ion-icon name="person" class="text-white text-2xl"></ion-icon>
-            </div>
-            <div
-              class="absolute -top-1 -right-1 w-5 h-5 bg-green-400 border-2 border-white rounded-full"
-            ></div>
-          </div>
-          <div class="flex-1">
-            <h3 class="font-bold text-handy-navy-800 flex items-center text-lg">
-              <ion-icon
-                name="person-circle"
-                class="text-handy-blue-500 mr-2 text-base"
-              ></ion-icon>
-              {{ getClientName(booking) }}
-            </h3>
-            <p class="text-xs text-gray-500 flex items-center mt-2">
-              <ion-icon
-                name="time-outline"
-                class="text-handy-blue-400 mr-2 text-sm"
-              ></ion-icon>
-              Posted {{ getFormattedDate(booking.createdAt) }}
-            </p>
-          </div>
-          <div class="text-right">
-            <ion-badge
-              class="bg-handy-yellow-500 text-handy-navy-800 font-bold text-xs px-2 py-1"
-            >
-              NEW
-            </ion-badge>
-          </div>
-        </div>
-
-        <!-- Enhanced Booking Details -->
-        <div
-          class="bg-gradient-to-r from-handy-blue-50 to-handy-yellow-50 rounded-xl p-4 mb-5 border border-handy-blue-100"
-        >
-          <div class="space-y-3">
-            <div
-              *ngIf="booking.description || booking.additionalDetails"
-              class="flex items-start"
-            >
-              <div
-                class="w-8 h-8 bg-handy-blue-100 rounded-lg flex items-center justify-center mr-3 mt-0.5 flex-shrink-0"
-              >
-                <ion-icon
-                  name="document-text"
-                  class="text-handy-blue-500 text-sm"
-                ></ion-icon>
-              </div>
-              <div class="flex-1">
-                <p class="text-xs font-semibold text-handy-navy-600 mb-1">
-                  Additional Details
-                </p>
-                <p class="text-sm text-gray-700 leading-relaxed">
-                  {{ booking.additionalDetails || booking.description || 'No
-                  additional details provided' }}
-                </p>
+        <!-- Compact Client Header Section -->
+        <div class="bg-gradient-to-r from-handy-blue-50 to-handy-yellow-50 p-4 border-b border-handy-blue-100">
+          <div class="flex items-center space-x-3">
+            <!-- Client Image -->
+            <div class="relative flex-shrink-0">
+              <img
+                [src]="getClientPhotoUrl(booking)"
+                [alt]="getClientName(booking)"
+                class="client-image w-12 h-12 rounded-full border-3 border-white shadow-md object-cover"
+                onerror="this.src='assets/icon/default-avatar.jpg'"
+              />
+              <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
+                <ion-icon name="checkmark" class="text-white text-xs"></ion-icon>
               </div>
             </div>
-
-            <div class="flex items-start">
-              <div
-                class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 mt-0.5 flex-shrink-0"
-              >
-                <ion-icon
-                  name="construct"
-                  class="text-purple-500 text-sm"
-                ></ion-icon>
-              </div>
-              <div class="flex-1">
-                <p class="text-xs font-semibold text-handy-navy-600 mb-1">
-                  Requested Service
-                </p>
-                <p
-                  class="text-sm text-gray-700 font-medium bg-purple-50 px-3 py-2 rounded-lg border border-purple-100"
-                >
-                  {{ getServiceName(booking) }}
-                </p>
-              </div>
+            
+            <!-- Client Info -->
+            <div class="flex-1 min-w-0">
+              <h3 class="text-lg font-bold text-handy-navy-800 truncate">
+                {{ getClientName(booking) }}
+              </h3>
+              <p class="text-xs text-gray-600 flex items-center">
+                <ion-icon name="calendar-outline" class="text-handy-blue-500 mr-1 text-sm"></ion-icon>
+                {{ getRequestDate(booking) }}
+              </p>
             </div>
-
-            <div class="flex items-start">
-              <div
-                class="w-8 h-8 bg-handy-yellow-100 rounded-lg flex items-center justify-center mr-3 mt-0.5 flex-shrink-0"
-              >
-                <ion-icon
-                  name="calendar"
-                  class="text-handy-yellow-600 text-sm"
-                ></ion-icon>
-              </div>
-              <div class="flex-1">
-                <p class="text-xs font-semibold text-handy-navy-600 mb-1">
-                  Preferred Schedule
-                </p>
-                <div
-                  class="bg-handy-yellow-50 px-3 py-2 rounded-lg border border-handy-yellow-100"
-                >
-                  <p
-                    class="text-sm text-gray-700 font-medium flex items-center"
-                  >
-                    <ion-icon
-                      name="calendar-outline"
-                      class="mr-1 text-handy-yellow-600"
-                    ></ion-icon>
-                    {{ formatScheduleDate(booking) }}
-                  </p>
-                  <p class="text-sm text-gray-600 flex items-center mt-1">
-                    <ion-icon
-                      name="time-outline"
-                      class="mr-1 text-handy-yellow-600"
-                    ></ion-icon>
-                    {{ getPreferredTime(booking) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div
-              *ngIf="booking.locations && booking.locations.length > 0"
-              class="flex items-start"
-            >
-              <div
-                class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3 mt-0.5 flex-shrink-0"
-              >
-                <ion-icon
-                  name="location"
-                  class="text-red-500 text-sm"
-                ></ion-icon>
-              </div>
-              <div class="flex-1">
-                <p class="text-xs font-semibold text-handy-navy-600 mb-1">
-                  Service Location
-                </p>
-                <p class="text-sm text-gray-700 leading-relaxed">
-                  {{ booking.locations[0].address }}
-                </p>
-              </div>
+            
+            <!-- Status Badge -->
+            <div class="flex-shrink-0">
+              <ion-badge class="status-badge bg-gradient-to-r from-orange-400 to-red-400 text-white font-bold px-3 py-1 rounded-full shadow-sm text-xs">
+                <ion-icon name="time" class="mr-1"></ion-icon>
+                PENDING
+              </ion-badge>
             </div>
           </div>
         </div>
 
-        <!-- Enhanced Price and Actions Section -->
-        <div class="flex flex-col space-y-4">
-          <!-- Price Section -->
-          <div
-            class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 border border-green-100"
-          >
-            <div class="flex items-center justify-center">
-              <div class="flex items-center space-x-2">
-                <div
-                  class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center"
-                >
-                  <ion-icon
-                    name="cash"
-                    class="text-green-500 text-sm"
-                  ></ion-icon>
-                </div>
-                <div class="text-center">
-                  <p class="text-xs font-semibold text-gray-600 mb-1">
-                    Client Budget
-                  </p>
-                  <div class="flex flex-col items-center space-y-1">
-                    <span class="text-lg font-bold text-green-600">
-                      ₱{{ getPriceRange(booking).min | number:'1.0-0' }}
-                      <span
-                        *ngIf="getPriceRange(booking).min !== getPriceRange(booking).max"
-                        class="text-sm font-medium"
-                      >
-                        - ₱{{ getPriceRange(booking).max | number:'1.0-0' }}
-                      </span>
-                    </span>
-                    <span class="text-xs text-gray-500 font-medium"
-                      >Budget Range</span
-                    >
-                  </div>
-                </div>
+        <!-- Compact Request Details Section -->
+        <div class="p-4 space-y-3">
+          <!-- Service Information -->
+          <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-3 border border-purple-100">
+            <div class="flex items-center space-x-2 mb-2">
+              <div class="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center">
+                <ion-icon name="construct" class="text-white text-sm"></ion-icon>
               </div>
+              <h4 class="text-sm font-bold text-handy-navy-800">Service</h4>
+            </div>
+            <div class="space-y-1">
+              <p class="text-base font-semibold text-purple-700">
+                {{ booking.category || booking.neededService || booking.title || 'Service Request' }}
+              </p>
+              <p *ngIf="getSpecificService(booking)" class="text-sm text-handy-blue-600 bg-handy-blue-50 px-2 py-1 rounded-md inline-block">
+                <ion-icon name="arrow-forward-outline" class="mr-1 text-xs"></ion-icon>
+                {{ getSpecificService(booking) }}
+              </p>
             </div>
           </div>
 
-          <!-- Action Buttons -->
+          <!-- Schedule & Location Row -->
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Schedule Information -->
+            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-3 border border-blue-100">
+              <div class="flex items-center space-x-2 mb-2">
+                <div class="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <ion-icon name="calendar" class="text-white text-sm"></ion-icon>
+                </div>
+                <h4 class="text-sm font-bold text-handy-navy-800">Schedule</h4>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-gray-700 flex items-center">
+                  <ion-icon name="calendar-outline" class="text-blue-500 mr-1"></ion-icon>
+                  {{ formatScheduleDate(booking) }}
+                </p>
+                <p class="text-xs font-medium text-gray-700 flex items-center">
+                  <ion-icon name="time-outline" class="text-blue-500 mr-1"></ion-icon>
+                  {{ getPreferredTime(booking) }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Service Location -->
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 border border-green-100">
+              <div class="flex items-center space-x-2 mb-2">
+                <div class="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center">
+                  <ion-icon name="location" class="text-white text-sm"></ion-icon>
+                </div>
+                <h4 class="text-sm font-bold text-handy-navy-800">Location</h4>
+              </div>
+              <p class="text-xs font-medium text-gray-700 flex items-start">
+                <ion-icon name="pin" class="text-green-500 mr-1 mt-0.5 flex-shrink-0"></ion-icon>
+                <span class="line-clamp-2">{{ getServiceLocation(booking) }}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Action Buttons Section -->
+        <div class="px-4 pb-4">
           <div class="flex space-x-3">
             <button
               (click)="acceptBooking(booking.id!)"
-              class="flex-1 bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 hover:from-handy-blue-600 hover:to-handy-blue-700 text-white px-4 py-3 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2 font-semibold"
+              class="action-button flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-3 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 font-semibold text-sm"
             >
-              <ion-icon name="checkmark-circle" class="text-base"></ion-icon>
-              <span>Accept Request</span>
+              <ion-icon name="checkmark-circle" class="text-lg"></ion-icon>
+              <span>Accept</span>
             </button>
             <button
               (click)="rejectBooking(booking.id!)"
-              class="bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white px-4 py-3 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2 font-semibold"
+              class="action-button flex-1 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white px-4 py-3 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 font-semibold text-sm"
             >
-              <ion-icon name="close-circle" class="text-base"></ion-icon>
+              <ion-icon name="close-circle" class="text-lg"></ion-icon>
               <span>Decline</span>
             </button>
           </div>
         </div>
 
-        <!-- Enhanced Status Indicator -->
-        <div class="mt-4 pt-4 border-t border-handy-blue-100">
-          <div class="flex items-center justify-center">
-            <div
-              class="flex items-center space-x-2 bg-gradient-to-r from-orange-50 to-yellow-50 px-4 py-2 rounded-full border border-orange-100"
-            >
-              <div class="relative">
-                <div class="w-2 h-2 bg-orange-400 rounded-full"></div>
-                <div
-                  class="absolute inset-0 w-2 h-2 bg-orange-400 rounded-full animate-ping"
-                ></div>
-              </div>
-              <span class="text-orange-600 font-semibold text-sm"
-                >Awaiting Your Response</span
-              >
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 

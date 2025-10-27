@@ -24,6 +24,16 @@ interface BookingHistoryItem {
   status: 'draft' | 'pending' | 'accepted' | 'completed' | 'cancelled';
   createdAt: any;
   updatedAt: any;
+  calculatedPayment?: {
+    baseAmount?: number;
+    totalHours?: number;
+    hourlyRate?: number;
+    serviceFee?: number;
+    transportationFee?: number;
+    totalAmount?: number;
+    actualDuration?: string;
+    billingDuration?: string;
+  };
 }
 
 @Component({
@@ -246,5 +256,40 @@ export class BookingHistoryPage implements OnInit {
 
   trackByBookingId(index: number, booking: BookingHistoryItem): string {
     return booking.id;
+  }
+
+  // Get the total price including service fee and transportation fee
+  getTotalPrice(booking: BookingHistoryItem): string {
+    // If booking has calculated payment (completed bookings), show the actual total
+    if (booking.calculatedPayment?.totalAmount) {
+      return `₱${booking.calculatedPayment.totalAmount.toLocaleString()}`;
+    }
+    
+    // For pending/active bookings, calculate estimated total from base price
+    let basePrice = 0;
+    
+    if (booking.minBudget && booking.maxBudget) {
+      // Use average of min and max budget
+      basePrice = (booking.minBudget + booking.maxBudget) / 2;
+    } else if (booking.priceRange) {
+      basePrice = booking.priceRange;
+    } else {
+      return 'Price TBD';
+    }
+    
+    // Calculate estimated total with fees (10% service fee + ₱50 transportation)
+    const serviceFee = basePrice * 0.10;
+    const transportationFee = 50;
+    const estimatedTotal = basePrice + serviceFee + transportationFee;
+    
+    return `₱${estimatedTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  }
+
+  // Get price label to show whether it's actual or estimated
+  getPriceLabel(booking: BookingHistoryItem): string {
+    if (booking.calculatedPayment?.totalAmount) {
+      return 'Total Paid';
+    }
+    return 'Est. Total';
   }
 }

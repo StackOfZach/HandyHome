@@ -18,8 +18,30 @@ import {
 } from '@ionic/angular';
 import { AuthService } from '../../../services/auth.service';
 import { WorkerMatchingService } from '../../../services/worker-matching.service';
-import { ServiceCategory } from '../select-category/select-category.page';
-import { LocationData } from '../select-location/select-location.page';
+// Import and extend ServiceCategory interface to match select-location
+export interface ServiceCategory {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  description: string;
+  averagePrice: number;
+  serviceChargeRate: number;
+  estimatedDuration: number; // in minutes
+  services: string[];
+  servicesQuickBookingPricing?: number[]; // Array of prices for quick booking
+  servicesQuickBookingUnit?: string[]; // Array of units (per_hour, per_day, etc.)
+  isActive: boolean;
+  createdAt: any;
+}
+
+export interface LocationData {
+  latitude: number;
+  longitude: number;
+  address: string;
+  city?: string;
+  province?: string;
+}
 
 export interface BookingData {
   clientId: string;
@@ -75,7 +97,8 @@ export class ConfirmBookingPage implements OnInit {
 
   // Pricing calculation
   basePrice: number = 0;
-  serviceCharge: number = 0;
+  platformFee: number = 0;
+  transportationFee: number = 50; // Fixed transportation fee
   totalPrice: number = 0;
 
   isLoading = false;
@@ -118,17 +141,19 @@ export class ConfirmBookingPage implements OnInit {
   }
 
   calculatePricing() {
-    if (!this.category) return;
+    if (!this.category || !this.selectedService) return;
 
-    // Use default price of 500 if not set by admin
-    this.basePrice = this.category.averagePrice || 500;
-    // Service charge is 10% of base price
-    this.serviceCharge = Math.round(
+    // Get service-specific price from servicesQuickBookingPricing
+    const serviceIndex = this.category.services.indexOf(this.selectedService);
+    this.basePrice = this.getServicePrice(serviceIndex);
+    
+    // Platform fee is 10% of base price
+    this.platformFee = Math.round(
       this.basePrice * (this.category.serviceChargeRate || 0.1)
     );
-    // Additional flat fee of ₱50
-    const additionalFee = 50;
-    this.totalPrice = this.basePrice + this.serviceCharge + additionalFee;
+    
+    // Calculate total: base price + platform fee + transportation fee
+    this.totalPrice = this.basePrice + this.platformFee + this.transportationFee;
   }
 
   async confirmBooking() {
@@ -190,7 +215,7 @@ export class ConfirmBookingPage implements OnInit {
         },
         pricing: {
           basePrice: this.basePrice,
-          serviceCharge: this.serviceCharge,
+          serviceCharge: this.platformFee,
           total: this.totalPrice,
         },
         estimatedDuration: this.category!.estimatedDuration || 60,
@@ -326,6 +351,74 @@ export class ConfirmBookingPage implements OnInit {
     await toast.present();
   }
 
+  // Helper method to get service price from servicesQuickBookingPricing
+  getServicePrice(serviceIndex: number): number {
+    if (this.category?.servicesQuickBookingPricing && 
+        this.category.servicesQuickBookingPricing[serviceIndex] !== undefined) {
+      return this.category.servicesQuickBookingPricing[serviceIndex];
+    }
+    // Fallback to average price
+    return this.category?.averagePrice || 0;
+  }
+
+  // Helper method to get formatted unit from servicesQuickBookingUnit
+  getServiceUnit(serviceIndex: number): string {
+    if (this.category?.servicesQuickBookingUnit && 
+        this.category.servicesQuickBookingUnit[serviceIndex]) {
+      const unit = this.category.servicesQuickBookingUnit[serviceIndex];
+      // Convert unit format: per_hour -> /hr, per_day -> /day, etc.
+      switch (unit.toLowerCase()) {
+        case 'per_hour':
+          return '/hr';
+        case 'per_day':
+          return '/day';
+        case 'per_week':
+          return '/week';
+        case 'per_month':
+          return '/month';
+        case 'per_project':
+        case 'per_job':
+          return '';
+        default:
+          return `/${unit.replace('per_', '')}`;
+      }
+    }
+    return '/hr'; // Default fallback
+  }
+
+  // Helper method to get price with unit for selected service
+  getSelectedServicePriceWithUnit(): string {
+    if (!this.selectedService || !this.category) return '₱0';
+    const serviceIndex = this.category.services.indexOf(this.selectedService);
+    const price = this.getServicePrice(serviceIndex);
+    const unit = this.getServiceUnit(serviceIndex);
+    return `₱${price.toLocaleString()}${unit}`;
+  }
+
+  // Helper method to get formatted address
+  getFormattedAddress(): string {
+    if (!this.selectedLocation) return 'No location selected';
+    
+    // If we have a proper address, use it
+    if (this.selectedLocation.address && 
+        !this.selectedLocation.address.includes('Selected Location') &&
+        !this.selectedLocation.address.match(/^-?\d+\.\d+, -?\d+\.\d+$/)) {
+      return this.selectedLocation.address;
+    }
+    
+    // Otherwise, show city and province if available
+    const parts = [];
+    if (this.selectedLocation.city) parts.push(this.selectedLocation.city);
+    if (this.selectedLocation.province) parts.push(this.selectedLocation.province);
+    
+    if (parts.length > 0) {
+      return parts.join(', ');
+    }
+    
+    // Fallback to coordinates
+    return `${this.selectedLocation.latitude.toFixed(4)}, ${this.selectedLocation.longitude.toFixed(4)}`;
+  }
+
   // Helper method to format price
   formatPrice(price: number): string {
     return `₱${price.toLocaleString()}`;
@@ -334,18 +427,5 @@ export class ConfirmBookingPage implements OnInit {
   // Helper method to get card gradient
   getCardGradient(color: string): string {
     return `linear-gradient(135deg, ${color}, ${color}cc)`;
-  }
-
-  // Helper method to format duration
-  formatDuration(minutes: number): string {
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    if (remainingMinutes === 0) {
-      return `${hours} hr`;
-    }
-    return `${hours} hr ${remainingMinutes} min`;
   }
 }

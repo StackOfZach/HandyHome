@@ -216,11 +216,11 @@ export class WorkerResultsPage implements OnInit {
           const passedChecks = [serviceMatch, isAvailable, timeAvailable, priceMatch, locationMatch].filter(Boolean).length;
           console.log(`🎯 RESULT: ${passedChecks}/5 checks passed`);
 
-          // TEMPORARY: Make matching more lenient for debugging
-          const relaxedMatch = serviceMatch && isAvailable && priceMatch;
-          console.log(`🔧 RELAXED MATCH (service + day + price): ${relaxedMatch}`);
+          // ✅ STRICT MATCH: Include time availability check
+          const fullMatch = serviceMatch && isAvailable && timeAvailable && priceMatch && locationMatch;
+          console.log(`🎯 FULL MATCH (all criteria): ${fullMatch}`);
 
-          if (relaxedMatch) {
+          if (fullMatch) {
             const worker: WorkerProfile = {
               uid: doc.id,
               fullName:
@@ -825,7 +825,20 @@ export class WorkerResultsPage implements OnInit {
    * Check if worker is available at the specific booking time
    */
   workerIsAvailableAtTime(workerData: any): boolean {
-    if (!this.booking || !this.booking.scheduleTime) return true; // If no specific time, assume available
+    if (!this.booking) return true;
+
+    // Get booking time - try scheduleTime first, then extract from scheduleDate
+    let bookingTime: string;
+    if (this.booking.scheduleTime) {
+      bookingTime = this.booking.scheduleTime;
+    } else if (this.booking.scheduleDate) {
+      // Extract time from full datetime for backward compatibility
+      const scheduleDate = new Date(this.booking.scheduleDate.toDate());
+      bookingTime = scheduleDate.toTimeString().slice(0, 5); // Extract HH:MM format
+    } else {
+      console.log('No schedule time information available');
+      return true; // If no time info, assume available
+    }
 
     const scheduleDate = new Date(this.booking.scheduleDate.toDate());
     const dayOfWeek = scheduleDate
@@ -835,27 +848,51 @@ export class WorkerResultsPage implements OnInit {
     const timeAvailability = workerData['timeAvailability'] || {};
     const dayAvailability = timeAvailability[dayOfWeek];
 
-    if (!dayAvailability) {
-      console.log(`No time availability set for ${dayOfWeek}`);
-      return true; // If no specific time availability, assume available
+    if (!dayAvailability || !dayAvailability.startTime || !dayAvailability.endTime) {
+      console.log(`❌ No time availability set for ${dayOfWeek} for worker ${workerData.fullName || 'Unknown'}`);
+      console.log(`⚠️ Worker will be EXCLUDED due to missing availability data`);
+      return false; // If no specific time availability, exclude worker for safety
     }
 
     // Parse booking time and worker availability
-    const bookingTime = this.booking.scheduleTime; // Format: "HH:MM"
     const workerStartTime = dayAvailability.startTime; // Format: "HH:MM"
     const workerEndTime = dayAvailability.endTime; // Format: "HH:MM"
+
+    // Validate time formats
+    if (!this.isValidTimeFormat(bookingTime) || !this.isValidTimeFormat(workerStartTime) || !this.isValidTimeFormat(workerEndTime)) {
+      console.warn(`❌ Invalid time format detected for worker ${workerData.fullName || 'Unknown'}:`);
+      console.warn(`- Booking time: "${bookingTime}"`);
+      console.warn(`- Worker start: "${workerStartTime}"`);
+      console.warn(`- Worker end: "${workerEndTime}"`);
+      console.warn(`⚠️ Worker will be EXCLUDED due to invalid time format`);
+      return false; // Exclude workers with invalid time formats
+    }
 
     // Convert times to minutes for easier comparison
     const bookingMinutes = this.timeToMinutes(bookingTime);
     const startMinutes = this.timeToMinutes(workerStartTime);
     const endMinutes = this.timeToMinutes(workerEndTime);
 
-    const isTimeAvailable = bookingMinutes >= startMinutes && bookingMinutes <= endMinutes;
+    // Handle overnight shifts (e.g., 22:00 - 06:00)
+    let isTimeAvailable: boolean;
+    if (endMinutes < startMinutes) {
+      // Overnight shift: available if booking is after start OR before end
+      isTimeAvailable = bookingMinutes >= startMinutes || bookingMinutes <= endMinutes;
+    } else {
+      // Normal shift: available if booking is between start and end
+      isTimeAvailable = bookingMinutes >= startMinutes && bookingMinutes <= endMinutes;
+    }
     
-    console.log(`Time availability check for ${dayOfWeek}:`);
+    console.log(`⏰ Time availability check for ${workerData.fullName || 'Unknown'} on ${dayOfWeek}:`);
     console.log(`- Booking time: ${bookingTime} (${bookingMinutes} min)`);
     console.log(`- Worker hours: ${workerStartTime} - ${workerEndTime} (${startMinutes} - ${endMinutes} min)`);
-    console.log(`- Available: ${isTimeAvailable}`);
+    console.log(`- Overnight shift: ${endMinutes < startMinutes ? 'Yes' : 'No'}`);
+    console.log(`- Available: ${isTimeAvailable ? '✅ YES' : '❌ NO'}`);
+    
+    if (!isTimeAvailable) {
+      console.log(`🚫 WORKER EXCLUDED: ${workerData.fullName || 'Unknown'} is NOT available at ${bookingTime} on ${dayOfWeek}`);
+      console.log(`   Reason: Booking time ${bookingTime} is outside worker's hours ${workerStartTime}-${workerEndTime}`);
+    }
 
     return isTimeAvailable;
   }
@@ -898,11 +935,55 @@ export class WorkerResultsPage implements OnInit {
   }
 
   /**
+   * Validate time format (HH:MM)
+   */
+  private isValidTimeFormat(timeString: string): boolean {
+    if (!timeString || typeof timeString !== 'string') return false;
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return timeRegex.test(timeString);
+  }
+
+  /**
    * Convert time string (HH:MM) to minutes since midnight
    */
   private timeToMinutes(timeString: string): number {
     const [hours, minutes] = timeString.split(':').map(Number);
     return hours * 60 + minutes;
+  }
+
+  /**
+   * Format time string to 12-hour format with AM/PM
+   */
+  formatTime(timeString: string): string {
+    if (!timeString || !this.isValidTimeFormat(timeString)) return timeString;
+    
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  }
+
+  /**
+   * Get worker availability info for the booking day
+   */
+  getWorkerAvailabilityInfo(workerData: any): string {
+    if (!this.booking || !this.booking.scheduleDate) return '';
+
+    const scheduleDate = new Date(this.booking.scheduleDate.toDate());
+    const dayOfWeek = scheduleDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    
+    const timeAvailability = workerData['timeAvailability'] || {};
+    const dayAvailability = timeAvailability[dayOfWeek];
+    
+    if (!dayAvailability || !dayAvailability.startTime || !dayAvailability.endTime) {
+      return 'Availability not specified';
+    }
+    
+    const startTime = this.formatTime(dayAvailability.startTime);
+    const endTime = this.formatTime(dayAvailability.endTime);
+    
+    return `Available ${startTime} - ${endTime}`;
   }
 
   /**

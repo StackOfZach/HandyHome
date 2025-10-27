@@ -244,16 +244,24 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
   }
 
   getClientPhotoUrl(booking: BookingData): string {
-    return 'assets/icon/default-avatar.png';
+    // Return client photo URL if available, otherwise default avatar
+    return booking.clientPhotoUrl || 'assets/icon/default-avatar.png';
   }
 
   getServiceName(booking: BookingData): string {
-    return (
-      booking.neededService ||
-      booking.title ||
-      booking.category ||
-      'Service Request'
-    );
+    const mainService = booking.category || booking.neededService || booking.title || 'Service Request';
+    const specificService = booking.specificService || booking.subService;
+    
+    // Format as "Main Service - Specific Service" if both exist
+    if (mainService && specificService && mainService !== specificService) {
+      return `${mainService} - ${specificService}`;
+    }
+    
+    return mainService;
+  }
+
+  getSpecificService(booking: BookingData): string | null {
+    return booking.specificService || booking.subService || null;
   }
 
   getPriceRange(booking: BookingData): { min: number; max: number } {
@@ -332,5 +340,33 @@ export class WorkerBookingRequestsPage implements OnInit, OnDestroy {
     }
 
     return 'Time not specified';
+  }
+
+  getServiceLocation(booking: BookingData): string {
+    // Check for different location formats
+    if (booking.locations && booking.locations.length > 0) {
+      return booking.locations[0].address;
+    }
+    
+    if (booking.address) {
+      return booking.address;
+    }
+    
+    if (booking.city) {
+      return booking.city + (booking.zipCode ? `, ${booking.zipCode}` : '');
+    }
+    
+    return 'Location not specified';
+  }
+
+  getRequestDate(booking: BookingData): string {
+    return this.getFormattedDate(booking.createdAt);
+  }
+
+  getPreferredSchedule(booking: BookingData): { date: string; time: string } {
+    return {
+      date: this.formatScheduleDate(booking),
+      time: this.getPreferredTime(booking)
+    };
   }
 }

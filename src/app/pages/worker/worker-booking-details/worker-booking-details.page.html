@@ -1,0 +1,525 @@
+<ion-content [fullscreen]="true" class="bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="flex justify-center items-center h-screen">
+    <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading && booking" class="min-h-screen">
+    <!-- Custom Header -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6 relative overflow-hidden">
+      <!-- Background Pattern -->
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"></div>
+        <div class="absolute top-8 right-8 w-20 h-20 bg-white rounded-full opacity-20"></div>
+        <div class="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full translate-x-20 translate-y-20"></div>
+      </div>
+
+      <div class="relative z-10">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center">
+            <button (click)="goBack()" class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 mr-3">
+              <ion-icon name="arrow-back-outline" class="text-white text-xl"></ion-icon>
+            </button>
+            <div>
+              <h1 class="text-white text-2xl font-bold">Job Details</h1>
+              <p class="text-blue-100 text-sm">{{ booking.subService }}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="px-3 py-1 rounded-full" [class]="getStatusBadgeClass(booking.status)">
+              <span class="text-xs font-semibold">{{ booking.status | titlecase }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Timer Display (if job is in progress) -->
+        <div *ngIf="booking.status === 'in-progress'" class="bg-white/10 rounded-lg p-3 mt-3">
+          <div class="flex items-center justify-center">
+            <ion-icon name="time-outline" class="text-white mr-2"></ion-icon>
+            <span class="text-white font-mono text-lg">{{ elapsedTime }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Information Card -->
+    <div class="px-4 mb-4">
+      <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex-1">
+            <h2 class="text-xl font-bold text-gray-800 mb-2">{{ booking.categoryName }}</h2>
+            <p class="text-gray-600 mb-3">{{ booking.subService }}</p>
+            
+            <!-- Client Information -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+              <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                <ion-icon name="person-outline" class="mr-2 text-blue-600"></ion-icon>
+                Client Information
+              </h3>
+              
+              <div class="flex items-start space-x-3">
+                <!-- Profile Picture -->
+                <div class="flex-shrink-0">
+                  <div *ngIf="booking.clientDetails?.profilePicture; else defaultAvatar" class="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200">
+                    <img [src]="booking.clientDetails?.profilePicture" [alt]="booking.clientDetails?.name" class="w-full h-full object-cover">
+                  </div>
+                  <ng-template #defaultAvatar>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center border-2 border-gray-200">
+                      <ion-icon name="person" class="text-blue-600 text-xl"></ion-icon>
+                    </div>
+                  </ng-template>
+                </div>
+                
+                <!-- Client Details -->
+                <div class="flex-1 space-y-2">
+                  <div class="flex items-center">
+                    <p class="text-sm font-medium text-gray-800">{{ booking.clientDetails?.name || 'Loading...' }}</p>
+                    <ion-icon *ngIf="booking.clientDetails?.verified" name="checkmark-circle" class="ml-2 text-green-500 text-sm" title="Verified Client"></ion-icon>
+                  </div>
+                  
+                  <div *ngIf="booking.clientDetails?.phone" class="flex items-center text-sm text-gray-600">
+                    <ion-icon name="call-outline" class="mr-2 text-gray-400"></ion-icon>
+                    <span>{{ booking.clientDetails?.phone }}</span>
+                  </div>
+                  
+                  <div *ngIf="booking.clientDetails?.email" class="flex items-center text-sm text-gray-600">
+                    <ion-icon name="mail-outline" class="mr-2 text-gray-400"></ion-icon>
+                    <span>{{ booking.clientDetails?.email }}</span>
+                  </div>
+                  
+                  <div *ngIf="booking.clientDetails?.address" class="flex items-center text-sm text-gray-600">
+                    <ion-icon name="home-outline" class="mr-2 text-gray-400"></ion-icon>
+                    <span>{{ booking.clientDetails?.address }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Location -->
+            <div class="bg-blue-50 rounded-lg p-4 mb-4">
+              <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                <ion-icon name="location-outline" class="text-blue-600 mr-2"></ion-icon>
+                Service Location
+              </h3>
+              
+              <!-- Loading state -->
+              <div *ngIf="isLoadingServiceAddress" class="flex items-center justify-center py-4">
+                <ion-spinner name="dots" class="text-blue-600 mr-2"></ion-spinner>
+                <span class="text-sm text-blue-600">Fetching precise address...</span>
+              </div>
+              
+              <!-- Precise address details from Nominatim -->
+              <div *ngIf="!isLoadingServiceAddress && serviceLocationDetails" class="space-y-3">
+                <!-- Main Address -->
+                <div class="bg-white rounded-lg p-3 border border-blue-200">
+                  <h4 class="font-medium text-gray-800 mb-2 flex items-center">
+                    <ion-icon name="home-outline" class="text-blue-600 mr-2 text-sm"></ion-icon>
+                    Complete Address
+                  </h4>
+                  <p class="text-sm text-gray-700 leading-relaxed">{{ serviceLocationDetails.formattedAddress }}</p>
+                </div>
+
+                <!-- Address Components Grid -->
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <!-- Street -->
+                  <div *ngIf="serviceLocationDetails.street" class="bg-white rounded-lg p-2 border border-blue-100">
+                    <p class="text-gray-500 mb-1">Street</p>
+                    <p class="font-medium text-gray-800">{{ serviceLocationDetails.street }}</p>
+                  </div>
+                  
+                  <!-- Barangay -->
+                  <div *ngIf="serviceLocationDetails.barangay" class="bg-white rounded-lg p-2 border border-blue-100">
+                    <p class="text-gray-500 mb-1">Barangay</p>
+                    <p class="font-medium text-gray-800">{{ serviceLocationDetails.barangay }}</p>
+                  </div>
+                  
+                  <!-- City -->
+                  <div *ngIf="serviceLocationDetails.city" class="bg-white rounded-lg p-2 border border-blue-100">
+                    <p class="text-gray-500 mb-1">City</p>
+                    <p class="font-medium text-gray-800">{{ serviceLocationDetails.city }}</p>
+                  </div>
+                  
+                  <!-- Province -->
+                  <div *ngIf="serviceLocationDetails.province" class="bg-white rounded-lg p-2 border border-blue-100">
+                    <p class="text-gray-500 mb-1">Province</p>
+                    <p class="font-medium text-gray-800">{{ serviceLocationDetails.province }}</p>
+                  </div>
+                  
+                  <!-- Postal Code -->
+                  <div *ngIf="serviceLocationDetails.postalCode" class="bg-white rounded-lg p-2 border border-blue-100">
+                    <p class="text-gray-500 mb-1">Postal Code</p>
+                    <p class="font-medium text-gray-800">{{ serviceLocationDetails.postalCode }}</p>
+                  </div>
+                </div>
+
+                <!-- Nearby Landmark -->
+                <div *ngIf="serviceLocationDetails.nearbyLandmark" class="bg-green-50 rounded-lg p-3 border border-green-200">
+                  <h4 class="font-medium text-green-800 mb-1 flex items-center">
+                    <ion-icon name="business-outline" class="text-green-600 mr-2 text-sm"></ion-icon>
+                    Nearby Landmark
+                  </h4>
+                  <p class="text-sm text-green-700">{{ serviceLocationDetails.nearbyLandmark }}</p>
+                </div>
+
+                <!-- GPS Coordinates -->
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <h4 class="font-medium text-gray-800 mb-2 flex items-center">
+                    <ion-icon name="navigate-outline" class="text-gray-600 mr-2 text-sm"></ion-icon>
+                    GPS Coordinates
+                  </h4>
+                  <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <p class="text-gray-500 mb-1">Latitude</p>
+                      <p class="font-mono font-medium text-gray-800">{{ booking.location.lat | number:'1.6-6' }}°N</p>
+                    </div>
+                    <div>
+                      <p class="text-gray-500 mb-1">Longitude</p>
+                      <p class="font-mono font-medium text-gray-800">{{ booking.location.lng | number:'1.6-6' }}°E</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fallback for basic address -->
+              <div *ngIf="!isLoadingServiceAddress && !serviceLocationDetails" class="bg-white rounded-lg p-3 border border-blue-200">
+                <p class="text-sm text-gray-700">{{ serviceLocationAddress }}</p>
+                <div class="mt-2 pt-2 border-t border-gray-200">
+                  <p class="text-xs text-gray-500">
+                    <ion-icon name="navigate-outline" class="mr-1"></ion-icon>
+                    GPS: {{ booking.location.lat | number:'1.6-6' }}°, {{ booking.location.lng | number:'1.6-6' }}°
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Price Breakdown -->
+            <div class="bg-green-50 rounded-lg p-3">
+              <h3 class="font-semibold text-gray-800 mb-2">Payment Details</h3>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Base Price:</span>
+                  <span class="font-medium">{{ formatPrice(booking.pricing.basePrice) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Platform Fee:</span>
+                  <span class="font-medium">{{ formatPrice(booking.pricing.serviceCharge) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Transportation:</span>
+                  <span class="font-medium">₱50</span>
+                </div>
+                <div class="border-t pt-2 mt-2">
+                  <div class="flex justify-between font-semibold">
+                    <span>Total:</span>
+                    <span class="text-green-600">{{ formatPrice(booking.pricing.total) }}</span>
+                  </div>
+                  <div class="flex justify-between text-sm text-gray-600 mt-1">
+                    <span>Your Earning:</span>
+                    <span class="font-medium text-blue-600">{{ formatPrice(booking.pricing.basePrice + 50) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="px-4 mb-4">
+      <div class="bg-white rounded-2xl shadow-lg p-4 border border-gray-100">
+        <h3 class="font-semibold text-gray-800 mb-4">Quick Actions</h3>
+        
+        <!-- Communication Buttons -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <button (click)="sendMessage()" class="bg-green-500 hover:bg-green-600 text-white p-3 rounded-xl flex items-center justify-center transition-colors">
+            <ion-icon name="chatbubble-outline" class="mr-2"></ion-icon>
+            <span class="text-sm font-medium">Send Message</span>
+          </button>
+          <button (click)="callClient()" class="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-xl flex items-center justify-center transition-colors">
+            <ion-icon name="call-outline" class="mr-2"></ion-icon>
+            <span class="text-sm font-medium">Call Client</span>
+          </button>
+        </div>
+        
+        <!-- Utility Buttons -->
+        <div class="grid grid-cols-2 gap-3">
+          <button (click)="getDirections()" class="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-xl flex items-center justify-center transition-colors">
+            <ion-icon name="navigate-outline" class="mr-2"></ion-icon>
+            <span class="text-sm font-medium">Directions</span>
+          </button>
+          <button (click)="showReportOptions()" class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-xl flex items-center justify-center transition-colors">
+            <ion-icon name="flag-outline" class="mr-2"></ion-icon>
+            <span class="text-sm font-medium">Report Issue</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Tracking -->
+    <div class="px-4 mb-4">
+      <div class="bg-white rounded-2xl shadow-lg p-4 border border-gray-100">
+        <h3 class="font-semibold text-gray-800 mb-4">Job Progress</h3>
+        
+        <!-- Status: Accepted -->
+        <div *ngIf="booking.status === 'accepted'" class="space-y-4">
+          <div class="text-center">
+            <p class="text-gray-600 mb-4">Ready to start your journey to the client?</p>
+            <button (click)="updateStatusToOnTheWay()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors">
+              <ion-icon name="car-outline" class="mr-2"></ion-icon>
+              I'm On The Way
+            </button>
+          </div>
+        </div>
+        
+        <!-- Status: On The Way -->
+        <div *ngIf="booking.status === 'on-the-way'" class="space-y-4">
+          <div class="text-center">
+            <p class="text-gray-600 mb-4">Slide when you arrive at the location</p>
+            <!-- Custom Arrived Slider -->
+            <div class="bg-orange-100 rounded-full p-2 relative">
+              <div class="flex items-center justify-between px-4 py-2">
+                <span class="text-sm font-medium text-orange-800">Slide to confirm arrival</span>
+                <button (click)="markAsArrived()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                  <ion-icon name="checkmark" class="mr-1"></ion-icon>
+                  Arrived
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Status: Arrived -->
+        <div *ngIf="booking.status === 'arrived'" class="space-y-4">
+          <div class="text-center">
+            <p class="text-gray-600 mb-4">You've arrived! Ready to start the job?</p>
+            <button (click)="startJob()" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors">
+              <ion-icon name="play-outline" class="mr-2"></ion-icon>
+              Start Job
+            </button>
+          </div>
+        </div>
+        
+        <!-- Status: In Progress -->
+        <div *ngIf="booking.status === 'in-progress'" class="space-y-4">
+          <div class="text-center">
+            <div class="bg-purple-100 rounded-lg p-4 mb-4">
+              <p class="text-purple-800 font-medium mb-2">Job in progress</p>
+              <p class="text-purple-600 text-sm">Timer: {{ elapsedTime }}</p>
+            </div>
+            <p class="text-gray-600 mb-4">Slide when you complete the job</p>
+            <!-- Custom Completion Slider -->
+            <div class="bg-green-100 rounded-full p-2 relative">
+              <div class="flex items-center justify-between px-4 py-2">
+                <span class="text-sm font-medium text-green-800">Slide to complete job</span>
+                <button (click)="completeJob()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                  <ion-icon name="checkmark-done" class="mr-1"></ion-icon>
+                  Complete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Status: Completed -->
+        <div *ngIf="booking.status === 'completed'" class="space-y-4">
+          <div class="text-center">
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-3xl shadow-xl p-6 border border-green-200">
+              <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <ion-icon name="checkmark-done" class="text-white text-2xl"></ion-icon>
+              </div>
+              <h3 class="font-bold text-gray-800 text-xl mb-2">Job Completed Successfully!</h3>
+              <p class="text-gray-600 text-sm mb-4">Completion photo sent to client</p>
+              
+              <!-- Payment Breakdown -->
+              <div *ngIf="calculatedPricing" class="bg-white rounded-2xl p-4 text-left mb-4">
+                <h4 class="font-bold text-gray-800 mb-3 text-center">Your Earnings</h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">Work Duration:</span>
+                    <span class="font-medium">{{ formatDuration(calculatedPricing?.duration || 0) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">Base Amount:</span>
+                    <span class="font-bold text-gray-800">₱{{ (calculatedPricing?.basePrice || 0).toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">Service Charge (10%):</span>
+                    <span class="font-bold text-gray-800">₱{{ (calculatedPricing?.serviceCharge || 0).toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">Transport Fee:</span>
+                    <span class="font-bold text-gray-800">₱{{ (calculatedPricing?.transportFee || 50).toFixed(2) }}</span>
+                  </div>
+                  <hr class="my-2">
+                  <div class="flex justify-between font-bold text-lg">
+                    <span>Total Amount:</span>
+                    <span class="text-green-600">₱{{ (calculatedPricing?.total || 0).toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between text-sm text-blue-600 bg-blue-50 p-2 rounded-lg mt-2">
+                    <span>Your Earnings:</span>
+                    <span class="font-bold">₱{{ (calculatedPricing?.workerEarnings || 0).toFixed(2) }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <p class="text-green-600 font-medium">Waiting for client payment confirmation</p>
+            </div>
+            
+            <!-- Debug: Reset Status Button (only show if no completion data) -->
+            <div *ngIf="!booking.completionPhoto && !booking.completedAt && !booking.finalPricing" class="mt-4 p-3 bg-orange-100 border border-orange-300 rounded-lg">
+              <p class="text-orange-800 text-sm mb-2">⚠️ Status may be incorrect (no completion data found)</p>
+              <button (click)="resetBookingStatus()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                <ion-icon name="refresh" class="mr-2"></ion-icon>
+                Reset Status
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completion Photo Modal -->
+    <div *ngIf="showCompletionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-3xl shadow-2xl p-6 max-w-md w-full">
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+            <ion-icon name="camera" class="text-white text-2xl"></ion-icon>
+          </div>
+          <h3 class="font-bold text-gray-800 text-xl mb-2">Job Completion</h3>
+          <p class="text-gray-600 text-sm">Please take a photo of the completed work</p>
+        </div>
+        
+        <!-- Photo Preview -->
+        <div class="mb-6">
+          <div *ngIf="!completionPhoto" class="bg-gray-100 rounded-lg h-48 flex items-center justify-center border-2 border-dashed border-gray-300">
+            <div class="text-center">
+              <ion-icon name="camera-outline" class="text-gray-400 text-3xl mb-2"></ion-icon>
+              <p class="text-gray-500 text-sm">No photo taken yet</p>
+            </div>
+          </div>
+          <div *ngIf="completionPhoto" class="relative">
+            <img [src]="completionPhoto" class="w-full h-48 object-cover rounded-lg">
+            <button (click)="completionPhoto = ''" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+              <ion-icon name="close" class="text-sm"></ion-icon>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="space-y-3">
+          <button (click)="takeCompletionPhoto()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition-colors">
+            <ion-icon name="camera" class="mr-2"></ion-icon>
+            {{ completionPhoto ? 'Retake Photo' : 'Take Photo' }}
+          </button>
+          <button (click)="submitCompletion()" [disabled]="!completionPhoto" class="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold transition-colors">
+            <ion-icon name="checkmark-done" class="mr-2"></ion-icon>
+            Submit Completion
+          </button>
+          <button (click)="showCompletionModal = false" class="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-xl font-semibold transition-colors">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price Breakdown Modal -->
+    <div *ngIf="showPriceBreakdownModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-3xl shadow-2xl p-6 max-w-md w-full">
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+            <ion-icon name="checkmark" class="text-white text-2xl"></ion-icon>
+          </div>
+          <h3 class="font-bold text-gray-800 text-xl mb-2">Job Completed!</h3>
+          <p class="text-gray-600 text-sm">Review the final pricing and confirm payment</p>
+        </div>
+        
+        <!-- Payment Breakdown -->
+        <div *ngIf="calculatedPricing" class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 mb-6 border border-green-200">
+          <h4 class="font-bold text-gray-800 text-lg mb-4 text-center">Payment Details</h4>
+          
+          <div class="space-y-3">
+            <div class="flex justify-between items-center py-2 border-b border-green-200">
+              <span class="text-gray-700">Work Duration:</span>
+              <span class="font-medium">{{ formatDuration(calculatedPricing?.duration || 0) }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2 border-b border-green-200">
+              <span class="text-gray-700">Pricing Type:</span>
+              <span class="font-medium capitalize">{{ calculatedPricing?.pricingType }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2 border-b border-green-200">
+              <span class="text-gray-700">Base Amount:</span>
+              <span class="font-bold text-gray-800">₱{{ (calculatedPricing?.basePrice || 0).toFixed(2) }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2 border-b border-green-200">
+              <span class="text-gray-700">Service Fee (10%):</span>
+              <span class="font-bold text-gray-800">₱{{ (calculatedPricing?.serviceCharge || 0).toFixed(2) }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2 border-b border-green-200">
+              <span class="text-gray-700">Transportation Fee:</span>
+              <span class="font-bold text-gray-800">₱{{ (calculatedPricing?.transportFee || 50).toFixed(2) }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-3 bg-white rounded-xl px-4 shadow-sm">
+              <span class="font-bold text-lg text-gray-800">Total Amount:</span>
+              <span class="font-bold text-2xl text-green-600">₱{{ (calculatedPricing?.total || 0).toFixed(2) }}</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-2 bg-blue-50 rounded-xl px-4">
+              <span class="font-bold text-blue-700">Your Earnings:</span>
+              <span class="font-bold text-xl text-blue-600">₱{{ (calculatedPricing?.workerEarnings || 0).toFixed(2) }}</span>
+            </div>
+          </div>
+          
+          <div class="mt-4 text-center">
+            <p class="text-xs text-gray-500">
+              Actual duration: {{ formatDuration(calculatedPricing?.duration || 0) }} | 
+              Pricing: {{ calculatedPricing?.pricingType }}
+            </p>
+          </div>
+        </div>
+        
+        <!-- Waiting for Client Payment -->
+        <div class="text-center">
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-200 mb-4">
+            <div class="flex items-center justify-center space-x-2 mb-2">
+              <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+              <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+              <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+            </div>
+            <p class="text-blue-700 font-bold text-lg mb-1">Waiting for Client Payment</p>
+            <p class="text-gray-600 text-sm">The client will pay you directly. Confirm payment once received.</p>
+          </div>
+          
+          <button
+            (click)="confirmPayment()"
+            class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
+          >
+            <ion-icon name="wallet" class="text-xl"></ion-icon>
+            <span>Confirm Payment Received</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Spacing -->
+    <div class="h-20"></div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!isLoading && !booking" class="flex items-center justify-center h-screen">
+    <div class="text-center">
+      <ion-icon name="alert-circle-outline" class="text-red-500 text-6xl mb-4"></ion-icon>
+      <h2 class="text-xl font-bold text-gray-800 mb-2">Booking Not Found</h2>
+      <p class="text-gray-600 mb-4">The booking you're looking for doesn't exist.</p>
+      <button (click)="goBack()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors">
+        Go Back to Dashboard
+      </button>
+    </div>
+  </div>
+</ion-content>

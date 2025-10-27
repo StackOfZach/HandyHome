@@ -244,7 +244,7 @@
               </div>
             </div>
 
-            <!-- Budget Range -->
+            <!-- Total Price -->
             <div
               class="flex items-center space-x-2 p-3 bg-emerald-50/50 rounded-xl border border-emerald-200/30"
             >
@@ -257,17 +257,9 @@
                 ></ion-icon>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-gray-600 text-xs font-medium">Budget</p>
+                <p class="text-gray-600 text-xs font-medium">{{ getPriceLabel(booking) }}</p>
                 <p class="font-bold text-handy-navy-800 text-sm">
-                  <span
-                    *ngIf="booking.minBudget && booking.maxBudget; else fallbackBudget"
-                  >
-                    ₱{{ booking.minBudget | number:'1.0-0' }} - ₱{{
-                    booking.maxBudget | number:'1.0-0' }}
-                  </span>
-                  <ng-template #fallbackBudget>
-                    ₱{{ booking.priceRange | number:'1.0-0' }}
-                  </ng-template>
+                  {{ getTotalPrice(booking) }}
                 </p>
               </div>
             </div>

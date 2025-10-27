@@ -123,10 +123,10 @@
                   "
                 >
                   <ion-icon
-                    name="time-outline"
+                    name="pricetag-outline"
                     style="margin-right: 4px; color: #3b82f6"
                   ></ion-icon>
-                  <span>{{ formatDuration(category.estimatedDuration) }}</span>
+                  <span>{{ getSelectedServicePriceWithUnit() }}</span>
                 </div>
               </div>
             </div>
@@ -171,7 +171,7 @@
                   overflow: hidden;
                   text-overflow: ellipsis;
                 "
-                >{{ selectedLocation.address }}</span
+                >{{ getFormattedAddress() }}</span
               >
             </div>
           </div>
@@ -250,7 +250,7 @@
                   margin-bottom: 4px;
                 "
               >
-                {{ selectedLocation.address }}
+                {{ getFormattedAddress() }}
               </p>
               <div
                 style="
@@ -341,7 +341,7 @@
               padding: 8px 0;
             "
           >
-            <span style="color: #475569; font-weight: 500">Base Service</span>
+            <span style="color: #475569; font-weight: 500">Base Price</span>
             <span style="font-weight: 600; color: #1e293b"
               >{{ formatPrice(basePrice) }}</span
             >
@@ -357,7 +357,7 @@
           >
             <div style="display: flex; align-items: center">
               <span style="color: #475569; font-weight: 500; margin-right: 8px"
-                >Service Charge</span
+                >Platform Fee (10%)</span
               >
               <ion-icon
                 name="information-circle-outline"
@@ -365,7 +365,7 @@
               ></ion-icon>
             </div>
             <span style="font-weight: 600; color: #1e293b"
-              >{{ formatPrice(serviceCharge) }}</span
+              >{{ formatPrice(platformFee) }}</span
             >
           </div>
 
@@ -377,9 +377,9 @@
               padding: 8px 0;
             "
           >
-            <span style="color: #475569; font-weight: 500">Platform Fee</span>
+            <span style="color: #475569; font-weight: 500">Transportation Fee</span>
             <span style="font-weight: 600; color: #1e293b"
-              >{{ formatPrice(50) }}</span
+              >{{ formatPrice(transportationFee) }}</span
             >
           </div>
 

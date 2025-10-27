@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   Firestore,
@@ -87,10 +87,11 @@ export class SearchingPage implements OnInit, OnDestroy {
   private searchTimer?: any;
   private animationTimer?: any;
 
+  private firestore = inject(Firestore);
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private firestore: Firestore,
     private toastController: ToastController,
     private alertController: AlertController
   ) {}
@@ -223,10 +224,25 @@ export class SearchingPage implements OnInit, OnDestroy {
 
     if (this.bookingData?.assignedWorker) {
       // Load worker data and navigate to worker found page
+      console.log('=== WORKER ACCEPTED - NAVIGATING ===');
+      console.log('Booking ID:', this.bookingId);
+      console.log('Assigned Worker:', this.bookingData.assignedWorker);
+      console.log('Navigation URL:', `/client/worker-found/${this.bookingId}`);
+      
       await this.showToast('Worker found! Redirecting...', 'success');
       setTimeout(() => {
-        this.router.navigate(['/client/worker-found', this.bookingId]);
+        console.log('Executing navigation to worker-found page...');
+        this.router.navigate(['/client/worker-found', this.bookingId]).then(
+          (success) => {
+            console.log('Navigation success:', success);
+          },
+          (error) => {
+            console.error('Navigation error:', error);
+          }
+        );
       }, 1500);
+    } else {
+      console.warn('Worker accepted but no assignedWorker found in booking data');
     }
   }
 

@@ -157,6 +157,27 @@ export class BookingDetailsPage implements OnInit {
     );
   }
 
+  getSpecificService(): string | null {
+    if (!this.booking) return null;
+    if (this.isNewBooking(this.booking)) {
+      // For new booking format, check for specificService field
+      return this.booking.specificService || null;
+    }
+    // For old booking format, check for specificService field
+    return this.booking.specificService || null;
+  }
+
+  getFullServiceTitle(): string {
+    const mainService = this.getBookingTitle();
+    const specificService = this.getSpecificService();
+    
+    if (mainService && specificService) {
+      return `${mainService} - ${specificService}`;
+    }
+    
+    return mainService;
+  }
+
   getBookingWorkerName(): string | null {
     if (!this.booking) return null;
     if (this.isNewBooking(this.booking)) {

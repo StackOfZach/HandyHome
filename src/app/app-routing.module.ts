@@ -330,6 +330,12 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { role: 'worker' },
   },
+  {
+    path: 'pages/worker/worker-booking-details',
+    loadChildren: () => import('./pages/worker/worker-booking-details/worker-booking-details.module').then( m => m.WorkerBookingDetailsPageModule),
+    canActivate: [AuthGuard],
+    data: { role: 'worker' },
+  },
   // Wildcard route - redirect to login (MUST BE LAST)
   {
     path: '**',

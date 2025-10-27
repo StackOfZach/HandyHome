@@ -20,6 +20,7 @@ export interface ServiceCategory {
   serviceChargeRate: number;
   estimatedDuration: number; // in minutes
   services: string[];
+  servicesQuickBookingPricing?: number[]; // Array of prices for quick booking
   isActive: boolean;
   createdAt: any;
 }
@@ -116,6 +117,18 @@ export class SelectCategoryPage implements OnInit {
       position: 'top',
     });
     await toast.present();
+  }
+
+  // Helper method to get minimum price for display
+  getMinimumPrice(category: ServiceCategory): number {
+    // Get minimum price from servicesQuickBookingPricing array
+    if (category.servicesQuickBookingPricing && category.servicesQuickBookingPricing.length > 0) {
+      // Find the minimum price from the pricing array
+      return Math.min(...category.servicesQuickBookingPricing);
+    }
+    
+    // Fall back to averagePrice if servicesQuickBookingPricing is not available
+    return category.averagePrice || 0;
   }
 
   // Helper method to format price

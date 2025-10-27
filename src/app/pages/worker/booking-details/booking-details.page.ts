@@ -9,11 +9,40 @@ import {
   Timestamp,
   serverTimestamp,
 } from '@angular/fire/firestore';
-import { ToastController, AlertController } from '@ionic/angular';
+import { ToastController, AlertController, ModalController } from '@ionic/angular';
 import { AuthService, UserProfile } from '../../../services/auth.service';
+import { DashboardService, ServiceCategory } from '../../../services/dashboard.service';
+import { WorkerService } from '../../../services/worker.service';
 import { Subscription, interval } from 'rxjs';
 import { Geolocation } from '@capacitor/geolocation';
 import { BookingData } from '../../../services/booking.service';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+} from '@angular/fire/firestore';
+
+interface SubServicePrice {
+  subServiceName: string;
+  price: number;
+  unit?: string;
+}
+
+interface ServiceWithPricing {
+  categoryName: string;
+  subServices: SubServicePrice[];
+}
+
+interface WorkerServicePricing {
+  serviceName: string;
+  subServiceName: string;
+  price: number;
+  unit: string;
+}
 
 @Component({
   selector: 'app-booking-details',
@@ -35,6 +64,28 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   isJobStarted: boolean = false;
   isJobCompleted: boolean = false;
   isPaymentRequested: boolean = false;
+  
+  // New workflow states
+  hasArrivedAtClient: boolean = false;
+  showArrivalSlider: boolean = false;
+  showStartJobButton: boolean = false;
+  showJobDoneSlider: boolean = false;
+  
+  // Job timer
+  jobStartTime: Date | null = null;
+  jobEndTime: Date | null = null;
+  jobDuration: number = 0; // in milliseconds
+  jobTimer: string = '00:00:00';
+  private timerSubscription?: Subscription;
+  
+  // Photo capture
+  completionPhoto: string = '';
+  isCapturingPhoto: boolean = false;
+
+  // Worker pricing
+  workerPricing: WorkerServicePricing | null = null;
+  serviceCategories: ServiceCategory[] = [];
+  loadingPricing: boolean = false;
 
   private subscriptions: Subscription[] = [];
   private locationSubscription?: Subscription;
@@ -45,7 +96,10 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     private firestore: Firestore,
     private toastController: ToastController,
     private alertController: AlertController,
-    private authService: AuthService
+    private modalController: ModalController,
+    private authService: AuthService,
+    private dashboardService: DashboardService,
+    private workerService: WorkerService
   ) {}
 
   ngOnInit() {
@@ -85,6 +139,14 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
             console.log('Booking coordinates:', this.booking.coordinates);
             console.log('Booking location (legacy):', this.booking.location);
             console.log('Booking locations (legacy):', this.booking.locations);
+            console.log('Booking neededService:', this.booking.neededService);
+            console.log('Booking specificService:', this.booking.specificService);
+            
+            // Load worker pricing after booking is loaded
+            this.loadWorkerPricing();
+            
+            // Update workflow state based on booking status
+            this.updateWorkflowState();
           } else {
             console.log('Booking not found in bookings collection');
             this.showToast('Booking not found', 'danger');
@@ -614,74 +676,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     return degrees * (Math.PI / 180);
   }
 
-  // Job Control Methods
-  async startJob() {
-    const alert = await this.alertController.create({
-      header: 'Start Job',
-      message: 'Are you ready to start working on this job?',
-      buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        {
-          text: 'Start Job',
-          handler: async () => {
-            await this.updateBookingStatus('in-progress');
-            this.isJobStarted = true;
-            this.showToast('Job started successfully!', 'success');
-          },
-        },
-      ],
-    });
-    await alert.present();
-  }
-
-  async completeJob() {
-    if (!this.booking) return;
-
-    const alert = await this.alertController.create({
-      header: 'Complete Job',
-      message: 'Enter the amount to charge the client (within budget range)',
-      inputs: [
-        {
-          name: 'amount',
-          type: 'number',
-          placeholder: `Amount (₱${this.booking.minBudget || 0} - ₱${
-            this.booking.maxBudget || this.booking.priceRange || 0
-          })`,
-          min: this.booking.minBudget || 0,
-          max: this.booking.maxBudget || this.booking.priceRange || 999999,
-        },
-      ],
-      buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        {
-          text: 'Complete Job',
-          handler: async (data) => {
-            const amount = parseFloat(data.amount);
-            const minBudget = this.booking.minBudget || 0;
-            const maxBudget =
-              this.booking.maxBudget || this.booking.priceRange || 999999;
-
-            if (amount < minBudget || amount > maxBudget) {
-              this.showToast(
-                `Amount must be between ₱${minBudget} and ₱${maxBudget}`,
-                'medium'
-              );
-              return false;
-            }
-
-            this.jobAmount = amount;
-            // Update to awaiting-payment first, then completed after payment
-            await this.updateBookingStatus('awaiting-payment');
-            await this.requestPayment(amount);
-            this.isJobCompleted = true;
-            this.stopLocationTracking(); // Stop tracking when job is completed
-            return true;
-          },
-        },
-      ],
-    });
-    await alert.present();
-  }
+  // Old job control methods removed - using comprehensive workflow methods
 
   async requestPayment(amount: number) {
     try {
@@ -776,8 +771,517 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     this.isLocationTracking = false;
   }
 
+  // ===== PRICING METHODS =====
+
+  async loadServiceCategories() {
+    try {
+      this.serviceCategories = await this.dashboardService.getServiceCategories();
+      console.log('Service categories loaded:', this.serviceCategories);
+    } catch (error) {
+      console.error('Error loading service categories:', error);
+      this.serviceCategories = [];
+    }
+  }
+
+  async loadWorkerPricing() {
+    if (!this.booking || !this.userProfile?.uid) return;
+
+    try {
+      this.loadingPricing = true;
+      
+      // Load service categories first
+      await this.loadServiceCategories();
+      
+      // Get the main service and specific service from booking
+      const mainService = this.booking.neededService;
+      const specificService = this.booking.specificService;
+      
+      console.log('Loading worker pricing for:', { mainService, specificService });
+      
+      // Fetch worker profile to get pricing data
+      const workerProfile = await this.workerService.getCompleteWorkerProfile(this.userProfile.uid);
+      
+      if (workerProfile) {
+        console.log('Worker profile loaded:', workerProfile);
+        const serviceWithPricing = (workerProfile as any).serviceWithPricing as ServiceWithPricing[];
+        console.log('Worker serviceWithPricing:', serviceWithPricing);
+        
+        if (serviceWithPricing && serviceWithPricing.length > 0) {
+          await this.findPricingInData(serviceWithPricing, mainService, specificService);
+        }
+      }
+      
+      // If no pricing found, try direct fetch from workers collection
+      if (!this.workerPricing) {
+        console.log('No worker pricing found in profile, trying direct fetch...');
+        await this.fetchWorkerPricingDirectly(mainService, specificService);
+      }
+      
+      // If still no pricing found, create mock pricing
+      if (!this.workerPricing) {
+        console.log('No worker pricing found, creating mock data');
+        const unit = await this.getServiceUnit(mainService, specificService || mainService);
+        
+        this.workerPricing = {
+          serviceName: mainService,
+          subServiceName: specificService || mainService,
+          price: 500, // Mock price
+          unit: this.formatUnit(unit)
+        };
+      }
+      
+      console.log('Final worker pricing:', this.workerPricing);
+    } catch (error) {
+      console.error('Error loading worker pricing:', error);
+    } finally {
+      this.loadingPricing = false;
+    }
+  }
+
+  async fetchWorkerPricingDirectly(mainService: string, specificService?: string): Promise<void> {
+    try {
+      console.log('Fetching worker pricing directly from workers collection...');
+      
+      const workerDoc = await getDocs(
+        query(
+          collection(this.firestore, 'workers'),
+          where('__name__', '==', this.userProfile!.uid),
+          limit(1)
+        )
+      );
+      
+      if (!workerDoc.empty) {
+        const workerData = workerDoc.docs[0].data();
+        console.log('Direct worker data:', workerData);
+        
+        const serviceWithPricing = workerData['serviceWithPricing'] as ServiceWithPricing[];
+        
+        if (serviceWithPricing && serviceWithPricing.length > 0) {
+          await this.findPricingInData(serviceWithPricing, mainService, specificService);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching worker pricing directly:', error);
+    }
+  }
+
+  async findPricingInData(serviceWithPricing: ServiceWithPricing[], mainService: string, specificService?: string): Promise<void> {
+    let foundPricing: SubServicePrice | null = null;
+    let matchedCategory: ServiceWithPricing | null = null;
+    
+    console.log('Searching for pricing - Available categories:', serviceWithPricing.map(c => c.categoryName));
+    
+    // Find matching category
+    matchedCategory = serviceWithPricing.find((category: ServiceWithPricing) => {
+      const categoryLower = category.categoryName.toLowerCase();
+      const serviceLower = mainService.toLowerCase();
+      
+      console.log(`Comparing category "${categoryLower}" with service "${serviceLower}"`);
+      
+      return categoryLower === serviceLower ||
+             categoryLower.includes(serviceLower) ||
+             serviceLower.includes(categoryLower) ||
+             this.isServiceMatch(categoryLower, serviceLower);
+    }) || null;
+    
+    if (matchedCategory) {
+      console.log('Found matching category:', matchedCategory);
+      console.log('Available sub-services:', matchedCategory.subServices.map(s => s.subServiceName));
+      
+      // Look for specific service
+      if (specificService) {
+        console.log('Looking for specific service:', specificService);
+        foundPricing = matchedCategory.subServices.find((subService: SubServicePrice) => {
+          const subServiceLower = subService.subServiceName.toLowerCase();
+          const specificLower = specificService.toLowerCase();
+          
+          console.log(`Comparing sub-service "${subServiceLower}" with specific "${specificLower}"`);
+          
+          return subServiceLower === specificLower ||
+                 subServiceLower.includes(specificLower) ||
+                 specificLower.includes(subServiceLower) ||
+                 this.isServiceMatch(subServiceLower, specificLower);
+        }) || null;
+      }
+      
+      // Use first subservice if no specific match
+      if (!foundPricing && matchedCategory.subServices.length > 0) {
+        foundPricing = matchedCategory.subServices[0];
+        console.log('Using first available sub-service:', foundPricing);
+      }
+      
+      if (foundPricing) {
+        const unit = foundPricing.unit || await this.getServiceUnit(matchedCategory.categoryName, foundPricing.subServiceName);
+        
+        this.workerPricing = {
+          serviceName: matchedCategory.categoryName,
+          subServiceName: foundPricing.subServiceName,
+          price: foundPricing.price,
+          unit: this.formatUnit(unit || 'per_hour')
+        };
+        
+        console.log('Found pricing:', this.workerPricing);
+      }
+    } else {
+      console.log('No matching category found for:', mainService);
+    }
+  }
+
+  async getServiceUnit(serviceName: string, subServiceName: string): Promise<string> {
+    try {
+      const serviceCategory = this.serviceCategories.find(cat => 
+        cat.name.toLowerCase() === serviceName.toLowerCase() ||
+        cat.services.some(service => service.toLowerCase() === serviceName.toLowerCase())
+      );
+      
+      if (serviceCategory && serviceCategory.services && serviceCategory.servicesQuickBookingUnit) {
+        const subServiceIndex = serviceCategory.services.findIndex(service => 
+          service.toLowerCase() === subServiceName.toLowerCase()
+        );
+        
+        if (subServiceIndex >= 0 && serviceCategory.servicesQuickBookingUnit[subServiceIndex]) {
+          return serviceCategory.servicesQuickBookingUnit[subServiceIndex];
+        }
+      }
+      
+      return 'per_hour';
+    } catch (error) {
+      console.error('Error getting service unit:', error);
+      return 'per_hour';
+    }
+  }
+
+  isServiceMatch(service1: string, service2: string): boolean {
+    const commonWords = ['service', 'services', 'work', 'repair', 'maintenance'];
+    
+    const clean1 = service1.replace(new RegExp(commonWords.join('|'), 'gi'), '').trim();
+    const clean2 = service2.replace(new RegExp(commonWords.join('|'), 'gi'), '').trim();
+    
+    return clean1.includes(clean2) || clean2.includes(clean1);
+  }
+
+  formatUnit(unit: string): string {
+    switch (unit?.toLowerCase()) {
+      case 'per_hour':
+        return '/hr';
+      case 'per_day':
+        return '/day';
+      case 'per hour':
+        return '/hr';
+      case 'per day':
+        return '/day';
+      default:
+        return unit || '/hr';
+    }
+  }
+
+  getWorkerPriceDisplay(): string {
+    if (!this.workerPricing) {
+      return 'Price not available';
+    }
+    
+    return `₱${this.workerPricing.price.toLocaleString()} ${this.workerPricing.unit}`;
+  }
+
+  hasWorkerPricing(): boolean {
+    return this.workerPricing !== null;
+  }
+
+  // ===== COMPREHENSIVE BOOKING WORKFLOW METHODS =====
+
+  // Step 1: Go to Client (triggers arrival slider)
+  async goToClient() {
+    try {
+      await this.updateBookingStatus('on-the-way');
+      this.showArrivalSlider = true;
+      this.showToast('Navigate to client location. Slide when you arrive!', 'medium');
+    } catch (error) {
+      console.error('Error going to client:', error);
+      this.showToast('Error updating status', 'danger');
+    }
+  }
+
+  // Step 2: Confirm Arrival ("I'm here" slider)
+  async confirmArrival() {
+    try {
+      const bookingRef = doc(this.firestore, 'bookings', this.bookingId);
+      await updateDoc(bookingRef, {
+        status: 'worker-arrived',
+        workerArrivedAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      });
+
+      this.hasArrivedAtClient = true;
+      this.showArrivalSlider = false;
+      this.showStartJobButton = true;
+      
+      this.showToast('Arrival confirmed! Client has been notified.', 'success');
+    } catch (error) {
+      console.error('Error confirming arrival:', error);
+      this.showToast('Error confirming arrival', 'danger');
+    }
+  }
+
+  // Step 3: Start Job
+  async startJob() {
+    try {
+      this.jobStartTime = new Date();
+      
+      const bookingRef = doc(this.firestore, 'bookings', this.bookingId);
+      await updateDoc(bookingRef, {
+        status: 'service-started',
+        serviceStartedAt: Timestamp.now(),
+        jobStartTime: Timestamp.fromDate(this.jobStartTime),
+        updatedAt: Timestamp.now()
+      });
+
+      this.isJobStarted = true;
+      this.showStartJobButton = false;
+      this.showJobDoneSlider = true;
+      
+      // Start the job timer
+      this.startJobTimer();
+      
+      this.showToast('Job started! Timer is now running.', 'success');
+    } catch (error) {
+      console.error('Error starting job:', error);
+      this.showToast('Error starting job', 'danger');
+    }
+  }
+
+  // Step 4: Job Timer
+  startJobTimer() {
+    if (this.timerSubscription) {
+      this.timerSubscription.unsubscribe();
+    }
+
+    this.timerSubscription = interval(1000).subscribe(() => {
+      if (this.jobStartTime) {
+        const now = new Date();
+        const diff = now.getTime() - this.jobStartTime.getTime();
+        this.jobDuration = diff;
+        this.jobTimer = this.formatDuration(diff);
+      }
+    });
+  }
+
+  stopJobTimer() {
+    if (this.timerSubscription) {
+      this.timerSubscription.unsubscribe();
+      this.timerSubscription = undefined;
+    }
+  }
+
+  formatDuration(milliseconds: number): string {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  // Step 5: Complete Job ("Job Done" slider)
+  async completeJob() {
+    try {
+      this.jobEndTime = new Date();
+      this.stopJobTimer();
+      
+      // Show photo capture modal
+      await this.showPhotoCapture();
+      
+    } catch (error) {
+      console.error('Error completing job:', error);
+      this.showToast('Error completing job', 'danger');
+    }
+  }
+
+  // Step 6: Photo Capture Modal
+  async showPhotoCapture() {
+    const alert = await this.alertController.create({
+      header: 'Job Completed',
+      message: 'Please take a photo of the completed work to show the client.',
+      buttons: [
+        {
+          text: 'Take Photo',
+          handler: async () => {
+            await this.captureCompletionPhoto();
+          }
+        }
+      ],
+      backdropDismiss: false
+    });
+
+    await alert.present();
+  }
+
+  async captureCompletionPhoto() {
+    try {
+      this.isCapturingPhoto = true;
+      
+      const image = await Camera.getPhoto({
+        quality: 80,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera
+      });
+
+      if (image.dataUrl) {
+        this.completionPhoto = image.dataUrl;
+        await this.submitJobCompletion();
+      }
+    } catch (error) {
+      console.error('Error capturing photo:', error);
+      this.showToast('Error taking photo. Please try again.', 'danger');
+    } finally {
+      this.isCapturingPhoto = false;
+    }
+  }
+
+  // Step 7: Submit Job Completion
+  async submitJobCompletion() {
+    try {
+      const calculatedPayment = this.calculatePayment();
+      
+      const bookingRef = doc(this.firestore, 'bookings', this.bookingId);
+      await updateDoc(bookingRef, {
+        status: 'awaiting-payment',
+        completedAt: Timestamp.now(),
+        jobEndTime: this.jobEndTime ? Timestamp.fromDate(this.jobEndTime) : Timestamp.now(),
+        jobDuration: this.jobDuration,
+        completionPhoto: this.completionPhoto,
+        calculatedPayment: calculatedPayment,
+        updatedAt: Timestamp.now()
+      });
+
+      this.isJobCompleted = true;
+      this.showJobDoneSlider = false;
+      this.isPaymentRequested = true;
+      
+      this.showToast('Job completed! Client will review and provide payment.', 'success');
+    } catch (error) {
+      console.error('Error submitting job completion:', error);
+      this.showToast('Error submitting completion', 'danger');
+    }
+  }
+
+  // Step 8: Calculate Payment
+  calculatePayment() {
+    if (!this.workerPricing || !this.jobDuration) {
+      return {
+        baseAmount: 0,
+        totalHours: 0,
+        serviceFee: 0,
+        transportationFee: 0,
+        totalAmount: 0
+      };
+    }
+
+    const durationInHours = this.jobDuration / (1000 * 60 * 60); // Convert ms to hours
+    let billingHours: number;
+
+    // Fair billing calculation
+    if (durationInHours < 1) {
+      billingHours = 1; // Minimum 1 hour
+    } else {
+      // Round up to next hour if more than 3 minutes past the hour
+      const wholeHours = Math.floor(durationInHours);
+      const extraMinutes = (durationInHours - wholeHours) * 60;
+      billingHours = extraMinutes > 3 ? wholeHours + 1 : wholeHours;
+    }
+
+    const baseAmount = this.workerPricing.price * billingHours;
+    const serviceFee = baseAmount * 0.10; // 10% service fee
+    const transportationFee = 50; // Fixed ₱50 transportation fee
+    const totalAmount = baseAmount + serviceFee + transportationFee;
+
+    return {
+      baseAmount,
+      totalHours: billingHours,
+      hourlyRate: this.workerPricing.price,
+      serviceFee,
+      transportationFee,
+      totalAmount,
+      actualDuration: this.formatDuration(this.jobDuration),
+      billingDuration: `${billingHours} hour${billingHours !== 1 ? 's' : ''}`
+    };
+  }
+
+  // Update booking status based on current workflow state
+  updateWorkflowState() {
+    if (!this.booking) return;
+
+    const status = this.booking.status;
+    
+    // Set UI states based on booking status
+    switch (status) {
+      case 'accepted':
+        this.showArrivalSlider = false;
+        this.showStartJobButton = false;
+        this.showJobDoneSlider = false;
+        break;
+        
+      case 'on-the-way':
+        this.showArrivalSlider = true;
+        this.showStartJobButton = false;
+        this.showJobDoneSlider = false;
+        break;
+        
+      case 'worker-arrived':
+        this.hasArrivedAtClient = true;
+        this.showArrivalSlider = false;
+        this.showStartJobButton = true;
+        this.showJobDoneSlider = false;
+        break;
+        
+      case 'service-started':
+        this.hasArrivedAtClient = true;
+        this.isJobStarted = true;
+        this.showArrivalSlider = false;
+        this.showStartJobButton = false;
+        this.showJobDoneSlider = true;
+        
+        // Restore job timer if job was already started
+        if (this.booking.jobStartTime && !this.timerSubscription) {
+          this.jobStartTime = this.booking.jobStartTime.toDate();
+          this.startJobTimer();
+        }
+        break;
+        
+      case 'awaiting-payment':
+      case 'completed':
+        this.hasArrivedAtClient = true;
+        this.isJobStarted = true;
+        this.isJobCompleted = true;
+        this.showArrivalSlider = false;
+        this.showStartJobButton = false;
+        this.showJobDoneSlider = false;
+        
+        if (this.booking.jobEndTime) {
+          this.jobEndTime = this.booking.jobEndTime.toDate();
+          this.jobDuration = this.booking.jobDuration || 0;
+          this.jobTimer = this.formatDuration(this.jobDuration);
+        }
+        break;
+    }
+  }
+
   ngOnDestroy() {
-    this.subscriptions.forEach((sub) => sub.unsubscribe());
+    // Clean up subscriptions
+    this.subscriptions.forEach(sub => {
+      if (sub && typeof sub.unsubscribe === 'function') {
+        sub.unsubscribe();
+      }
+    });
+    
+    if (this.locationSubscription) {
+      this.locationSubscription.unsubscribe();
+    }
+    
+    if (this.timerSubscription) {
+      this.timerSubscription.unsubscribe();
+    }
+    
     this.stopLocationTracking();
   }
 }

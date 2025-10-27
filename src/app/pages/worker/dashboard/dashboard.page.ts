@@ -71,8 +71,15 @@ interface QuickBookingNotification {
   subService: string;
   clientLocation: string;
   pricing: {
+    basePrice: number;
+    platformFee: number;
+    transportationFee: number;
     total: number;
     workerEarning: number;
+  };
+  clientDetails: {
+    name: string;
+    phone?: string;
   };
   timestamp: Date;
 }
@@ -323,29 +330,43 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
       return; // Already showing this notification
     }
 
+    // Calculate pricing breakdown
+    const basePrice = booking.pricing?.basePrice || 0;
+    const platformFee = booking.pricing?.serviceCharge || 0;
+    const transportationFee = 50; // Fixed transportation fee
+    const total = booking.pricing?.total || (basePrice + platformFee + transportationFee);
+    const workerEarning = basePrice + transportationFee; // Worker gets base price + transportation, platform keeps the fee
+
     this.quickBookingNotification = {
       id: booking.id,
       title: 'Quick Booking Alert!',
-      message: `${booking.serviceType} needed at ${booking.address}`,
+      message: `${booking.subService || booking.categoryName} needed at ${booking.location?.address || 'Unknown location'}`,
       bookingId: booking.id,
-      categoryName: booking.serviceCategory || booking.serviceType,
-      subService: booking.serviceType,
-      clientLocation: booking.address,
+      categoryName: booking.categoryName,
+      subService: booking.subService,
+      clientLocation: booking.location?.address || 'Unknown location',
       pricing: {
-        total: booking.price || 0,
-        workerEarning: (booking.price || 0) * 0.8, // Assuming 80% goes to worker
+        basePrice,
+        platformFee,
+        transportationFee,
+        total,
+        workerEarning,
+      },
+      clientDetails: {
+        name: booking.clientName || 'Client',
+        phone: booking.clientPhone,
       },
       timestamp: new Date(),
     };
 
     this.showQuickNotification = true;
 
-    // Auto-hide after 10 seconds if not interacted with
+    // Auto-hide after 15 seconds if not interacted with
     setTimeout(() => {
       if (this.quickBookingNotification?.id === booking.id) {
         this.dismissQuickNotification();
       }
-    }, 10000);
+    }, 15000);
   }
 
   private initializeSlideshow() {
@@ -891,6 +912,30 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     }
   }
 
+  // Navigate to worker booking details page
+  viewJobDetails(job: JobData) {
+    if (!job.id) {
+      this.showToast('Job ID not available', 'danger');
+      return;
+    }
+    
+    console.log('Navigating to job details:', {
+      jobId: job.id,
+      jobTitle: job.title,
+      jobStatus: job.status,
+      jobData: job
+    });
+    
+    // Navigate to worker booking details page
+    // Try 'quick' first since most active jobs are likely from quick bookings
+    this.router.navigate(['/pages/worker/worker-booking-details'], {
+      queryParams: { 
+        bookingId: job.id, 
+        type: 'quick' // Changed to 'quick' as most active jobs are from quick bookings
+      },
+    });
+  }
+
   async toggleAvailability() {
     this.isAvailable = !this.isAvailable;
 
@@ -1010,6 +1055,11 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
       this.showToast('Quick booking accepted successfully!', 'success');
       this.dismissQuickNotification();
+      
+      // Navigate to worker booking details page
+      this.router.navigate(['/pages/worker/worker-booking-details'], {
+        queryParams: { bookingId: this.quickBookingNotification.bookingId, type: 'quick' },
+      });
     } catch (error) {
       console.error('Error accepting quick booking:', error);
       this.showToast('Error accepting booking. Please try again.', 'danger');
@@ -1171,9 +1221,9 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
       this.showToast('Booking accepted successfully!', 'success');
 
-      // Navigate to booking details page
-      this.router.navigate(['/pages/worker/booking-details'], {
-        queryParams: { bookingId: booking.id },
+      // Navigate to worker booking details page
+      this.router.navigate(['/pages/worker/worker-booking-details'], {
+        queryParams: { bookingId: booking.id, type: 'quick' },
       });
     } catch (error) {
       console.error('Error accepting booking:', error);

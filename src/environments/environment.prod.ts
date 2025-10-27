@@ -9,4 +9,5 @@ export const environment = {
     appId: '1:991938859943:web:8b632c38e2dd7ae8229c82',
     measurementId: 'G-F6KZY247CD',
   },
+  googleMapsApiKey: 'AIzaSyAKE5W0sDAmGwgzNfIwivvcE2f3_2vDnvo', // Using Firebase API key for Google Maps
 };

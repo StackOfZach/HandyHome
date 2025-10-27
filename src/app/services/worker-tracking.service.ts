@@ -173,18 +173,7 @@ export class WorkerTrackingService {
               skills: workerData['skills'] || [],
               phone: userData['phone'],
               email: userData['email'],
-              location: workerData['currentLocation']
-                ? {
-                    lat: workerData['currentLocation'].latitude,
-                    lng: workerData['currentLocation'].longitude,
-                    lastUpdatedAt: workerData['lastLocationUpdate'],
-                    accuracy: workerData['locationAccuracy'],
-                  }
-                : {
-                    lat: 0,
-                    lng: 0,
-                    lastUpdatedAt: null,
-                  },
+              location: this.extractWorkerLocation(workerData),
             },
             client: {
               location: bookingData['location'],
@@ -319,5 +308,46 @@ export class WorkerTrackingService {
     } catch (error) {
       console.error('Error refreshing worker location:', error);
     }
+  }
+
+  /**
+   * Extract worker location from different possible data structures
+   */
+  private extractWorkerLocation(workerData: any): WorkerLocation {
+    // Check for currentLocation (GeoPoint from location tracking)
+    if (workerData['currentLocation']) {
+      const geoPoint = workerData['currentLocation'];
+      if (geoPoint.latitude !== undefined && geoPoint.longitude !== undefined) {
+        console.log('Using currentLocation (GeoPoint):', geoPoint);
+        return {
+          lat: geoPoint.latitude,
+          lng: geoPoint.longitude,
+          lastUpdatedAt: workerData['lastLocationUpdate'],
+          accuracy: workerData['locationAccuracy'],
+        };
+      }
+    }
+
+    // Check for location object
+    if (workerData['location']) {
+      const location = workerData['location'];
+      if (location.lat !== undefined && location.lng !== undefined) {
+        console.log('Using location object:', location);
+        return {
+          lat: location.lat,
+          lng: location.lng,
+          lastUpdatedAt: workerData['lastLocationUpdate'],
+          accuracy: workerData['locationAccuracy'],
+        };
+      }
+    }
+
+    // Fallback to default location
+    console.warn('No valid location found for worker, using default');
+    return {
+      lat: 0,
+      lng: 0,
+      lastUpdatedAt: null,
+    };
   }
 }

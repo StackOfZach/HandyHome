@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { Observable } from 'rxjs';
@@ -22,18 +22,9 @@ export class AuthGuard implements CanActivate {
         console.log('AuthGuard: Current user:', user ? user.uid : 'null');
 
         if (!user) {
-          // Check if we have a valid stored session before redirecting
-          if (this.authService.shouldAutoLogin()) {
-            console.log(
-              'AuthGuard: No current user but valid session exists, trying to restore'
-            );
-            // Try to restore session
-            await this.authService.navigateToAppropriateStartPage();
-            return false; // Block this navigation as we're redirecting
-          }
-
-          // No user found and no valid session, redirect to login
+          // No user found, redirect to login
           console.log('AuthGuard: No user found, redirecting to login');
+          console.log('AuthGuard: Attempted route:', route.routeConfig?.path);
           this.router.navigate(['/pages/auth/login']);
           return false;
         }

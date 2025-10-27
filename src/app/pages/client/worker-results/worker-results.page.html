@@ -54,7 +54,7 @@
           <h3 class="font-bold text-handy-navy-800 text-xl mb-2">
             {{ booking.neededService }}
           </h3>
-          <div class="flex items-center space-x-4 text-sm text-handy-navy-600">
+          <div class="flex items-center flex-wrap gap-2 text-sm text-handy-navy-600">
             <div
               class="flex items-center space-x-2 bg-handy-blue-50 px-3 py-2 rounded-full"
             >
@@ -64,6 +64,18 @@
               ></ion-icon>
               <span class="font-semibold"
                 >{{ booking.scheduleDate?.toDate() | date:'fullDate' }}</span
+              >
+            </div>
+            <div
+              *ngIf="booking.scheduleTime"
+              class="flex items-center space-x-2 bg-green-50 px-3 py-2 rounded-full"
+            >
+              <ion-icon
+                name="time-outline"
+                class="text-green-600 text-sm"
+              ></ion-icon>
+              <span class="font-semibold"
+                >{{ formatTime(booking.scheduleTime) }}</span
               >
             </div>
             <div

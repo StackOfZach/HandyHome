@@ -301,6 +301,32 @@ export class BookServicePage implements OnInit {
       return;
     }
 
+    // Validate that the selected date/time is not in the past
+    const selectedDate = new Date(this.selectedDateTime);
+    const now = new Date();
+    
+    if (selectedDate <= now) {
+      const toast = await this.toastController.create({
+        message: 'Please select a future date and time for your service',
+        duration: 3000,
+        color: 'warning',
+      });
+      toast.present();
+      return;
+    }
+
+    // Check if the selected time is within reasonable hours (6 AM to 10 PM)
+    const selectedHour = selectedDate.getHours();
+    if (selectedHour < 6 || selectedHour > 22) {
+      const toast = await this.toastController.create({
+        message: 'Please select a time between 6:00 AM and 10:00 PM for better worker availability',
+        duration: 4000,
+        color: 'warning',
+      });
+      toast.present();
+      return;
+    }
+
     if (this.minBudget >= this.maxBudget) {
       const toast = await this.toastController.create({
         message: 'Maximum budget must be greater than minimum budget',
@@ -364,13 +390,19 @@ export class BookServicePage implements OnInit {
         }
       }
 
+      // Extract date and time from selectedDateTime
+      const selectedDate = new Date(this.selectedDateTime);
+      const scheduleTime = selectedDate.toTimeString().slice(0, 5); // Extract HH:MM format
+
       // Create booking in Firestore
       const bookingData = {
         clientId: this.currentUser.uid,
         clientName: this.userProfile?.fullName || 'Unknown User',
         neededService: this.selectedService,
         specificService: this.selectedSubService || '',
-        scheduleDate: new Date(this.selectedDateTime),
+        scheduleDate: selectedDate,
+        scheduleTime: scheduleTime, // Add separate time field for worker availability checking
+        scheduledDateTime: selectedDate, // Keep full datetime for reference
         priceRange: this.maxBudget,
         minBudget: this.minBudget,
         maxBudget: this.maxBudget,
