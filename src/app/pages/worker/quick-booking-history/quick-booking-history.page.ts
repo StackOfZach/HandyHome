@@ -1,11 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  ToastController,
-  LoadingController,
-  AlertController,
-} from '@ionic/angular';
-import { AuthService, UserProfile } from '../../services/auth.service';
+import { AuthService, UserProfile } from '../../../services/auth.service';
 import {
   Firestore,
   collection,
@@ -15,8 +10,9 @@ import {
   getDocs,
   Timestamp,
 } from '@angular/fire/firestore';
+import { ToastController, LoadingController } from '@ionic/angular';
 
-export interface QuickBookingData {
+export interface WorkerQuickBookingData {
   id?: string;
   clientId: string;
   categoryId: string;
@@ -46,36 +42,30 @@ export interface QuickBookingData {
   jobTimer?: {
     startTime?: Date;
     endTime?: Date;
-    duration?: number; // Actual duration in minutes
+    duration?: number;
   };
-  status:
-    | 'searching'
-    | 'accepted'
-    | 'on-the-way'
-    | 'in-progress'
-    | 'completed'
-    | 'cancelled'
-    | 'payment-confirmed';
-  assignedWorker: string | null;
-  workerName?: string;
-  workerId?: string;
+  status: string;
+  assignedWorker: string;
+  clientName?: string;
+  clientPhone?: string;
+  rating?: number;
+  review?: string;
   createdAt: Date;
-  scheduledDate?: Date;
-  scheduledTime?: string;
+  acceptedAt?: Date;
   completedAt?: Date;
   cancelledAt?: Date;
   cancellationReason?: string;
 }
 
 @Component({
-  selector: 'app-quick-bookings-history',
-  templateUrl: './quick-bookings-history.page.html',
-  styleUrls: ['./quick-bookings-history.page.scss'],
+  selector: 'app-quick-booking-history',
+  templateUrl: './quick-booking-history.page.html',
+  styleUrls: ['./quick-booking-history.page.scss'],
   standalone: false,
 })
-export class QuickBookingsHistoryPage implements OnInit {
+export class QuickBookingHistoryPage implements OnInit {
   userProfile: UserProfile | null = null;
-  quickBookings: QuickBookingData[] = [];
+  quickBookings: WorkerQuickBookingData[] = [];
   isLoading = true;
   error: string | null = null;
 
@@ -84,31 +74,31 @@ export class QuickBookingsHistoryPage implements OnInit {
     private authService: AuthService,
     private firestore: Firestore,
     private toastController: ToastController,
-    private loadingController: LoadingController,
-    private alertController: AlertController
+    private loadingController: LoadingController
   ) {}
 
   ngOnInit() {
     this.authService.userProfile$.subscribe((profile) => {
       this.userProfile = profile;
       if (profile?.uid) {
-        this.loadQuickBookings();
+        this.loadQuickBookingHistory();
       }
     });
   }
 
-  async loadQuickBookings() {
+  async loadQuickBookingHistory() {
     if (!this.userProfile?.uid) return;
 
     try {
       this.isLoading = true;
       this.error = null;
 
-      // Fetch quick bookings from Firestore
+      console.log('Loading quick booking history for worker:', this.userProfile.uid);
+
       const quickBookingsRef = collection(this.firestore, 'quickbookings');
       const q = query(
         quickBookingsRef,
-        where('clientId', '==', this.userProfile.uid),
+        where('assignedWorker', '==', this.userProfile.uid),
         orderBy('createdAt', 'desc')
       );
 
@@ -118,11 +108,18 @@ export class QuickBookingsHistoryPage implements OnInit {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
 
-        // Convert Firestore Timestamp to Date
+        // Convert Firestore Timestamps to Dates
         const createdAt =
           data['createdAt'] instanceof Timestamp
             ? data['createdAt'].toDate()
             : new Date(data['createdAt']);
+
+        const acceptedAt =
+          data['acceptedAt'] instanceof Timestamp
+            ? data['acceptedAt'].toDate()
+            : data['acceptedAt']
+            ? new Date(data['acceptedAt'])
+            : undefined;
 
         const completedAt =
           data['completedAt'] instanceof Timestamp
@@ -157,19 +154,22 @@ export class QuickBookingsHistoryPage implements OnInit {
           id: doc.id,
           ...data,
           createdAt,
+          acceptedAt,
           completedAt,
           cancelledAt,
           jobTimer,
-        } as QuickBookingData);
+        } as WorkerQuickBookingData);
       });
 
+      console.log(`Loaded ${this.quickBookings.length} quick bookings`);
+
       if (this.quickBookings.length === 0) {
-        this.error = 'No quick bookings found. Start by using quick booking!';
+        this.error = 'No quick booking history found.';
       }
     } catch (error) {
-      console.error('Error loading quick bookings:', error);
-      this.error = 'Failed to load quick bookings. Please try again.';
-      this.showToast('Failed to load quick bookings', 'danger');
+      console.error('Error loading quick booking history:', error);
+      this.error = 'Failed to load quick booking history. Please try again.';
+      this.showToast('Failed to load booking history', 'danger');
     } finally {
       this.isLoading = false;
     }
@@ -189,7 +189,7 @@ export class QuickBookingsHistoryPage implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/pages/client/dashboard']);
+    this.router.navigate(['/pages/worker/dashboard']);
   }
 
   getStatusColor(status: string): string {
@@ -294,96 +294,48 @@ export class QuickBookingsHistoryPage implements OnInit {
   /**
    * Get the actual duration for a booking, preferring jobTimer.duration over estimatedDuration
    */
-  getActualDuration(booking: QuickBookingData): number {
-    // For completed bookings, prefer actual duration from jobTimer
+  getActualDuration(booking: WorkerQuickBookingData): number {
     if (booking.status === 'completed' || booking.status === 'payment-confirmed') {
       if (booking.jobTimer?.duration && booking.jobTimer.duration > 0) {
         return booking.jobTimer.duration;
       }
-      // Fallback to finalPricing duration if available
       if (booking.finalPricing?.duration && booking.finalPricing.duration > 0) {
         return booking.finalPricing.duration;
       }
     }
-    // For other statuses or when no actual duration is available, use estimated
     return booking.estimatedDuration || 0;
   }
 
   /**
    * Get the final price for display, preferring finalPricing over initial pricing
    */
-  getFinalPrice(booking: QuickBookingData): number {
-    // For completed bookings, prefer final pricing
+  getFinalPrice(booking: WorkerQuickBookingData): number {
     if (booking.status === 'completed' || booking.status === 'payment-confirmed') {
       if (booking.finalPricing?.total && booking.finalPricing.total > 0) {
         return booking.finalPricing.total;
       }
     }
-    // Fallback to initial pricing
     return booking.pricing?.total || 0;
   }
 
   /**
    * Check if booking has actual duration data
    */
-  hasActualDuration(booking: QuickBookingData): boolean {
+  hasActualDuration(booking: WorkerQuickBookingData): boolean {
     return !!(booking.jobTimer?.duration && booking.jobTimer.duration > 0);
   }
 
-  async viewBookingDetails(booking: QuickBookingData) {
-    if (!booking.id) {
-      this.showToast('Booking details not available', 'warning');
-      return;
-    }
-
-    // Check if user is authenticated
-    if (!this.userProfile?.uid) {
-      console.warn('⚠️ User not authenticated, cannot navigate to worker-found');
-      this.showToast('Please log in to view booking details', 'warning');
-      return;
-    }
-
-    console.log('🔍 Navigating to worker-found page with booking ID:', booking.id);
-    console.log('📋 Booking data:', booking);
-    console.log('👤 Current user:', this.userProfile.uid);
-    
-    try {
-      // Try primary navigation with route parameter
-      let navigationResult = await this.router.navigate(['/client/worker-found', booking.id], {
+  async viewBookingDetails(booking: WorkerQuickBookingData) {
+    if (booking.id) {
+      this.router.navigate(['/pages/worker/worker-booking-details'], {
         queryParams: { 
-          fromHistory: 'true'
+          bookingId: booking.id,
+          type: 'quick'
         }
       });
-      
-      console.log('✅ Primary navigation result:', navigationResult);
-      
-      // If primary navigation fails, try fallback with query parameter
-      if (!navigationResult) {
-        console.log('🔄 Primary navigation failed, trying fallback...');
-        navigationResult = await this.router.navigate(['/client/worker-found'], {
-          queryParams: { 
-            bookingId: booking.id,
-            fromHistory: 'true'
-          }
-        });
-        console.log('✅ Fallback navigation result:', navigationResult);
-      }
-      
-      if (!navigationResult) {
-        console.warn('⚠️ Both navigation attempts failed');
-        this.showToast('Unable to navigate to booking details. Please try again.', 'warning');
-      }
-    } catch (error) {
-      console.error('❌ Navigation error:', error);
-      this.showToast('Navigation failed. Please try again.', 'danger');
+    } else {
+      this.showToast('Booking details not available', 'warning');
     }
-  }
-
-  async rebookService(booking: QuickBookingData) {
-    // Navigate to quick booking with the same category
-    this.router.navigate(['/client/select-category'], {
-      queryParams: { type: 'quick', category: booking.categoryId },
-    });
   }
 
   getCompletedCount(): number {
@@ -392,17 +344,23 @@ export class QuickBookingsHistoryPage implements OnInit {
     ).length;
   }
 
-  getActiveCount(): number {
-    return this.quickBookings.filter((booking) =>
-      ['searching', 'accepted', 'on-the-way', 'in-progress'].includes(
-        booking.status
-      )
-    ).length;
-  }
-
   getCancelledCount(): number {
     return this.quickBookings.filter(
       (booking) => booking.status === 'cancelled'
     ).length;
+  }
+
+  getTotalEarnings(): number {
+    return this.quickBookings
+      .filter(booking => booking.status === 'completed' || booking.status === 'payment-confirmed')
+      .reduce((total, booking) => total + this.getFinalPrice(booking), 0);
+  }
+
+  getAverageRating(): number {
+    const ratedBookings = this.quickBookings.filter(booking => booking.rating && booking.rating > 0);
+    if (ratedBookings.length === 0) return 0;
+    
+    const totalRating = ratedBookings.reduce((sum, booking) => sum + (booking.rating || 0), 0);
+    return totalRating / ratedBookings.length;
   }
 }

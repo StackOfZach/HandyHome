@@ -41,7 +41,7 @@ import {
 
 interface WorkerStats {
   jobsCompleted: number;
-  monthlyEarnings: number;
+  averageRating: number;
   totalEarnings: number;
 }
 
@@ -123,7 +123,7 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   // Stats
   workerStats: WorkerStats = {
     jobsCompleted: 0,
-    monthlyEarnings: 0,
+    averageRating: 0,
     totalEarnings: 0,
   };
 
@@ -400,17 +400,10 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
             labelColor: 'text-blue-600',
           },
           {
-            value: `₱${this.workerStats.monthlyEarnings || 0}`,
-            label: 'Earnings',
-            colorClass: 'from-green-50 to-green-100 border-green-200',
-            textColor: 'text-green-700',
-            labelColor: 'text-green-600',
-          },
-          {
-            value: this.workerProfile?.rating
-              ? this.workerProfile.rating.toFixed(1)
+            value: this.workerStats.averageRating
+              ? this.workerStats.averageRating.toFixed(1)
               : '0.0',
-            label: 'Rating',
+            label: 'Avg Rating',
             colorClass: 'from-yellow-50 to-yellow-100 border-yellow-200',
             textColor: 'text-yellow-700',
             labelColor: 'text-yellow-600',
@@ -421,6 +414,13 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
             colorClass: 'from-purple-50 to-purple-100 border-purple-200',
             textColor: 'text-purple-700',
             labelColor: 'text-purple-600',
+          },
+          {
+            value: this.ongoingJobs.length || 0,
+            label: 'Active Jobs',
+            colorClass: 'from-orange-50 to-orange-100 border-orange-200',
+            textColor: 'text-orange-700',
+            labelColor: 'text-orange-600',
           },
         ],
         progress: Math.min((this.workerStats.jobsCompleted / 10) * 100, 100),
@@ -439,10 +439,10 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
             labelColor: 'text-indigo-600',
           },
           {
-            value: `₱${Math.floor(
-              (this.workerStats.monthlyEarnings || 0) / 4
-            )}`,
-            label: 'Weekly Pay',
+            value: this.workerStats.averageRating
+              ? this.workerStats.averageRating.toFixed(1)
+              : '0.0',
+            label: 'Rating',
             colorClass: 'from-emerald-50 to-emerald-100 border-emerald-200',
             textColor: 'text-emerald-700',
             labelColor: 'text-emerald-600',
@@ -542,14 +542,158 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     if (!this.userProfile?.uid || !this.workerProfile) return;
 
     try {
-      // Get stats from worker profile
+      console.log('Loading worker stats from database...');
+      
+      // Fetch completed jobs from both quickbookings and bookings collections
+      const [quickBookingStats, regularBookingStats] = await Promise.all([
+        this.getQuickBookingStats(),
+        this.getRegularBookingStats()
+      ]);
+
+      // Combine stats from both collections
+      const totalJobsCompleted = quickBookingStats.jobsCompleted + regularBookingStats.jobsCompleted;
+      const totalRatings = quickBookingStats.totalRating + regularBookingStats.totalRating;
+      const totalRatingCount = quickBookingStats.ratingCount + regularBookingStats.ratingCount;
+      const averageRating = totalRatingCount > 0 ? totalRatings / totalRatingCount : 0;
+
+      console.log('📊 Combined Stats Calculation:');
+      console.log('- Quick bookings:', quickBookingStats);
+      console.log('- Regular bookings:', regularBookingStats);
+      console.log('- Total jobs completed:', totalJobsCompleted);
+      console.log('- Total ratings:', totalRatings);
+      console.log('- Total rating count:', totalRatingCount);
+      console.log('- Calculated average rating:', averageRating);
+
       this.workerStats = {
-        jobsCompleted: this.workerProfile.jobsCompleted || 0,
-        monthlyEarnings: this.workerProfile.totalEarnings || 0, // Use totalEarnings as monthlyEarnings for now
+        jobsCompleted: totalJobsCompleted,
+        averageRating: averageRating,
         totalEarnings: this.workerProfile.totalEarnings || 0,
       };
+
+      console.log('✅ Final worker stats loaded:', this.workerStats);
+      
+      // Force UI update
+      this.generateBookingSlides();
     } catch (error) {
       console.error('Error loading worker stats:', error);
+      // Fallback to profile data
+      this.workerStats = {
+        jobsCompleted: this.workerProfile.jobsCompleted || 0,
+        averageRating: this.workerProfile.rating || 0,
+        totalEarnings: this.workerProfile.totalEarnings || 0,
+      };
+    }
+  }
+
+  private async getQuickBookingStats(): Promise<{jobsCompleted: number, totalRating: number, ratingCount: number}> {
+    if (!this.userProfile?.uid) return {jobsCompleted: 0, totalRating: 0, ratingCount: 0};
+
+    try {
+      const quickBookingsRef = collection(this.firestore, 'quickbookings');
+      const q = query(
+        quickBookingsRef,
+        where('assignedWorker', '==', this.userProfile.uid),
+        where('status', 'in', ['completed', 'payment-confirmed'])
+      );
+
+      const querySnapshot = await getDocs(q);
+      let jobsCompleted = 0;
+      let totalRating = 0;
+      let ratingCount = 0;
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        jobsCompleted++;
+        
+        console.log('Quick booking data:', {
+          id: doc.id,
+          status: data['status'],
+          rating: data['rating'],
+          clientRating: data['clientRating'],
+          workerRating: data['workerRating'],
+          feedback: data['feedback']
+        });
+        
+        // Check for rating in multiple possible fields
+        let rating = null;
+        if (data['rating'] && typeof data['rating'] === 'number') {
+          rating = data['rating'];
+        } else if (data['clientRating'] && typeof data['clientRating'] === 'number') {
+          rating = data['clientRating'];
+        } else if (data['workerRating'] && typeof data['workerRating'] === 'number') {
+          rating = data['workerRating'];
+        } else if (data['feedback'] && data['feedback']['rating'] && typeof data['feedback']['rating'] === 'number') {
+          rating = data['feedback']['rating'];
+        }
+        
+        if (rating && rating > 0 && rating <= 5) {
+          totalRating += rating;
+          ratingCount++;
+          console.log(`Found rating: ${rating} for booking ${doc.id}`);
+        }
+      });
+
+      console.log(`Quick bookings stats: ${jobsCompleted} jobs, ${ratingCount} ratings, avg rating: ${ratingCount > 0 ? (totalRating/ratingCount).toFixed(2) : 0}`);
+      return {jobsCompleted, totalRating, ratingCount};
+    } catch (error) {
+      console.error('Error fetching quick booking stats:', error);
+      return {jobsCompleted: 0, totalRating: 0, ratingCount: 0};
+    }
+  }
+
+  private async getRegularBookingStats(): Promise<{jobsCompleted: number, totalRating: number, ratingCount: number}> {
+    if (!this.userProfile?.uid) return {jobsCompleted: 0, totalRating: 0, ratingCount: 0};
+
+    try {
+      const bookingsRef = collection(this.firestore, 'bookings');
+      const q = query(
+        bookingsRef,
+        where('assignedWorker', '==', this.userProfile.uid),
+        where('status', 'in', ['completed', 'payment-confirmed'])
+      );
+
+      const querySnapshot = await getDocs(q);
+      let jobsCompleted = 0;
+      let totalRating = 0;
+      let ratingCount = 0;
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        jobsCompleted++;
+        
+        console.log('Regular booking data:', {
+          id: doc.id,
+          status: data['status'],
+          rating: data['rating'],
+          clientRating: data['clientRating'],
+          workerRating: data['workerRating'],
+          feedback: data['feedback']
+        });
+        
+        // Check for rating in multiple possible fields
+        let rating = null;
+        if (data['rating'] && typeof data['rating'] === 'number') {
+          rating = data['rating'];
+        } else if (data['clientRating'] && typeof data['clientRating'] === 'number') {
+          rating = data['clientRating'];
+        } else if (data['workerRating'] && typeof data['workerRating'] === 'number') {
+          rating = data['workerRating'];
+        } else if (data['feedback'] && data['feedback']['rating'] && typeof data['feedback']['rating'] === 'number') {
+          rating = data['feedback']['rating'];
+        }
+        
+        if (rating && rating > 0 && rating <= 5) {
+          totalRating += rating;
+          ratingCount++;
+          console.log(`Found rating: ${rating} for booking ${doc.id}`);
+        }
+      });
+
+      console.log(`Regular bookings stats: ${jobsCompleted} jobs, ${ratingCount} ratings, avg rating: ${ratingCount > 0 ? (totalRating/ratingCount).toFixed(2) : 0}`);
+      return {jobsCompleted, totalRating, ratingCount};
+    } catch (error) {
+      console.error('Error fetching regular booking stats:', error);
+      return {jobsCompleted: 0, totalRating: 0, ratingCount: 0};
     }
   }
 
@@ -1087,6 +1231,26 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
   navigateToJobHistory() {
     this.router.navigate(['/pages/worker/job-history']);
+  }
+
+  navigateToQuickBookingHistory() {
+    console.log('🔍 Navigating to Quick Booking History...');
+    console.log('- Current user:', this.userProfile?.uid);
+    console.log('- User role:', this.userProfile?.role);
+    
+    if (!this.userProfile?.uid) {
+      console.warn('⚠️ No user profile found, cannot navigate');
+      this.showToast('Please log in to view booking history', 'danger');
+      return;
+    }
+    
+    console.log('✅ Navigating to /pages/worker/quick-booking-history');
+    this.router.navigate(['/pages/worker/quick-booking-history']).then(success => {
+      console.log('Navigation result:', success);
+    }).catch(error => {
+      console.error('Navigation error:', error);
+      this.showToast('Navigation failed. Please try again.', 'danger');
+    });
   }
 
   async logout() {

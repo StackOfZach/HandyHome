@@ -1,10 +1,10 @@
 <ion-content
   [fullscreen]="true"
-  class="bg-gradient-to-br from-handy-blue-50 via-white to-handy-yellow-50"
+  class="bg-gradient-to-br from-purple-50 via-white to-indigo-50"
 >
   <!-- Custom Header -->
   <div
-    class="bg-gradient-to-r from-purple-500 to-indigo-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-lg mb-4"
+    class="bg-gradient-to-r from-purple-600 to-indigo-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6"
   >
     <div class="flex items-center">
       <button
@@ -16,8 +16,11 @@
           class="text-white text-xl"
         ></ion-icon>
       </button>
-      <h1 class="text-white text-2xl font-bold">Quick Bookings History</h1>
+      <h1 class="text-white text-2xl font-bold">Quick Booking History</h1>
     </div>
+    <p class="text-white/90 text-sm mt-2 ml-14">
+      Your completed quick booking jobs
+    </p>
   </div>
 
   <!-- Loading Spinner -->
@@ -35,13 +38,50 @@
       >
         <ion-icon name="time-outline" class="text-4xl text-white"></ion-icon>
       </div>
-      <h3 class="text-xl font-bold text-handy-navy-800 mb-2">{{ error }}</h3>
+      <h3 class="text-xl font-bold text-gray-800 mb-2">{{ error }}</h3>
       <button
-        (click)="loadQuickBookings()"
+        (click)="loadQuickBookingHistory()"
         class="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-8 py-3 rounded-2xl font-semibold shadow-lg transform hover:scale-105 transition-all duration-300"
       >
         Retry
       </button>
+    </div>
+
+    <!-- Summary Stats -->
+    <div
+      *ngIf="quickBookings.length > 0"
+      class="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-white/20 mb-6"
+    >
+      <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+        <ion-icon name="stats-chart-outline" class="text-purple-600 mr-2"></ion-icon>
+        Quick Booking Summary
+      </h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-purple-600">
+            {{ quickBookings.length }}
+          </div>
+          <div class="text-sm text-gray-600">Total Jobs</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-green-600">
+            {{ getCompletedCount() }}
+          </div>
+          <div class="text-sm text-gray-600">Completed</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-yellow-600">
+            {{ getAverageRating() | number:'1.1-1' }}
+          </div>
+          <div class="text-sm text-gray-600">Avg Rating</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-blue-600">
+            {{ formatCurrency(getTotalEarnings()) }}
+          </div>
+          <div class="text-sm text-gray-600">Total Earned</div>
+        </div>
+      </div>
     </div>
 
     <!-- Quick Bookings List -->
@@ -63,10 +103,10 @@
               ></ion-icon>
             </div>
             <div>
-              <h3 class="font-bold text-handy-navy-800 text-lg">
+              <h3 class="font-bold text-gray-800 text-lg">
                 {{ booking.categoryName }}
               </h3>
-              <p class="text-handy-navy-600 text-sm">
+              <p class="text-gray-600 text-sm">
                 {{ booking.subService }}
               </p>
             </div>
@@ -85,79 +125,117 @@
           <div class="flex items-start">
             <ion-icon
               name="location-outline"
-              class="text-handy-navy-500 mr-3 mt-1 flex-shrink-0"
+              class="text-gray-500 mr-3 mt-1 flex-shrink-0"
             ></ion-icon>
             <div class="flex-1">
-              <p class="text-sm text-handy-navy-700 font-medium">Location</p>
-              <p class="text-sm text-handy-navy-600">
+              <p class="text-sm text-gray-700 font-medium">Location</p>
+              <p class="text-sm text-gray-600">
                 {{ booking.location.address }}
               </p>
             </div>
           </div>
 
-          <!-- Pricing -->
+          <!-- Client Info -->
+          <div class="flex items-center" *ngIf="booking.clientName">
+            <ion-icon
+              name="person-outline"
+              class="text-gray-500 mr-3"
+            ></ion-icon>
+            <div>
+              <p class="text-sm text-gray-700 font-medium">Client</p>
+              <p class="text-sm text-gray-600">
+                {{ booking.clientName }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Pricing and Duration -->
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <ion-icon
                 name="cash-outline"
-                class="text-handy-navy-500 mr-3"
+                class="text-gray-500 mr-3"
               ></ion-icon>
               <div>
-                <p class="text-sm text-handy-navy-700 font-medium">
-                  Total Cost
+                <p class="text-sm text-gray-700 font-medium">
+                  Total Earned
                 </p>
-                <p class="text-sm text-handy-navy-600 font-semibold">
+                <p class="text-sm text-gray-600 font-semibold">
                   {{ formatCurrency(getFinalPrice(booking)) }}
                 </p>
                 <!-- Show price breakdown for completed bookings -->
-                <div *ngIf="booking.finalPricing && (booking.status === 'completed' || booking.status === 'payment-confirmed')" class="text-xs text-handy-navy-500 mt-1">
+                <div *ngIf="booking.finalPricing && (booking.status === 'completed' || booking.status === 'payment-confirmed')" class="text-xs text-gray-500 mt-1">
                   <div>Base: {{ formatCurrency(booking.finalPricing.basePrice) }}</div>
                   <div *ngIf="booking.finalPricing.transportFee">Transport: {{ formatCurrency(booking.finalPricing.transportFee) }}</div>
-                  <div>Service: {{ formatCurrency(booking.finalPricing.serviceCharge) }}</div>
                 </div>
               </div>
             </div>
             <div class="flex items-center">
               <ion-icon
                 name="time-outline"
-                class="text-handy-navy-500 mr-2"
+                class="text-gray-500 mr-2"
               ></ion-icon>
               <div>
-                <p class="text-sm text-handy-navy-700 font-medium">
+                <p class="text-sm text-gray-700 font-medium">
                   Duration
                   <span *ngIf="hasActualDuration(booking)" class="text-green-600 text-xs ml-1">✓ Actual</span>
                   <span *ngIf="!hasActualDuration(booking)" class="text-orange-600 text-xs ml-1">~ Estimated</span>
                 </p>
-                <p class="text-sm text-handy-navy-600 font-semibold">
+                <p class="text-sm text-gray-600 font-semibold">
                   {{ formatDuration(getActualDuration(booking)) }}
                 </p>
               </div>
             </div>
           </div>
 
-          <!-- Worker Info (if assigned) -->
-          <div *ngIf="booking.workerName" class="flex items-center">
+          <!-- Rating (if available) -->
+          <div *ngIf="booking.rating" class="flex items-center">
             <ion-icon
-              name="person-outline"
-              class="text-handy-navy-500 mr-3"
+              name="star-outline"
+              class="text-gray-500 mr-3"
             ></ion-icon>
             <div>
-              <p class="text-sm text-handy-navy-700 font-medium">Worker</p>
-              <p class="text-sm text-handy-navy-600">
-                {{ booking.workerName }}
+              <p class="text-sm text-gray-700 font-medium">Client Rating</p>
+              <div class="flex items-center">
+                <div class="flex items-center mr-2">
+                  <ion-icon
+                    *ngFor="let star of [1,2,3,4,5]"
+                    [name]="star <= booking.rating ? 'star' : 'star-outline'"
+                    [class]="star <= booking.rating ? 'text-yellow-500' : 'text-gray-300'"
+                    class="text-sm"
+                  ></ion-icon>
+                </div>
+                <span class="text-sm text-gray-600">{{ booking.rating }}/5</span>
+              </div>
+              <p *ngIf="booking.review" class="text-xs text-gray-500 mt-1 italic">
+                "{{ booking.review }}"
               </p>
             </div>
           </div>
 
-          <!-- Created Date -->
+          <!-- Job Timer Details (if available) -->
+          <div *ngIf="booking.jobTimer && booking.jobTimer.startTime && booking.jobTimer.endTime" class="flex items-center">
+            <ion-icon
+              name="stopwatch-outline"
+              class="text-gray-500 mr-3"
+            ></ion-icon>
+            <div>
+              <p class="text-sm text-gray-700 font-medium">Work Time</p>
+              <p class="text-sm text-gray-600">
+                {{ booking.jobTimer.startTime | date:'h:mm a' }} - {{ booking.jobTimer.endTime | date:'h:mm a' }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Dates -->
           <div class="flex items-center">
             <ion-icon
               name="calendar-outline"
-              class="text-handy-navy-500 mr-3"
+              class="text-gray-500 mr-3"
             ></ion-icon>
             <div>
-              <p class="text-sm text-handy-navy-700 font-medium">Created</p>
-              <p class="text-sm text-handy-navy-600">
+              <p class="text-sm text-gray-700 font-medium">Created</p>
+              <p class="text-sm text-gray-600">
                 {{ booking.createdAt | date:'MMM d, y \'at\' h:mm a' }}
               </p>
             </div>
@@ -170,14 +248,10 @@
               class="text-green-600 mr-3"
             ></ion-icon>
             <div>
-              <p class="text-sm text-handy-navy-700 font-medium">Completed</p>
-              <p class="text-sm text-handy-navy-600">
+              <p class="text-sm text-gray-700 font-medium">Completed</p>
+              <p class="text-sm text-gray-600">
                 {{ booking.completedAt | date:'MMM d, y \'at\' h:mm a' }}
               </p>
-              <!-- Show job timer details for completed bookings -->
-              <div *ngIf="booking.jobTimer && booking.jobTimer.startTime && booking.jobTimer.endTime" class="text-xs text-green-600 mt-1">
-                Work Time: {{ booking.jobTimer.startTime | date:'h:mm a' }} - {{ booking.jobTimer.endTime | date:'h:mm a' }}
-              </div>
             </div>
           </div>
 
@@ -202,57 +276,15 @@
           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="flex space-x-3">
+        <!-- Action Button -->
+        <div class="flex">
           <button
             (click)="viewBookingDetails(booking)"
-            class="flex-1 bg-handy-navy-100 hover:bg-handy-navy-200 text-handy-navy-700 py-2 px-4 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center"
+            class="flex-1 bg-purple-100 hover:bg-purple-200 text-purple-700 py-2 px-4 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center"
           >
             <ion-icon name="eye-outline" class="mr-2"></ion-icon>
             View Details
           </button>
-          <button
-            *ngIf="booking.status === 'completed' || booking.status === 'payment-confirmed'"
-            (click)="rebookService(booking)"
-            class="flex-1 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white py-2 px-4 rounded-xl font-medium text-sm transition-all duration-300 flex items-center justify-center"
-          >
-            <ion-icon name="refresh-outline" class="mr-2"></ion-icon>
-            Book Again
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Summary Stats (if there are bookings) -->
-    <div
-      *ngIf="quickBookings.length > 0"
-      class="mt-8 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-white/20"
-    >
-      <h3 class="text-lg font-bold text-handy-navy-800 mb-4">Quick Stats</h3>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="text-center">
-          <div class="text-2xl font-bold text-purple-600">
-            {{ quickBookings.length }}
-          </div>
-          <div class="text-sm text-handy-navy-600">Total Bookings</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-green-600">
-            {{ getCompletedCount() }}
-          </div>
-          <div class="text-sm text-handy-navy-600">Completed</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-blue-600">
-            {{ getActiveCount() }}
-          </div>
-          <div class="text-sm text-handy-navy-600">Active</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-red-600">
-            {{ getCancelledCount() }}
-          </div>
-          <div class="text-sm text-handy-navy-600">Cancelled</div>
         </div>
       </div>
     </div>

@@ -447,7 +447,7 @@
       </div>
 
       <!-- Quick Stats Cards -->
-      <div class="grid grid-cols-3 gap-4 mb-4">
+      <div class="grid grid-cols-2 gap-4 mb-4">
         <div
           class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center border border-blue-200"
         >
@@ -457,23 +457,15 @@
           <div class="text-xs text-blue-600 font-medium">Jobs Done</div>
         </div>
         <div
-          class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 text-center border border-green-200"
-        >
-          <div class="text-2xl font-bold text-green-700">
-            ₱{{ workerStats.monthlyEarnings | number:'1.0-0' }}
-          </div>
-          <div class="text-xs text-green-600 font-medium">This Month</div>
-        </div>
-        <div
           class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 text-center border border-yellow-200"
         >
           <div
             class="text-2xl font-bold flex items-center justify-center text-yellow-700"
           >
             <ion-icon name="star" class="text-yellow-500 mr-1"></ion-icon>
-            {{ (workerProfile?.rating || 0) | number:'1.1-1' }}
+            {{ (workerStats.averageRating || 0) | number:'1.1-1' }}
           </div>
-          <div class="text-xs text-yellow-600 font-medium">Rating</div>
+          <div class="text-xs text-yellow-600 font-medium">Avg Rating</div>
         </div>
       </div>
 
@@ -494,7 +486,7 @@
           <ion-icon name="flash" class="text-green-600 mr-2"></ion-icon>
           Quick Actions
         </h3>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4 mb-4">
           <button
             (click)="viewActiveBookings()"
             class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center text-center"
@@ -519,6 +511,22 @@
             </div>
             <span class="font-semibold text-sm">Booking Requests</span>
             <span class="text-xs text-emerald-100 mt-1">Review requests</span>
+          </button>
+        </div>
+        
+        <!-- Additional Quick Actions Row -->
+        <div class="grid grid-cols-1 gap-4">
+          <button
+            (click)="navigateToQuickBookingHistory()"
+            class="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center text-center"
+          >
+            <div
+              class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3"
+            >
+              <ion-icon name="time-outline" class="text-2xl"></ion-icon>
+            </div>
+            <span class="font-semibold text-sm">Quick Booking History</span>
+            <span class="text-xs text-purple-100 mt-1">View completed quick bookings</span>
           </button>
         </div>
       </div>

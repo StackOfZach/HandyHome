@@ -208,6 +208,15 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     data: { role: 'client' },
   },
+  {
+    path: 'client/worker-found',
+    loadChildren: () =>
+      import('./pages/client/worker-found/worker-found.module').then(
+        (m) => m.WorkerFoundPageModule
+      ),
+    canActivate: [AuthGuard],
+    data: { role: 'client' },
+  },
   // Browse Workers - Protected Route
   {
     path: 'client/browse-workers',
@@ -333,6 +342,12 @@ const routes: Routes = [
   {
     path: 'pages/worker/worker-booking-details',
     loadChildren: () => import('./pages/worker/worker-booking-details/worker-booking-details.module').then( m => m.WorkerBookingDetailsPageModule),
+    canActivate: [AuthGuard],
+    data: { role: 'worker' },
+  },
+  {
+    path: 'pages/worker/quick-booking-history',
+    loadChildren: () => import('./pages/worker/quick-booking-history/quick-booking-history.module').then( m => m.QuickBookingHistoryPageModule),
     canActivate: [AuthGuard],
     data: { role: 'worker' },
   },

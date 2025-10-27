@@ -198,8 +198,14 @@ export class WorkerFoundPage implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('=== WORKER-FOUND PAGE INITIALIZED ===');
-    this.bookingId = this.route.snapshot.paramMap.get('bookingId') || '';
-    this.isQuickBooking = this.route.snapshot.queryParamMap.get('type') === 'quick';
+    
+    // Get booking ID from route parameters or query parameters
+    this.bookingId = this.route.snapshot.paramMap.get('bookingId') || 
+                     this.route.snapshot.queryParamMap.get('bookingId') || '';
+    
+    // Check if this is a quick booking or coming from history
+    this.isQuickBooking = this.route.snapshot.queryParamMap.get('type') === 'quick' ||
+                          this.route.snapshot.queryParamMap.get('fromHistory') === 'true';
     
     console.log('Worker-found page - Booking ID:', this.bookingId);
     console.log('Worker-found page - Is Quick Booking:', this.isQuickBooking);
