@@ -22,6 +22,26 @@ export class AuthGuard implements CanActivate {
         console.log('AuthGuard: Current user:', user ? user.uid : 'null');
 
         if (!user) {
+          // Check if we have a cached session that might be restoring
+          const hasCachedSession =
+            this.authService.isAuthenticatedWithFallback();
+          if (hasCachedSession) {
+            console.log(
+              'AuthGuard: Cached session found, waiting for restoration...'
+            );
+            // Wait a bit for session restoration to complete
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            const restoredUser = this.authService.getCurrentUser();
+            if (restoredUser) {
+              console.log('AuthGuard: Session restored, continuing...');
+              return this.checkRouteAccess(
+                route,
+                restoredUser,
+                this.authService.getCurrentUserProfile()
+              );
+            }
+          }
+
           // No user found, redirect to login
           console.log('AuthGuard: No user found, redirecting to login');
           console.log('AuthGuard: Attempted route:', route.routeConfig?.path);

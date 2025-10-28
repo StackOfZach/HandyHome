@@ -1,3 +1,30 @@
 <ion-app>
-  <ion-router-outlet></ion-router-outlet>
+  <!-- Splash Screen -->
+  <div *ngIf="showSplash" class="splash-container">
+    <div class="splash-bg-glow glow-1"></div>
+    <div class="splash-bg-glow glow-2"></div>
+
+    <div class="splash-content">
+      <div class="splash-card">
+        <div class="logo-container">
+          <img src="assets/HandyHome.png" alt="HandyHome" class="logo" />
+        </div>
+        <h1 class="brand">HandyHome</h1>
+        <p class="tagline">Fast, reliable home services near you</p>
+
+        <div class="loading-spinner">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+
+        <div class="progress">
+          <span></span>
+        </div>
+
+        <p class="loading-text">Setting things up...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App Content -->
+  <ion-router-outlet *ngIf="!showSplash"></ion-router-outlet>
 </ion-app>

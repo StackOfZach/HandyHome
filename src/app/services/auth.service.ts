@@ -736,6 +736,7 @@ export class AuthService {
     try {
       const storedSession = localStorage.getItem(this.USER_SESSION_KEY);
       if (!storedSession) {
+        console.log('No stored session found');
         return;
       }
 
@@ -762,7 +763,7 @@ export class AuthService {
         return;
       }
 
-      // Restore user state
+      // Restore user state immediately for better UX
       console.log('Restoring user session from localStorage');
       this.currentUserSubject.next(session.user);
       this.userProfileSubject.next(session.profile);
@@ -770,6 +771,20 @@ export class AuthService {
 
       // Update last activity
       this.updateLastActivity();
+
+      // Verify the session is still valid with Firebase
+      try {
+        const currentUser = this.auth.currentUser;
+        if (currentUser && currentUser.uid === session.user.uid) {
+          console.log('Session verified with Firebase');
+        } else {
+          console.log('Session not verified with Firebase, clearing...');
+          this.clearUserSession();
+        }
+      } catch (error) {
+        console.error('Error verifying session with Firebase:', error);
+        // Don't clear session on verification error, keep it for offline use
+      }
     } catch (error) {
       console.error('Error restoring user session:', error);
       this.clearUserSession();

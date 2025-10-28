@@ -1,0 +1,163 @@
+.splash-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #5b6dfa 0%, #7b3fa1 50%, #2b2d42 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 12s ease infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.splash-bg-glow {
+  position: absolute;
+  filter: blur(60px);
+  opacity: 0.35;
+  transform: translateZ(0);
+}
+
+.splash-bg-glow.glow-1 {
+  width: 420px;
+  height: 420px;
+  top: -80px;
+  left: -80px;
+  background: radial-gradient(closest-side, #8aa2ff, transparent 70%);
+  animation: float1 10s ease-in-out infinite;
+}
+
+.splash-bg-glow.glow-2 {
+  width: 520px;
+  height: 520px;
+  bottom: -120px;
+  right: -120px;
+  background: radial-gradient(closest-side, #c07bff, transparent 70%);
+  animation: float2 12s ease-in-out infinite;
+}
+
+.splash-content {
+  text-align: center;
+  color: white;
+  padding: 16px;
+}
+
+.splash-card {
+  backdrop-filter: saturate(140%) blur(14px);
+  -webkit-backdrop-filter: saturate(140%) blur(14px);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 20px;
+  padding: 28px 24px;
+  min-width: 260px;
+  max-width: 340px;
+  margin: 0 auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.logo-container {
+  margin-bottom: 1.25rem;
+}
+
+.logo {
+  width: 112px;
+  height: 112px;
+  border-radius: 22px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 8px rgba(255, 255, 255, 0.06);
+  transform: translateZ(0);
+}
+
+.brand {
+  margin: 8px 0 2px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.tagline {
+  margin: 0 0 18px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.loading-spinner {
+  margin: 6px auto 14px;
+}
+
+.loading-text {
+  font-size: 13px;
+  font-weight: 500;
+  margin: 8px 0 0;
+  opacity: 0.85;
+}
+
+.progress {
+  position: relative;
+  height: 6px;
+  width: 100%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+}
+
+.progress span {
+  position: absolute;
+  height: 100%;
+  width: 40%;
+  left: -40%;
+  top: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.9),
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes float1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(20px, 14px) scale(1.05);
+  }
+}
+
+@keyframes float2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-16px, -10px) scale(1.04);
+  }
+}
