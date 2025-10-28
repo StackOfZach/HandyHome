@@ -553,17 +553,17 @@ export class DashboardService {
       let completedBookings = 0;
       let totalRevenue = 0;
 
-      // Process regular bookings from Firestore - sum all serviceCharge
+      // Process regular bookings from Firestore - sum service/platform fee
       bookingsSnapshot.forEach((doc) => {
         const booking = doc.data();
         const status = booking['status'];
 
-        // Sum up serviceCharge for revenue (from all bookings, not just completed)
-        // Regular bookings have serviceCharge directly on the booking object
-        const serviceCharge = booking['serviceCharge'] || 0;
-        totalRevenue += serviceCharge;
+        // Revenue: Prefer calculatedPayment.serviceFee if present; fallback to legacy serviceCharge
+        const calculatedFee = booking['calculatedPayment']?.['serviceFee'] || 0;
+        const legacyServiceCharge = booking['serviceCharge'] || 0;
+        totalRevenue += calculatedFee > 0 ? calculatedFee : legacyServiceCharge;
 
-        if (status === 'payment-confirmed') {
+        if (status === 'payment-confirmed' || status === 'completed') {
           completedBookings++;
         } else {
           // All other statuses are considered active
@@ -571,17 +571,17 @@ export class DashboardService {
         }
       });
 
-      // Process quick bookings from Firestore - sum all serviceCharge
+      // Process quick bookings from Firestore - sum service/platform fee
       quickBookingsSnapshot.forEach((doc) => {
         const booking = doc.data();
         const status = booking['status'];
 
-        // Sum up serviceCharge for revenue (from all bookings, not just completed)
-        // serviceCharge is nested under pricing object
-        const serviceCharge = booking['pricing']?.['serviceCharge'] || 0;
-        totalRevenue += serviceCharge;
+        // Revenue: Prefer calculatedPayment.serviceFee if present; fallback to pricing.serviceCharge
+        const calculatedFee = booking['calculatedPayment']?.['serviceFee'] || 0;
+        const legacyServiceCharge = booking['pricing']?.['serviceCharge'] || 0;
+        totalRevenue += calculatedFee > 0 ? calculatedFee : legacyServiceCharge;
 
-        if (status === 'payment-confirmed') {
+        if (status === 'payment-confirmed' || status === 'completed') {
           completedBookings++;
         } else {
           // All other statuses are considered active

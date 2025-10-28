@@ -2116,8 +2116,12 @@ export class AdminDashboardPage implements OnInit {
 
   getCompletedBookingsCount(): number {
     return (
-      this.regularBookings.filter((b) => b.status === 'completed').length +
-      this.quickBookings.filter((b) => b.status === 'completed').length
+      this.regularBookings.filter(
+        (b) => b.status === 'completed' || b.status === 'payment-confirmed'
+      ).length +
+      this.quickBookings.filter(
+        (b) => b.status === 'completed' || b.status === 'payment-confirmed'
+      ).length
     );
   }
 }
