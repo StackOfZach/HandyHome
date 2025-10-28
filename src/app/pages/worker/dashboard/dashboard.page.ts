@@ -136,6 +136,8 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
   private slideInterval: any;
+  private statsListenersSetup = false;
+  private lastQuickBookingIds = new Set<string>();
 
   constructor(
     private router: Router,
@@ -156,10 +158,11 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   async ngOnInit() {
     // Subscribe to user profile
     this.subscriptions.push(
-      this.authService.userProfile$.subscribe((profile) => {
+      this.authService.userProfile$.subscribe(async (profile) => {
         this.userProfile = profile;
         if (profile) {
-          this.loadWorkerData();
+          // Ensure workerProfile is loaded before setting listeners dependent on it
+          await this.loadWorkerData();
           this.setupNotificationListeners();
           this.setupJobListeners();
           this.setupLocationTracking();
@@ -581,6 +584,11 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
       // Force UI update
       this.generateBookingSlides();
+
+      // Ensure real-time stats listeners are set up (one-time)
+      if (!this.statsListenersSetup) {
+        this.setupStatsRealtimeListeners();
+      }
     } catch (error) {
       console.error('Error loading worker stats:', error);
       // Fallback to profile data
@@ -589,6 +597,86 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
         averageRating: this.workerProfile.rating || 0,
         totalEarnings: this.workerProfile.totalEarnings || 0,
       };
+    }
+  }
+
+  private setupStatsRealtimeListeners() {
+    if (this.statsListenersSetup || !this.userProfile?.uid) return;
+
+    try {
+      const quickBookingsRef = collection(this.firestore, 'quickbookings');
+      const regularBookingsRef = collection(this.firestore, 'bookings');
+
+      const quickQ = query(
+        quickBookingsRef,
+        where('assignedWorker', '==', this.userProfile.uid),
+        where('status', 'in', ['completed', 'payment-confirmed'])
+      );
+      const regularQ = query(
+        regularBookingsRef,
+        where('assignedWorker', '==', this.userProfile.uid),
+        where('status', 'in', ['completed', 'payment-confirmed'])
+      );
+
+      let latestQuickSnapshot: any[] = [];
+      let latestRegularSnapshot: any[] = [];
+
+      const recompute = () => {
+        // Combine both snapshots to compute stats
+        let jobsCompleted = 0;
+        let totalRating = 0;
+        let ratingCount = 0;
+
+        const accumulate = (docs: any[]) => {
+          docs.forEach((d) => {
+            const data = d.data();
+            jobsCompleted++;
+            let rating: number | null = null;
+            if (typeof data['rating'] === 'number') rating = data['rating'];
+            else if (typeof data['clientRating'] === 'number')
+              rating = data['clientRating'];
+            else if (typeof data['workerRating'] === 'number')
+              rating = data['workerRating'];
+            else if (
+              data['feedback'] &&
+              typeof data['feedback']['rating'] === 'number'
+            ) {
+              rating = data['feedback']['rating'];
+            }
+            if (rating && rating > 0 && rating <= 5) {
+              totalRating += rating;
+              ratingCount++;
+            }
+          });
+        };
+
+        accumulate(latestQuickSnapshot);
+        accumulate(latestRegularSnapshot);
+
+        const averageRating = ratingCount > 0 ? totalRating / ratingCount : 0;
+
+        this.workerStats = {
+          jobsCompleted,
+          averageRating,
+          totalEarnings: this.workerProfile?.totalEarnings || 0,
+        };
+      };
+
+      const unsubQuick = onSnapshot(quickQ, (snap) => {
+        latestQuickSnapshot = snap.docs;
+        recompute();
+      });
+      const unsubRegular = onSnapshot(regularQ, (snap) => {
+        latestRegularSnapshot = snap.docs;
+        recompute();
+      });
+
+      // Track unsubscribers
+      this.subscriptions.push({ unsubscribe: unsubQuick } as any);
+      this.subscriptions.push({ unsubscribe: unsubRegular } as any);
+      this.statsListenersSetup = true;
+    } catch (err) {
+      console.error('Error setting up real-time stats listeners:', err);
     }
   }
 
@@ -1325,37 +1413,71 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
     try {
       const quickBookingsRef = collection(this.firestore, 'quickbookings');
-      const q = query(
-        quickBookingsRef,
-        where('status', '==', 'searching'),
-        orderBy('createdAt', 'desc')
-      );
+      const q = query(quickBookingsRef, where('status', '==', 'searching'));
 
       // Real-time listener for available bookings
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        this.availableBookings = [];
+        const currentRelevantIds: string[] = [];
+        let firstNewBooking: any | null = null;
+        let currentDisplayedStillValid = false;
 
-        snapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          const booking = {
-            id: doc.id,
-            ...data,
+        // Update the list fully for UI
+        this.availableBookings = snapshot.docs
+          .map((d) => ({ id: d.id, ...d.data() } as any))
+          .filter((b) => this.isBookingRelevantToWorker(b))
+          .map((b) => ({
+            ...b,
             isProcessing: false,
-            distance: this.calculateDistanceToBooking(data['location']),
-          };
+            distance: this.calculateDistanceToBooking(b['location']),
+          }));
 
-          // Only show bookings that match worker's skills
-          if (this.isBookingRelevantToWorker(booking)) {
-            this.availableBookings.push(booking);
-          }
-        });
-
-        // Sort by distance if location is available
         if (this.currentLocation) {
           this.availableBookings.sort(
             (a, b) => (a.distance || 999) - (b.distance || 999)
           );
         }
+
+        this.availableBookings.forEach((b) => currentRelevantIds.push(b.id));
+
+        // Detect per-change events for better toast timing
+        snapshot.docChanges().forEach((change) => {
+          const data = change.doc.data();
+          const booking = { id: change.doc.id, ...data } as any;
+          const relevant = this.isBookingRelevantToWorker(booking);
+
+          if (change.type === 'added' && relevant) {
+            if (!this.lastQuickBookingIds.has(booking.id) && !firstNewBooking) {
+              firstNewBooking = booking;
+            }
+          }
+
+          if (change.type === 'modified') {
+            if (
+              this.quickBookingNotification?.id === booking.id &&
+              (booking.status !== 'searching' || !!booking.assignedWorker)
+            ) {
+              currentDisplayedStillValid = false;
+            }
+          }
+        });
+
+        // If we have a newly added relevant booking, show toast
+        if (firstNewBooking) {
+          this.showQuickBookingNotification(firstNewBooking);
+        }
+
+        // Decide if current toast should remain visible
+        if (this.quickBookingNotification) {
+          const stillExists = currentRelevantIds.includes(
+            this.quickBookingNotification.id
+          );
+          if (!stillExists) {
+            this.dismissQuickNotification();
+          }
+        }
+
+        // Update last seen IDs
+        this.lastQuickBookingIds = new Set(currentRelevantIds);
       });
 
       // Store the unsubscribe function to clean up later
