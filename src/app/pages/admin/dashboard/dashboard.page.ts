@@ -17,6 +17,8 @@ import {
   query,
   getDocs,
   orderBy,
+  doc,
+  updateDoc,
 } from '@angular/fire/firestore';
 import {
   AlertController,
@@ -1792,5 +1794,75 @@ export class AdminDashboardPage implements OnInit {
     return this.clientReports.filter(
       (r) => r.severity === 'critical' && r.status !== 'dismissed'
     ).length;
+  }
+
+  async updateClientReportStatus(status: string) {
+    if (!this.selectedClientReport) return;
+
+    const alert = await this.alertController.create({
+      header: `Mark as ${status.replace('_', ' ')}`,
+      message: `Are you sure you want to mark this client report as ${status.replace(
+        '_',
+        ' '
+      )}?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Confirm',
+          handler: async () => {
+            await this.processClientReportStatusUpdate(status);
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  private async processClientReportStatusUpdate(status: string) {
+    if (!this.selectedClientReport || !this.userProfile) return;
+
+    this.isProcessingReport = true;
+    try {
+      const clientReportRef = doc(
+        this.firestore,
+        'clientReports',
+        this.selectedClientReport.id
+      );
+
+      // Update the report with new status, admin notes, resolution, and reviewed info
+      await updateDoc(clientReportRef, {
+        status,
+        adminNotes: this.reportAdminNotes,
+        resolution: this.reportResolution,
+        reviewedBy: this.userProfile.uid,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Update local report
+      const reportIndex = this.clientReports.findIndex(
+        (r) => r.id === this.selectedClientReport!.id
+      );
+      if (reportIndex !== -1) {
+        this.clientReports[reportIndex].status = status;
+        this.clientReports[reportIndex].adminNotes = this.reportAdminNotes;
+        this.clientReports[reportIndex].resolution = this.reportResolution;
+      }
+
+      this.filterClientReports();
+      this.closeClientReportModal();
+      this.showToast(
+        `Client report marked as ${status.replace('_', ' ')} successfully`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Error updating client report status:', error);
+      this.showToast('Error updating client report status', 'danger');
+    } finally {
+      this.isProcessingReport = false;
+    }
   }
 }

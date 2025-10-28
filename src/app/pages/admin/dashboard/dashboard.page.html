@@ -1941,6 +1941,373 @@
         </div>
       </div>
 
+      <!-- Client Report Details Modal -->
+      <div
+        *ngIf="isClientReportModalOpen"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+        (click)="closeClientReportModal()"
+      >
+        <div
+          class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col"
+          (click)="$event.stopPropagation()"
+        >
+          <!-- Modal Header -->
+          <div class="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div
+                  class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+                >
+                  <ion-icon
+                    name="person-remove"
+                    class="text-white text-xl"
+                  ></ion-icon>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold text-white">
+                    Client Report Details
+                  </h3>
+                  <div class="flex items-center space-x-3 mt-1">
+                    <p class="text-orange-100 text-sm">
+                      {{ selectedClientReport?.reportType || 'Report' }}
+                    </p>
+                    <span
+                      [class]="getReportStatusBadgeClass(selectedClientReport?.status || '')"
+                    >
+                      {{ selectedClientReport?.status?.replace('_', ' ') |
+                      titlecase }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                (click)="closeClientReportModal()"
+                class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-200"
+              >
+                <ion-icon name="close" class="text-white text-xl"></ion-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- Modal Content -->
+          <div class="overflow-y-auto flex-1">
+            <div class="p-6 space-y-6">
+              <!-- Report Information -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gray-50 rounded-xl p-4">
+                  <h4 class="font-semibold text-gray-800 mb-3">
+                    Client Information
+                  </h4>
+                  <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Client Name:</span>
+                      <span class="font-medium"
+                        >{{ selectedClientReport?.clientName }}</span
+                      >
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Client ID:</span>
+                      <span class="font-medium font-mono text-xs"
+                        >{{ selectedClientReport?.clientId }}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-4">
+                  <h4 class="font-semibold text-gray-800 mb-3">
+                    Reporter Information
+                  </h4>
+                  <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Worker Name:</span>
+                      <span class="font-medium"
+                        >{{ selectedClientReport?.reporterName }}</span
+                      >
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Email:</span>
+                      <span class="font-medium"
+                        >{{ selectedClientReport?.reporterEmail }}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Report Details -->
+              <div
+                class="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6 border border-orange-200"
+              >
+                <div class="flex items-center space-x-3 mb-4">
+                  <ion-icon
+                    name="document-text"
+                    class="text-orange-600 text-2xl"
+                  ></ion-icon>
+                  <h4 class="text-lg font-bold text-gray-800">
+                    Report Description
+                  </h4>
+                </div>
+                <h5 class="font-semibold text-gray-800 mb-2">
+                  {{ selectedClientReport?.title }}
+                </h5>
+                <p class="text-gray-700 leading-relaxed">
+                  {{ selectedClientReport?.description }}
+                </p>
+              </div>
+
+              <!-- Report Metadata -->
+              <div class="grid grid-cols-3 gap-4">
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <ion-icon
+                      name="alert-circle"
+                      class="text-orange-600"
+                    ></ion-icon>
+                    <h5 class="font-semibold text-gray-700">Severity</h5>
+                  </div>
+                  <span
+                    [class]="getSeverityBadgeClass(selectedClientReport?.severity)"
+                  >
+                    {{ selectedClientReport?.severity | titlecase }}
+                  </span>
+                </div>
+
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <ion-icon name="calendar" class="text-blue-600"></ion-icon>
+                    <h5 class="font-semibold text-gray-700">Created</h5>
+                  </div>
+                  <p class="text-sm text-gray-600">
+                    {{ selectedClientReport?.createdAt?.toDate() | date:'short'
+                    }}
+                  </p>
+                </div>
+
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                  <div class="flex items-center space-x-2 mb-2">
+                    <ion-icon
+                      name="document-text"
+                      class="text-purple-600"
+                    ></ion-icon>
+                    <h5 class="font-semibold text-gray-700">Report Type</h5>
+                  </div>
+                  <p class="text-sm text-gray-600 capitalize">
+                    {{ selectedClientReport?.reportType?.replace('_', ' ') }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Booking Reference -->
+              <div
+                *ngIf="selectedClientReport?.bookingId"
+                class="bg-blue-50 rounded-xl p-4 border border-blue-200"
+              >
+                <div class="flex items-center space-x-2 mb-2">
+                  <ion-icon
+                    name="calendar-outline"
+                    class="text-blue-600"
+                  ></ion-icon>
+                  <h5 class="font-semibold text-gray-800">Related Booking</h5>
+                </div>
+                <p class="text-sm font-mono text-gray-700">
+                  {{ selectedClientReport.bookingId }}
+                </p>
+              </div>
+
+              <!-- Evidence -->
+              <div *ngIf="selectedClientReport?.evidence" class="space-y-4">
+                <!-- Photos -->
+                <div
+                  *ngIf="selectedClientReport.evidence.photos && selectedClientReport.evidence.photos.length > 0"
+                >
+                  <h5
+                    class="font-semibold text-gray-800 mb-3 flex items-center"
+                  >
+                    <ion-icon
+                      name="images"
+                      class="mr-2 text-blue-600"
+                    ></ion-icon>
+                    Photos of the Issue
+                  </h5>
+                  <div class="grid grid-cols-3 gap-3">
+                    <img
+                      *ngFor="let photo of selectedClientReport.evidence.photos"
+                      [src]="photo"
+                      alt="Evidence"
+                      class="w-full h-32 object-cover rounded-lg border border-gray-200"
+                      (click)="openImageInNewTab(photo, 'Evidence Photo')"
+                      style="cursor: pointer"
+                    />
+                  </div>
+                </div>
+
+                <!-- Screenshots -->
+                <div
+                  *ngIf="selectedClientReport.evidence.screenshots && selectedClientReport.evidence.screenshots.length > 0"
+                >
+                  <h5
+                    class="font-semibold text-gray-800 mb-3 flex items-center"
+                  >
+                    <ion-icon
+                      name="phone-portrait"
+                      class="mr-2 text-green-600"
+                    ></ion-icon>
+                    Screenshots
+                  </h5>
+                  <div class="grid grid-cols-3 gap-3">
+                    <img
+                      *ngFor="let screenshot of selectedClientReport.evidence.screenshots"
+                      [src]="screenshot"
+                      alt="Screenshot"
+                      class="w-full h-32 object-cover rounded-lg border border-gray-200"
+                      (click)="openImageInNewTab(screenshot, 'Screenshot Evidence')"
+                      style="cursor: pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Admin Notes -->
+              <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <h5 class="font-semibold text-gray-800 mb-3">Admin Notes</h5>
+                <textarea
+                  [(ngModel)]="reportAdminNotes"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  rows="3"
+                  placeholder="Add notes about this report..."
+                ></textarea>
+              </div>
+
+              <!-- Resolution -->
+              <div class="bg-green-50 rounded-xl p-4 border border-green-200">
+                <h5 class="font-semibold text-gray-800 mb-3">Resolution</h5>
+                <textarea
+                  [(ngModel)]="reportResolution"
+                  class="w-full px-4 py-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                  rows="3"
+                  placeholder="Resolution or action taken..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div
+            class="bg-gray-50 px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 mt-auto"
+          >
+            <button
+              (click)="closeClientReportModal()"
+              class="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-all duration-200"
+            >
+              <ion-icon name="close-outline" class="mr-2"></ion-icon>
+              Close
+            </button>
+
+            <!-- Action Buttons based on current status -->
+            <div class="flex flex-wrap gap-3">
+              <!-- Pending Status Actions -->
+              <ng-container *ngIf="selectedClientReport?.status === 'pending'">
+                <button
+                  (click)="updateClientReportStatus('under_review')"
+                  [disabled]="isProcessingReport"
+                  class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  <ion-icon name="eye-outline" class="mr-2"></ion-icon>
+                  <span *ngIf="!isProcessingReport">Start Review</span>
+                  <span *ngIf="isProcessingReport">Processing...</span>
+                </button>
+                <button
+                  (click)="updateClientReportStatus('dismissed')"
+                  [disabled]="isProcessingReport"
+                  class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  <ion-icon name="close-circle-outline" class="mr-2"></ion-icon>
+                  <span *ngIf="!isProcessingReport">Dismiss</span>
+                  <span *ngIf="isProcessingReport">Processing...</span>
+                </button>
+              </ng-container>
+
+              <!-- Under Review Status Actions -->
+              <ng-container
+                *ngIf="selectedClientReport?.status === 'under_review'"
+              >
+                <button
+                  (click)="updateClientReportStatus('resolved')"
+                  [disabled]="isProcessingReport"
+                  class="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  <ion-icon
+                    name="checkmark-circle-outline"
+                    class="mr-2"
+                  ></ion-icon>
+                  <span *ngIf="!isProcessingReport">Mark Resolved</span>
+                  <span *ngIf="isProcessingReport">Processing...</span>
+                </button>
+                <button
+                  (click)="updateClientReportStatus('dismissed')"
+                  [disabled]="isProcessingReport"
+                  class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  <ion-icon name="close-circle-outline" class="mr-2"></ion-icon>
+                  <span *ngIf="!isProcessingReport">Dismiss</span>
+                  <span *ngIf="isProcessingReport">Processing...</span>
+                </button>
+              </ng-container>
+
+              <!-- Resolved Status Actions -->
+              <ng-container *ngIf="selectedClientReport?.status === 'resolved'">
+                <button
+                  (click)="updateClientReportStatus('under_review')"
+                  [disabled]="isProcessingReport"
+                  class="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  <ion-icon name="refresh-outline" class="mr-2"></ion-icon>
+                  <span *ngIf="!isProcessingReport">Reopen for Review</span>
+                  <span *ngIf="isProcessingReport">Processing...</span>
+                </button>
+                <button
+                  (click)="updateClientReportStatus('dismissed')"
+                  [disabled]="isProcessingReport"
+                  class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  <ion-icon name="close-circle-outline" class="mr-2"></ion-icon>
+                  <span *ngIf="!isProcessingReport">Dismiss</span>
+                  <span *ngIf="isProcessingReport">Processing...</span>
+                </button>
+              </ng-container>
+
+              <!-- Dismissed Status Actions -->
+              <ng-container
+                *ngIf="selectedClientReport?.status === 'dismissed'"
+              >
+                <button
+                  (click)="updateClientReportStatus('under_review')"
+                  [disabled]="isProcessingReport"
+                  class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  <ion-icon name="refresh-outline" class="mr-2"></ion-icon>
+                  <span *ngIf="!isProcessingReport">Reopen for Review</span>
+                  <span *ngIf="isProcessingReport">Processing...</span>
+                </button>
+                <button
+                  (click)="updateClientReportStatus('resolved')"
+                  [disabled]="isProcessingReport"
+                  class="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  <ion-icon
+                    name="checkmark-circle-outline"
+                    class="mr-2"
+                  ></ion-icon>
+                  <span *ngIf="!isProcessingReport">Mark Resolved</span>
+                  <span *ngIf="isProcessingReport">Processing...</span>
+                </button>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Services Management Section -->
       <div *ngIf="activeSection === 'services'" class="animate-fadeIn">
         <!-- Enhanced Header with Gradient Background -->

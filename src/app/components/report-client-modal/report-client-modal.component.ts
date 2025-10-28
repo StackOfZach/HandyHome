@@ -188,7 +188,7 @@ export class ReportClientModalComponent implements OnInit {
     await loading.present();
 
     try {
-      const reportData = {
+      const reportData: any = {
         reporterId: this.currentUser.uid,
         reporterName: this.currentUser.fullName || 'Unknown',
         reporterEmail: this.currentUser.email,
@@ -199,14 +199,17 @@ export class ReportClientModalComponent implements OnInit {
         severity: this.selectedCategory.severity,
         title: this.reportForm.title || this.selectedCategory.name,
         description: this.reportForm.description,
-        evidence:
-          this.reportForm.evidence.photos.length > 0 ||
-          this.reportForm.evidence.screenshots.length > 0
-            ? this.reportForm.evidence
-            : undefined,
         status: 'pending' as const,
         createdAt: serverTimestamp(),
       };
+
+      // Only add evidence if there are photos or screenshots
+      if (
+        this.reportForm.evidence.photos.length > 0 ||
+        this.reportForm.evidence.screenshots.length > 0
+      ) {
+        reportData.evidence = this.reportForm.evidence;
+      }
 
       const reportsCollection = collection(this.firestore, 'clientReports');
       const docRef = await addDoc(reportsCollection, reportData);
