@@ -109,6 +109,17 @@ export class AdminDashboardPage implements OnInit {
   reportResolution: string = '';
   isProcessingReport: boolean = false;
 
+  // Client Reports Properties
+  clientReports: any[] = [];
+  filteredClientReports: any[] = [];
+  isLoadingClientReports: boolean = false;
+  clientReportSearchTerm: string = '';
+  clientReportStatusFilter: string = 'all';
+  clientReportSeverityFilter: string = 'all';
+  selectedClientReport: any | null = null;
+  isClientReportModalOpen: boolean = false;
+  reportViewType: 'worker' | 'client' = 'worker'; // Toggle between worker and client reports
+
   // Analytics refresh
   isRefreshingAnalytics: boolean = false;
   lastAnalyticsUpdate: Date | null = null;
@@ -1685,6 +1696,100 @@ export class AdminDashboardPage implements OnInit {
 
   getCriticalReportsCount(): number {
     return this.reports.filter(
+      (r) => r.severity === 'critical' && r.status !== 'dismissed'
+    ).length;
+  }
+
+  // Client Reports Methods
+  async loadClientReports() {
+    this.isLoadingClientReports = true;
+    try {
+      const reportsCollection = collection(this.firestore, 'clientReports');
+      const q = query(reportsCollection, orderBy('createdAt', 'desc'));
+
+      const querySnapshot = await getDocs(q);
+      this.clientReports = [];
+
+      querySnapshot.forEach((doc) => {
+        this.clientReports.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+
+      this.filteredClientReports = [...this.clientReports];
+      console.log('Loaded client reports:', this.clientReports);
+    } catch (error) {
+      console.error('Error loading client reports:', error);
+      this.showToast('Error loading client reports', 'danger');
+    } finally {
+      this.isLoadingClientReports = false;
+    }
+  }
+
+  filterClientReports() {
+    let filtered = [...this.clientReports];
+
+    // Filter by search term
+    if (this.clientReportSearchTerm.trim()) {
+      const searchTerm = this.clientReportSearchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (report) =>
+          report.clientName?.toLowerCase().includes(searchTerm) ||
+          report.reporterName?.toLowerCase().includes(searchTerm) ||
+          report.title?.toLowerCase().includes(searchTerm) ||
+          report.description?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Filter by status
+    if (this.clientReportStatusFilter !== 'all') {
+      filtered = filtered.filter(
+        (report) => report.status === this.clientReportStatusFilter
+      );
+    }
+
+    // Filter by severity
+    if (this.clientReportSeverityFilter !== 'all') {
+      filtered = filtered.filter(
+        (report) => report.severity === this.clientReportSeverityFilter
+      );
+    }
+
+    this.filteredClientReports = filtered;
+  }
+
+  viewClientReportDetails(report: any) {
+    this.selectedClientReport = report;
+    this.reportAdminNotes = report.adminNotes || '';
+    this.reportResolution = report.resolution || '';
+    this.isClientReportModalOpen = true;
+  }
+
+  closeClientReportModal() {
+    this.isClientReportModalOpen = false;
+    this.selectedClientReport = null;
+    this.reportAdminNotes = '';
+    this.reportResolution = '';
+  }
+
+  setReportViewType(type: 'worker' | 'client') {
+    this.reportViewType = type;
+    if (type === 'client' && this.clientReports.length === 0) {
+      this.loadClientReports();
+    }
+  }
+
+  getClientReportsCount(): number {
+    return this.clientReports.length;
+  }
+
+  getPendingClientReportsCount(): number {
+    return this.clientReports.filter((r) => r.status === 'pending').length;
+  }
+
+  getCriticalClientReportsCount(): number {
+    return this.clientReports.filter(
       (r) => r.severity === 'critical' && r.status !== 'dismissed'
     ).length;
   }

@@ -7,9 +7,14 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MapPickerComponent } from '../components/map-picker/map-picker.component';
 import { ReportWorkerModalComponent } from '../components/report-worker-modal/report-worker-modal.component';
 import { PaymentModalComponent } from '../components/payment-modal/payment-modal.component';
+import { ReportClientModalComponent } from '../components/report-client-modal/report-client-modal.component';
 
 @NgModule({
-  declarations: [ReportWorkerModalComponent, PaymentModalComponent],
+  declarations: [
+    ReportWorkerModalComponent,
+    PaymentModalComponent,
+    ReportClientModalComponent,
+  ],
   imports: [
     CommonModule,
     IonicModule,
@@ -21,6 +26,7 @@ import { PaymentModalComponent } from '../components/payment-modal/payment-modal
     MapPickerComponent,
     ReportWorkerModalComponent,
     PaymentModalComponent,
+    ReportClientModalComponent,
   ],
 })
 export class SharedComponentsModule {}

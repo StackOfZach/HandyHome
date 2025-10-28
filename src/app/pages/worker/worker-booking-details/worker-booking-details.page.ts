@@ -15,8 +15,10 @@ import {
   ToastController,
   ActionSheetController,
   LoadingController,
+  ModalController,
 } from '@ionic/angular';
 import { AuthService } from '../../../services/auth.service';
+import { ReportClientModalComponent } from '../../../components/report-client-modal/report-client-modal.component';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Subscription } from 'rxjs';
 
@@ -143,7 +145,8 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
     private actionSheetController: ActionSheetController,
     private loadingController: LoadingController,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private modalController: ModalController
   ) {}
 
   async ngOnInit() {
@@ -564,43 +567,26 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
 
   // Report functionality
   async showReportOptions() {
-    const actionSheet = await this.actionSheetController.create({
-      header: 'Report Issue',
-      buttons: [
-        {
-          text: 'Client Issue',
-          icon: 'person-outline',
-          handler: () => this.createReport('client_issue'),
-        },
-        {
-          text: 'Location Issue',
-          icon: 'location-outline',
-          handler: () => this.createReport('location_issue'),
-        },
-        {
-          text: 'Safety Concern',
-          icon: 'shield-outline',
-          handler: () => this.createReport('safety_concern'),
-        },
-        {
-          text: 'Equipment Issue',
-          icon: 'construct-outline',
-          handler: () => this.createReport('equipment_issue'),
-        },
-        {
-          text: 'Other',
-          icon: 'help-outline',
-          handler: () => this.createReport('other'),
-        },
-        {
-          text: 'Cancel',
-          icon: 'close',
-          role: 'cancel',
-        },
-      ],
+    if (!this.booking?.clientDetails) {
+      this.showToast('Client information not available', 'danger');
+      return;
+    }
+
+    const modal = await this.modalController.create({
+      component: ReportClientModalComponent,
+      componentProps: {
+        clientId: this.booking.clientId,
+        clientName: this.booking.clientDetails.name,
+        bookingId: this.bookingId,
+      },
     });
 
-    await actionSheet.present();
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss();
+    if (data?.success) {
+      this.showToast('Report submitted successfully', 'success');
+    }
   }
 
   async createReport(type: string) {
