@@ -115,13 +115,24 @@
             <div class="relative">
               <input
                 id="password"
-                type="password"
+                [type]="showPassword ? 'text' : 'password'"
                 formControlName="password"
                 placeholder="Enter your password"
                 class="p-4 border-2 border-gray-200 rounded-2xl w-full shadow-sm focus:ring-4 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300 text-handy-navy-700 placeholder-gray-400 bg-white/70"
                 [class.border-red-400]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
                 [class.focus:ring-red-200]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
               />
+              <button
+                type="button"
+                (click)="togglePasswordVisibility()"
+                class="absolute right-10 top-1/2 transform -translate-y-1/2 text-handy-navy-400 hover:text-handy-navy-600 focus:outline-none"
+                aria-label="Toggle password visibility"
+              >
+                <ion-icon
+                  [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
+                  class="text-2xl"
+                ></ion-icon>
+              </button>
               <div
                 *ngIf="loginForm.get('password')?.valid && loginForm.get('password')?.touched"
                 class="absolute right-4 top-1/2 transform -translate-y-1/2"

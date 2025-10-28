@@ -9,9 +9,16 @@ import {
   Timestamp,
   serverTimestamp,
 } from '@angular/fire/firestore';
-import { ToastController, AlertController, ModalController } from '@ionic/angular';
+import {
+  ToastController,
+  AlertController,
+  ModalController,
+} from '@ionic/angular';
 import { AuthService, UserProfile } from '../../../services/auth.service';
-import { DashboardService, ServiceCategory } from '../../../services/dashboard.service';
+import {
+  DashboardService,
+  ServiceCategory,
+} from '../../../services/dashboard.service';
 import { WorkerService } from '../../../services/worker.service';
 import { Subscription, interval } from 'rxjs';
 import { Geolocation } from '@capacitor/geolocation';
@@ -64,20 +71,20 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   isJobStarted: boolean = false;
   isJobCompleted: boolean = false;
   isPaymentRequested: boolean = false;
-  
+
   // New workflow states
   hasArrivedAtClient: boolean = false;
   showArrivalSlider: boolean = false;
   showStartJobButton: boolean = false;
   showJobDoneSlider: boolean = false;
-  
+
   // Job timer
   jobStartTime: Date | null = null;
   jobEndTime: Date | null = null;
   jobDuration: number = 0; // in milliseconds
   jobTimer: string = '00:00:00';
   private timerSubscription?: Subscription;
-  
+
   // Photo capture
   completionPhoto: string = '';
   isCapturingPhoto: boolean = false;
@@ -140,11 +147,14 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
             console.log('Booking location (legacy):', this.booking.location);
             console.log('Booking locations (legacy):', this.booking.locations);
             console.log('Booking neededService:', this.booking.neededService);
-            console.log('Booking specificService:', this.booking.specificService);
-            
+            console.log(
+              'Booking specificService:',
+              this.booking.specificService
+            );
+
             // Load worker pricing after booking is loaded
             this.loadWorkerPricing();
-            
+
             // Update workflow state based on booking status
             this.updateWorkflowState();
           } else {
@@ -775,7 +785,8 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
 
   async loadServiceCategories() {
     try {
-      this.serviceCategories = await this.dashboardService.getServiceCategories();
+      this.serviceCategories =
+        await this.dashboardService.getServiceCategories();
       console.log('Service categories loaded:', this.serviceCategories);
     } catch (error) {
       console.error('Error loading service categories:', error);
@@ -788,48 +799,63 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
 
     try {
       this.loadingPricing = true;
-      
+
       // Load service categories first
       await this.loadServiceCategories();
-      
+
       // Get the main service and specific service from booking
       const mainService = this.booking.neededService;
       const specificService = this.booking.specificService;
-      
-      console.log('Loading worker pricing for:', { mainService, specificService });
-      
+
+      console.log('Loading worker pricing for:', {
+        mainService,
+        specificService,
+      });
+
       // Fetch worker profile to get pricing data
-      const workerProfile = await this.workerService.getCompleteWorkerProfile(this.userProfile.uid);
-      
+      const workerProfile = await this.workerService.getCompleteWorkerProfile(
+        this.userProfile.uid
+      );
+
       if (workerProfile) {
         console.log('Worker profile loaded:', workerProfile);
-        const serviceWithPricing = (workerProfile as any).serviceWithPricing as ServiceWithPricing[];
+        const serviceWithPricing = (workerProfile as any)
+          .serviceWithPricing as ServiceWithPricing[];
         console.log('Worker serviceWithPricing:', serviceWithPricing);
-        
+
         if (serviceWithPricing && serviceWithPricing.length > 0) {
-          await this.findPricingInData(serviceWithPricing, mainService, specificService);
+          await this.findPricingInData(
+            serviceWithPricing,
+            mainService,
+            specificService
+          );
         }
       }
-      
+
       // If no pricing found, try direct fetch from workers collection
       if (!this.workerPricing) {
-        console.log('No worker pricing found in profile, trying direct fetch...');
+        console.log(
+          'No worker pricing found in profile, trying direct fetch...'
+        );
         await this.fetchWorkerPricingDirectly(mainService, specificService);
       }
-      
+
       // If still no pricing found, create mock pricing
       if (!this.workerPricing) {
         console.log('No worker pricing found, creating mock data');
-        const unit = await this.getServiceUnit(mainService, specificService || mainService);
-        
+        const unit = await this.getServiceUnit(
+          mainService,
+          specificService || mainService
+        );
+
         this.workerPricing = {
           serviceName: mainService,
           subServiceName: specificService || mainService,
           price: 500, // Mock price
-          unit: this.formatUnit(unit)
+          unit: this.formatUnit(unit),
         };
       }
-      
+
       console.log('Final worker pricing:', this.workerPricing);
     } catch (error) {
       console.error('Error loading worker pricing:', error);
@@ -838,10 +864,15 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     }
   }
 
-  async fetchWorkerPricingDirectly(mainService: string, specificService?: string): Promise<void> {
+  async fetchWorkerPricingDirectly(
+    mainService: string,
+    specificService?: string
+  ): Promise<void> {
     try {
-      console.log('Fetching worker pricing directly from workers collection...');
-      
+      console.log(
+        'Fetching worker pricing directly from workers collection...'
+      );
+
       const workerDoc = await getDocs(
         query(
           collection(this.firestore, 'workers'),
@@ -849,15 +880,21 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
           limit(1)
         )
       );
-      
+
       if (!workerDoc.empty) {
         const workerData = workerDoc.docs[0].data();
         console.log('Direct worker data:', workerData);
-        
-        const serviceWithPricing = workerData['serviceWithPricing'] as ServiceWithPricing[];
-        
+
+        const serviceWithPricing = workerData[
+          'serviceWithPricing'
+        ] as ServiceWithPricing[];
+
         if (serviceWithPricing && serviceWithPricing.length > 0) {
-          await this.findPricingInData(serviceWithPricing, mainService, specificService);
+          await this.findPricingInData(
+            serviceWithPricing,
+            mainService,
+            specificService
+          );
         }
       }
     } catch (error) {
@@ -865,61 +902,86 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     }
   }
 
-  async findPricingInData(serviceWithPricing: ServiceWithPricing[], mainService: string, specificService?: string): Promise<void> {
+  async findPricingInData(
+    serviceWithPricing: ServiceWithPricing[],
+    mainService: string,
+    specificService?: string
+  ): Promise<void> {
     let foundPricing: SubServicePrice | null = null;
     let matchedCategory: ServiceWithPricing | null = null;
-    
-    console.log('Searching for pricing - Available categories:', serviceWithPricing.map(c => c.categoryName));
-    
+
+    console.log(
+      'Searching for pricing - Available categories:',
+      serviceWithPricing.map((c) => c.categoryName)
+    );
+
     // Find matching category
-    matchedCategory = serviceWithPricing.find((category: ServiceWithPricing) => {
-      const categoryLower = category.categoryName.toLowerCase();
-      const serviceLower = mainService.toLowerCase();
-      
-      console.log(`Comparing category "${categoryLower}" with service "${serviceLower}"`);
-      
-      return categoryLower === serviceLower ||
-             categoryLower.includes(serviceLower) ||
-             serviceLower.includes(categoryLower) ||
-             this.isServiceMatch(categoryLower, serviceLower);
-    }) || null;
-    
+    matchedCategory =
+      serviceWithPricing.find((category: ServiceWithPricing) => {
+        const categoryLower = category.categoryName.toLowerCase();
+        const serviceLower = mainService.toLowerCase();
+
+        console.log(
+          `Comparing category "${categoryLower}" with service "${serviceLower}"`
+        );
+
+        return (
+          categoryLower === serviceLower ||
+          categoryLower.includes(serviceLower) ||
+          serviceLower.includes(categoryLower) ||
+          this.isServiceMatch(categoryLower, serviceLower)
+        );
+      }) || null;
+
     if (matchedCategory) {
       console.log('Found matching category:', matchedCategory);
-      console.log('Available sub-services:', matchedCategory.subServices.map(s => s.subServiceName));
-      
+      console.log(
+        'Available sub-services:',
+        matchedCategory.subServices.map((s) => s.subServiceName)
+      );
+
       // Look for specific service
       if (specificService) {
         console.log('Looking for specific service:', specificService);
-        foundPricing = matchedCategory.subServices.find((subService: SubServicePrice) => {
-          const subServiceLower = subService.subServiceName.toLowerCase();
-          const specificLower = specificService.toLowerCase();
-          
-          console.log(`Comparing sub-service "${subServiceLower}" with specific "${specificLower}"`);
-          
-          return subServiceLower === specificLower ||
-                 subServiceLower.includes(specificLower) ||
-                 specificLower.includes(subServiceLower) ||
-                 this.isServiceMatch(subServiceLower, specificLower);
-        }) || null;
+        foundPricing =
+          matchedCategory.subServices.find((subService: SubServicePrice) => {
+            const subServiceLower = subService.subServiceName.toLowerCase();
+            const specificLower = specificService.toLowerCase();
+
+            console.log(
+              `Comparing sub-service "${subServiceLower}" with specific "${specificLower}"`
+            );
+
+            return (
+              subServiceLower === specificLower ||
+              subServiceLower.includes(specificLower) ||
+              specificLower.includes(subServiceLower) ||
+              this.isServiceMatch(subServiceLower, specificLower)
+            );
+          }) || null;
       }
-      
+
       // Use first subservice if no specific match
       if (!foundPricing && matchedCategory.subServices.length > 0) {
         foundPricing = matchedCategory.subServices[0];
         console.log('Using first available sub-service:', foundPricing);
       }
-      
+
       if (foundPricing) {
-        const unit = foundPricing.unit || await this.getServiceUnit(matchedCategory.categoryName, foundPricing.subServiceName);
-        
+        const unit =
+          foundPricing.unit ||
+          (await this.getServiceUnit(
+            matchedCategory.categoryName,
+            foundPricing.subServiceName
+          ));
+
         this.workerPricing = {
           serviceName: matchedCategory.categoryName,
           subServiceName: foundPricing.subServiceName,
           price: foundPricing.price,
-          unit: this.formatUnit(unit || 'per_hour')
+          unit: this.formatUnit(unit || 'per_hour'),
         };
-        
+
         console.log('Found pricing:', this.workerPricing);
       }
     } else {
@@ -927,23 +989,36 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     }
   }
 
-  async getServiceUnit(serviceName: string, subServiceName: string): Promise<string> {
+  async getServiceUnit(
+    serviceName: string,
+    subServiceName: string
+  ): Promise<string> {
     try {
-      const serviceCategory = this.serviceCategories.find(cat => 
-        cat.name.toLowerCase() === serviceName.toLowerCase() ||
-        cat.services.some(service => service.toLowerCase() === serviceName.toLowerCase())
+      const serviceCategory = this.serviceCategories.find(
+        (cat) =>
+          cat.name.toLowerCase() === serviceName.toLowerCase() ||
+          cat.services.some(
+            (service) => service.toLowerCase() === serviceName.toLowerCase()
+          )
       );
-      
-      if (serviceCategory && serviceCategory.services && serviceCategory.servicesQuickBookingUnit) {
-        const subServiceIndex = serviceCategory.services.findIndex(service => 
-          service.toLowerCase() === subServiceName.toLowerCase()
+
+      if (
+        serviceCategory &&
+        serviceCategory.services &&
+        serviceCategory.servicesQuickBookingUnit
+      ) {
+        const subServiceIndex = serviceCategory.services.findIndex(
+          (service) => service.toLowerCase() === subServiceName.toLowerCase()
         );
-        
-        if (subServiceIndex >= 0 && serviceCategory.servicesQuickBookingUnit[subServiceIndex]) {
+
+        if (
+          subServiceIndex >= 0 &&
+          serviceCategory.servicesQuickBookingUnit[subServiceIndex]
+        ) {
           return serviceCategory.servicesQuickBookingUnit[subServiceIndex];
         }
       }
-      
+
       return 'per_hour';
     } catch (error) {
       console.error('Error getting service unit:', error);
@@ -952,11 +1027,21 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   }
 
   isServiceMatch(service1: string, service2: string): boolean {
-    const commonWords = ['service', 'services', 'work', 'repair', 'maintenance'];
-    
-    const clean1 = service1.replace(new RegExp(commonWords.join('|'), 'gi'), '').trim();
-    const clean2 = service2.replace(new RegExp(commonWords.join('|'), 'gi'), '').trim();
-    
+    const commonWords = [
+      'service',
+      'services',
+      'work',
+      'repair',
+      'maintenance',
+    ];
+
+    const clean1 = service1
+      .replace(new RegExp(commonWords.join('|'), 'gi'), '')
+      .trim();
+    const clean2 = service2
+      .replace(new RegExp(commonWords.join('|'), 'gi'), '')
+      .trim();
+
     return clean1.includes(clean2) || clean2.includes(clean1);
   }
 
@@ -979,8 +1064,10 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     if (!this.workerPricing) {
       return 'Price not available';
     }
-    
-    return `₱${this.workerPricing.price.toLocaleString()} ${this.workerPricing.unit}`;
+
+    return `₱${this.workerPricing.price.toLocaleString()} ${
+      this.workerPricing.unit
+    }`;
   }
 
   hasWorkerPricing(): boolean {
@@ -994,7 +1081,10 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     try {
       await this.updateBookingStatus('on-the-way');
       this.showArrivalSlider = true;
-      this.showToast('Navigate to client location. Slide when you arrive!', 'medium');
+      this.showToast(
+        'Navigate to client location. Slide when you arrive!',
+        'medium'
+      );
     } catch (error) {
       console.error('Error going to client:', error);
       this.showToast('Error updating status', 'danger');
@@ -1008,13 +1098,13 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       await updateDoc(bookingRef, {
         status: 'worker-arrived',
         workerArrivedAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
+        updatedAt: Timestamp.now(),
       });
 
       this.hasArrivedAtClient = true;
       this.showArrivalSlider = false;
       this.showStartJobButton = true;
-      
+
       this.showToast('Arrival confirmed! Client has been notified.', 'success');
     } catch (error) {
       console.error('Error confirming arrival:', error);
@@ -1026,22 +1116,22 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   async startJob() {
     try {
       this.jobStartTime = new Date();
-      
+
       const bookingRef = doc(this.firestore, 'bookings', this.bookingId);
       await updateDoc(bookingRef, {
         status: 'service-started',
         serviceStartedAt: Timestamp.now(),
         jobStartTime: Timestamp.fromDate(this.jobStartTime),
-        updatedAt: Timestamp.now()
+        updatedAt: Timestamp.now(),
       });
 
       this.isJobStarted = true;
       this.showStartJobButton = false;
       this.showJobDoneSlider = true;
-      
+
       // Start the job timer
       this.startJobTimer();
-      
+
       this.showToast('Job started! Timer is now running.', 'success');
     } catch (error) {
       console.error('Error starting job:', error);
@@ -1077,8 +1167,10 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    return `${hours.toString().padStart(2, '0')}:${minutes
+      .toString()
+      .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 
   // Step 5: Complete Job ("Job Done" slider)
@@ -1086,10 +1178,9 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     try {
       this.jobEndTime = new Date();
       this.stopJobTimer();
-      
+
       // Show photo capture modal
       await this.showPhotoCapture();
-      
     } catch (error) {
       console.error('Error completing job:', error);
       this.showToast('Error completing job', 'danger');
@@ -1106,10 +1197,10 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
           text: 'Take Photo',
           handler: async () => {
             await this.captureCompletionPhoto();
-          }
-        }
+          },
+        },
       ],
-      backdropDismiss: false
+      backdropDismiss: false,
     });
 
     await alert.present();
@@ -1118,16 +1209,18 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   async captureCompletionPhoto() {
     try {
       this.isCapturingPhoto = true;
-      
+
       const image = await Camera.getPhoto({
-        quality: 80,
+        quality: 60,
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
-        source: CameraSource.Camera
+        source: CameraSource.Camera,
       });
 
       if (image.dataUrl) {
-        this.completionPhoto = image.dataUrl;
+        // Compress the image to reduce file size
+        const compressedPhoto = await this.compressImage(image.dataUrl);
+        this.completionPhoto = compressedPhoto;
         await this.submitJobCompletion();
       }
     } catch (error) {
@@ -1138,27 +1231,86 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     }
   }
 
+  // Image compression helper to reduce file size for Firestore
+  async compressImage(dataUrl: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
+
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions while maintaining aspect ratio
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round((width * MAX_HEIGHT) / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        // Create canvas and compress
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to compressed data URL with JPEG format and quality 0.7
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+        console.log(
+          `Original size: ${dataUrl.length} bytes, Compressed size: ${compressedDataUrl.length} bytes`
+        );
+        resolve(compressedDataUrl);
+      };
+
+      img.onerror = () => {
+        reject(new Error('Error loading image'));
+      };
+
+      img.src = dataUrl;
+    });
+  }
+
   // Step 7: Submit Job Completion
   async submitJobCompletion() {
     try {
       const calculatedPayment = this.calculatePayment();
-      
+
       const bookingRef = doc(this.firestore, 'bookings', this.bookingId);
       await updateDoc(bookingRef, {
         status: 'awaiting-payment',
         completedAt: Timestamp.now(),
-        jobEndTime: this.jobEndTime ? Timestamp.fromDate(this.jobEndTime) : Timestamp.now(),
+        jobEndTime: this.jobEndTime
+          ? Timestamp.fromDate(this.jobEndTime)
+          : Timestamp.now(),
         jobDuration: this.jobDuration,
         completionPhoto: this.completionPhoto,
         calculatedPayment: calculatedPayment,
-        updatedAt: Timestamp.now()
+        updatedAt: Timestamp.now(),
       });
 
       this.isJobCompleted = true;
       this.showJobDoneSlider = false;
       this.isPaymentRequested = true;
-      
-      this.showToast('Job completed! Client will review and provide payment.', 'success');
+
+      this.showToast(
+        'Job completed! Client will review and provide payment.',
+        'success'
+      );
     } catch (error) {
       console.error('Error submitting job completion:', error);
       this.showToast('Error submitting completion', 'danger');
@@ -1173,7 +1325,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
         totalHours: 0,
         serviceFee: 0,
         transportationFee: 0,
-        totalAmount: 0
+        totalAmount: 0,
       };
     }
 
@@ -1191,7 +1343,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     }
 
     const baseAmount = this.workerPricing.price * billingHours;
-    const serviceFee = baseAmount * 0.10; // 10% service fee
+    const serviceFee = baseAmount * 0.1; // 10% service fee
     const transportationFee = 50; // Fixed ₱50 transportation fee
     const totalAmount = baseAmount + serviceFee + transportationFee;
 
@@ -1203,7 +1355,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       transportationFee,
       totalAmount,
       actualDuration: this.formatDuration(this.jobDuration),
-      billingDuration: `${billingHours} hour${billingHours !== 1 ? 's' : ''}`
+      billingDuration: `${billingHours} hour${billingHours !== 1 ? 's' : ''}`,
     };
   }
 
@@ -1212,7 +1364,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     if (!this.booking) return;
 
     const status = this.booking.status;
-    
+
     // Set UI states based on booking status
     switch (status) {
       case 'accepted':
@@ -1220,34 +1372,34 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
         this.showStartJobButton = false;
         this.showJobDoneSlider = false;
         break;
-        
+
       case 'on-the-way':
         this.showArrivalSlider = true;
         this.showStartJobButton = false;
         this.showJobDoneSlider = false;
         break;
-        
+
       case 'worker-arrived':
         this.hasArrivedAtClient = true;
         this.showArrivalSlider = false;
         this.showStartJobButton = true;
         this.showJobDoneSlider = false;
         break;
-        
+
       case 'service-started':
         this.hasArrivedAtClient = true;
         this.isJobStarted = true;
         this.showArrivalSlider = false;
         this.showStartJobButton = false;
         this.showJobDoneSlider = true;
-        
+
         // Restore job timer if job was already started
         if (this.booking.jobStartTime && !this.timerSubscription) {
           this.jobStartTime = this.booking.jobStartTime.toDate();
           this.startJobTimer();
         }
         break;
-        
+
       case 'awaiting-payment':
       case 'completed':
         this.hasArrivedAtClient = true;
@@ -1256,7 +1408,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
         this.showArrivalSlider = false;
         this.showStartJobButton = false;
         this.showJobDoneSlider = false;
-        
+
         if (this.booking.jobEndTime) {
           this.jobEndTime = this.booking.jobEndTime.toDate();
           this.jobDuration = this.booking.jobDuration || 0;
@@ -1268,20 +1420,20 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     // Clean up subscriptions
-    this.subscriptions.forEach(sub => {
+    this.subscriptions.forEach((sub) => {
       if (sub && typeof sub.unsubscribe === 'function') {
         sub.unsubscribe();
       }
     });
-    
+
     if (this.locationSubscription) {
       this.locationSubscription.unsubscribe();
     }
-    
+
     if (this.timerSubscription) {
       this.timerSubscription.unsubscribe();
     }
-    
+
     this.stopLocationTracking();
   }
 }

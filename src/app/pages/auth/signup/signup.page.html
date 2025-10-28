@@ -242,12 +242,23 @@
             <div class="relative">
               <input
                 id="password"
-                type="password"
+                [type]="showPassword ? 'text' : 'password'"
                 formControlName="password"
                 placeholder="Create a secure password"
                 class="p-3 border-2 border-gray-200 rounded-xl w-full shadow-sm focus:ring-3 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300 text-handy-navy-700 placeholder-gray-400 bg-white/70"
                 [class.border-red-400]="signupForm.get('password')?.invalid && signupForm.get('password')?.touched"
               />
+              <button
+                type="button"
+                (click)="togglePasswordVisibility()"
+                class="absolute right-10 top-1/2 transform -translate-y-1/2 text-handy-navy-400 hover:text-handy-navy-600 focus:outline-none"
+                aria-label="Toggle password visibility"
+              >
+                <ion-icon
+                  [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
+                  class="text-xl"
+                ></ion-icon>
+              </button>
               <div
                 *ngIf="signupForm.get('password')?.valid && signupForm.get('password')?.touched"
                 class="absolute right-3 top-1/2 transform -translate-y-1/2"
@@ -287,12 +298,23 @@
             <div class="relative">
               <input
                 id="confirmPassword"
-                type="password"
+                [type]="showConfirmPassword ? 'text' : 'password'"
                 formControlName="confirmPassword"
                 placeholder="Confirm your password"
                 class="p-3 border-2 border-gray-200 rounded-xl w-full shadow-sm focus:ring-3 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300 text-handy-navy-700 placeholder-gray-400 bg-white/70"
                 [class.border-red-400]="signupForm.get('confirmPassword')?.invalid && signupForm.get('confirmPassword')?.touched"
               />
+              <button
+                type="button"
+                (click)="toggleConfirmPasswordVisibility()"
+                class="absolute right-10 top-1/2 transform -translate-y-1/2 text-handy-navy-400 hover:text-handy-navy-600 focus:outline-none"
+                aria-label="Toggle confirm password visibility"
+              >
+                <ion-icon
+                  [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'"
+                  class="text-xl"
+                ></ion-icon>
+              </button>
               <div
                 *ngIf="signupForm.get('confirmPassword')?.valid && signupForm.get('confirmPassword')?.touched"
                 class="absolute right-3 top-1/2 transform -translate-y-1/2"

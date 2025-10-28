@@ -13,6 +13,7 @@ import { Router } from '@angular/router';
 export class LoginPage implements OnInit {
   loginForm: FormGroup;
   isLoading = false;
+  showPassword = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -115,5 +116,9 @@ export class LoginPage implements OnInit {
 
   goToSignup() {
     this.router.navigate(['/pages/auth/signup']);
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 }

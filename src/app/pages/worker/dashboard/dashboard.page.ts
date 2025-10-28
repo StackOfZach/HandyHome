@@ -96,7 +96,7 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   isAvailable: boolean = true;
 
   // Notification data
-  notifications: WorkerNotification[] = [];
+  notifications: (WorkerNotification & { bookingType?: string })[] = [];
   unreadCount: number = 0;
   showNotifications: boolean = false; // Keep for backward compatibility
   showNotificationModal: boolean = false;
@@ -529,12 +529,12 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
       color: 'primary',
       position: 'top',
       buttons: [
-        {
-          text: 'View',
-          handler: () => {
-            this.openJobDetailsModal(notification.bookingId, notification.id!);
-          },
-        },
+        // {
+        //   text: 'View',
+        //   handler: () => {
+        //     this.openJobDetailsModal(notification.bookingId, notification.id!);
+        //   },
+        // },
         {
           text: 'Dismiss',
           role: 'cancel',
@@ -1333,28 +1333,32 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
       return;
     }
 
+    // Accept booking step
     try {
-      // Accept the quick booking
       await this.quickBookingService.acceptBooking(
         this.quickBookingNotification.bookingId,
         this.userProfile!.uid,
         this.userProfile!.fullName || 'Worker'
       );
+    } catch (error) {
+      console.error('Error accepting quick booking:', error);
+      this.showToast('Error accepting booking. Please try again.', 'danger');
+      return;
+    }
 
-      this.showToast('Quick booking accepted successfully!', 'success');
-      this.dismissQuickNotification();
-
-      // Navigate to worker booking details page
-      this.router.navigate(['/pages/worker/worker-booking-details'], {
+    // Post-accept UI and navigation
+    this.showToast('Quick booking accepted successfully!', 'success');
+    this.dismissQuickNotification();
+    this.router
+      .navigate(['/pages/worker/worker-booking-details'], {
         queryParams: {
           bookingId: this.quickBookingNotification.bookingId,
           type: 'quick',
         },
+      })
+      .catch(() => {
+        this.showToast('Navigation failed. Please try again.', 'danger');
       });
-    } catch (error) {
-      console.error('Error accepting quick booking:', error);
-      this.showToast('Error accepting booking. Please try again.', 'danger');
-    }
   }
 
   // Refresh jobs and update timestamp
@@ -1404,7 +1408,21 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   }
 
   async logout() {
-    await this.authService.logout();
+    const alert = await this.alertController.create({
+      header: 'Confirm Logout',
+      message: 'Are you sure you want to log out?',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Log out',
+          role: 'destructive',
+          handler: async () => {
+            await this.authService.logout();
+          },
+        },
+      ],
+    });
+    await alert.present();
   }
 
   // Load available bookings from quickbookings collection
@@ -1552,8 +1570,8 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
     booking.isProcessing = true;
 
+    // Accept in Firestore
     try {
-      // Update the booking in Firestore
       const bookingRef = doc(this.firestore, 'quickbookings', booking.id);
       await updateDoc(bookingRef, {
         assignedWorker: this.userProfile.uid,
@@ -1566,18 +1584,22 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
           rating: this.workerProfile?.rating || 0,
         },
       });
-
-      this.showToast('Booking accepted successfully!', 'success');
-
-      // Navigate to worker booking details page
-      this.router.navigate(['/pages/worker/worker-booking-details'], {
-        queryParams: { bookingId: booking.id, type: 'quick' },
-      });
     } catch (error) {
       console.error('Error accepting booking:', error);
       this.showToast('Error accepting booking. Please try again.', 'danger');
       booking.isProcessing = false;
+      return;
     }
+
+    // Post-accept UI and navigation
+    this.showToast('Booking accepted successfully!', 'success');
+    this.router
+      .navigate(['/pages/worker/worker-booking-details'], {
+        queryParams: { bookingId: booking.id, type: 'quick' },
+      })
+      .catch(() => {
+        this.showToast('Navigation failed. Please try again.', 'danger');
+      });
   }
 
   // Navigate to active bookings page

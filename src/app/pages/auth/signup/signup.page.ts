@@ -14,6 +14,8 @@ export class SignupPage implements OnInit {
   signupForm: FormGroup;
   isLoading = false;
   showTermsModal = false;
+  showPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -28,7 +30,12 @@ export class SignupPage implements OnInit {
         email: ['', [Validators.required, Validators.email]],
         phone: [
           '',
-          [Validators.required, Validators.pattern(/^[0-9]{11}$/), Validators.minLength(11), Validators.maxLength(11)],
+          [
+            Validators.required,
+            Validators.pattern(/^[0-9]{11}$/),
+            Validators.minLength(11),
+            Validators.maxLength(11),
+          ],
         ],
         password: ['', [Validators.required, Validators.minLength(6)]],
         confirmPassword: ['', [Validators.required]],
@@ -153,5 +160,13 @@ export class SignupPage implements OnInit {
 
   goToLogin() {
     this.router.navigate(['/pages/auth/login']);
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleConfirmPasswordVisibility() {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 }

@@ -318,9 +318,9 @@
                 </div>
               </div>
 
-              <!-- Action buttons for job requests -->
+              <!-- Action buttons for job requests (only for quick bookings) -->
               <div
-                *ngIf="notification.type === 'job_request' && !notification.read"
+                *ngIf="notification.type === 'job_request' && !notification.read && notification.bookingType === 'quick'"
                 class="flex space-x-2 mt-3"
               >
                 <button
