@@ -6,6 +6,7 @@ import {
   signOut,
   User,
   onAuthStateChanged,
+  sendPasswordResetEmail,
 } from '@angular/fire/auth';
 import {
   Firestore,
@@ -243,6 +244,19 @@ export class AuthService {
       }
     } catch (error) {
       console.error('Login error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send a password reset email to the provided address
+   */
+  async resetPassword(email: string): Promise<void> {
+    try {
+      await this.waitForAuthInitialization();
+      await sendPasswordResetEmail(this.auth, email);
+    } catch (error) {
+      console.error('Reset password error:', error);
       throw error;
     }
   }

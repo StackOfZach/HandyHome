@@ -28,6 +28,13 @@ const routes: Routes = [
       ),
   },
   {
+    path: 'pages/auth/forgot-password',
+    loadChildren: () =>
+      import('./pages/auth/forgot-password/forgot-password.module').then(
+        (m) => m.ForgotPasswordPageModule
+      ),
+  },
+  {
     path: 'pages/auth/client-verification',
     loadChildren: () =>
       import(
@@ -341,13 +348,19 @@ const routes: Routes = [
   },
   {
     path: 'pages/worker/worker-booking-details',
-    loadChildren: () => import('./pages/worker/worker-booking-details/worker-booking-details.module').then( m => m.WorkerBookingDetailsPageModule),
+    loadChildren: () =>
+      import(
+        './pages/worker/worker-booking-details/worker-booking-details.module'
+      ).then((m) => m.WorkerBookingDetailsPageModule),
     canActivate: [AuthGuard],
     data: { role: 'worker' },
   },
   {
     path: 'pages/worker/quick-booking-history',
-    loadChildren: () => import('./pages/worker/quick-booking-history/quick-booking-history.module').then( m => m.QuickBookingHistoryPageModule),
+    loadChildren: () =>
+      import(
+        './pages/worker/quick-booking-history/quick-booking-history.module'
+      ).then((m) => m.QuickBookingHistoryPageModule),
     canActivate: [AuthGuard],
     data: { role: 'worker' },
   },
