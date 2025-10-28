@@ -10,6 +10,14 @@ import {
   ClientVerificationService,
   ClientVerification,
 } from '../../../services/client-verification.service';
+import { ReportService, WorkerReport } from '../../../services/report.service';
+import {
+  Firestore,
+  collection,
+  query,
+  getDocs,
+  orderBy,
+} from '@angular/fire/firestore';
 import {
   AlertController,
   ToastController,
@@ -87,6 +95,19 @@ export class AdminDashboardPage implements OnInit {
   isVerificationModalOpen: boolean = false;
   reviewNotes: string = '';
   isProcessingVerification: boolean = false;
+
+  // Reports Properties
+  reports: WorkerReport[] = [];
+  filteredReports: WorkerReport[] = [];
+  isLoadingReports: boolean = false;
+  reportSearchTerm: string = '';
+  reportStatusFilter: string = 'all';
+  reportSeverityFilter: string = 'all';
+  selectedReport: WorkerReport | null = null;
+  isReportModalOpen: boolean = false;
+  reportAdminNotes: string = '';
+  reportResolution: string = '';
+  isProcessingReport: boolean = false;
 
   // Analytics refresh
   isRefreshingAnalytics: boolean = false;
@@ -381,6 +402,8 @@ export class AdminDashboardPage implements OnInit {
     private dashboardService: DashboardService,
     private workerService: WorkerService,
     private clientVerificationService: ClientVerificationService,
+    private reportService: ReportService,
+    private firestore: Firestore,
     private alertController: AlertController,
     private toastController: ToastController,
     private modalController: ModalController
@@ -399,6 +422,7 @@ export class AdminDashboardPage implements OnInit {
     this.loadServices();
     this.loadClients();
     this.loadPendingVerifications();
+    this.loadReports();
     this.initializeIconPicker();
   }
 
@@ -994,9 +1018,13 @@ export class AdminDashboardPage implements OnInit {
 
     this.subServices = [...(service.services || [])];
     this.servicesPricing = [...(service.servicesPricing || [])];
-    this.servicesQuickBookingPricing = [...(service.servicesQuickBookingPricing || [])];
-    this.servicesQuickBookingUnit = [...(service.servicesQuickBookingUnit || [])];
-    
+    this.servicesQuickBookingPricing = [
+      ...(service.servicesQuickBookingPricing || []),
+    ];
+    this.servicesQuickBookingUnit = [
+      ...(service.servicesQuickBookingUnit || []),
+    ];
+
     // Ensure arrays match subServices length
     while (this.servicesPricing.length < this.subServices.length) {
       this.servicesPricing.push('per_hour');
@@ -1007,10 +1035,19 @@ export class AdminDashboardPage implements OnInit {
     while (this.servicesQuickBookingUnit.length < this.subServices.length) {
       this.servicesQuickBookingUnit.push('per_hour');
     }
-    this.servicesPricing = this.servicesPricing.slice(0, this.subServices.length);
-    this.servicesQuickBookingPricing = this.servicesQuickBookingPricing.slice(0, this.subServices.length);
-    this.servicesQuickBookingUnit = this.servicesQuickBookingUnit.slice(0, this.subServices.length);
-    
+    this.servicesPricing = this.servicesPricing.slice(
+      0,
+      this.subServices.length
+    );
+    this.servicesQuickBookingPricing = this.servicesQuickBookingPricing.slice(
+      0,
+      this.subServices.length
+    );
+    this.servicesQuickBookingUnit = this.servicesQuickBookingUnit.slice(
+      0,
+      this.subServices.length
+    );
+
     this.requirements = [...(service.requirements || [])];
   }
 
@@ -1096,9 +1133,18 @@ export class AdminDashboardPage implements OnInit {
         isActive: formValue.isActive,
         requiresCertificate: formValue.requiresCertificate || false,
         services: this.subServices.filter((s) => s.trim() !== ''),
-        servicesPricing: this.servicesPricing.slice(0, this.subServices.filter((s) => s.trim() !== '').length),
-        servicesQuickBookingPricing: this.servicesQuickBookingPricing.slice(0, this.subServices.filter((s) => s.trim() !== '').length),
-        servicesQuickBookingUnit: this.servicesQuickBookingUnit.slice(0, this.subServices.filter((s) => s.trim() !== '').length),
+        servicesPricing: this.servicesPricing.slice(
+          0,
+          this.subServices.filter((s) => s.trim() !== '').length
+        ),
+        servicesQuickBookingPricing: this.servicesQuickBookingPricing.slice(
+          0,
+          this.subServices.filter((s) => s.trim() !== '').length
+        ),
+        servicesQuickBookingUnit: this.servicesQuickBookingUnit.slice(
+          0,
+          this.subServices.filter((s) => s.trim() !== '').length
+        ),
         requirements: this.requirements.filter((r) => r.trim() !== ''),
       };
 
@@ -1441,5 +1487,205 @@ export class AdminDashboardPage implements OnInit {
       position: 'bottom',
     });
     await toast.present();
+  }
+
+  // Reports Management Methods
+
+  async loadReports() {
+    this.isLoadingReports = true;
+    try {
+      // Get all reports from Firestore
+      const reportsCollection = collection(this.firestore, 'workerReports');
+      const q = query(reportsCollection, orderBy('createdAt', 'desc'));
+
+      const querySnapshot = await getDocs(q);
+      this.reports = [];
+
+      querySnapshot.forEach((doc) => {
+        this.reports.push({
+          id: doc.id,
+          ...doc.data(),
+        } as WorkerReport);
+      });
+
+      this.filteredReports = [...this.reports];
+      console.log('Loaded reports:', this.reports);
+    } catch (error) {
+      console.error('Error loading reports:', error);
+      this.showToast('Error loading reports', 'danger');
+    } finally {
+      this.isLoadingReports = false;
+    }
+  }
+
+  filterReports() {
+    let filtered = [...this.reports];
+
+    // Filter by search term
+    if (this.reportSearchTerm.trim()) {
+      const searchTerm = this.reportSearchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (report) =>
+          report.reporterName.toLowerCase().includes(searchTerm) ||
+          report.workerName.toLowerCase().includes(searchTerm) ||
+          report.title.toLowerCase().includes(searchTerm) ||
+          report.description.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Filter by status
+    if (this.reportStatusFilter !== 'all') {
+      filtered = filtered.filter(
+        (report) => report.status === this.reportStatusFilter
+      );
+    }
+
+    // Filter by severity
+    if (this.reportSeverityFilter !== 'all') {
+      filtered = filtered.filter(
+        (report) => report.severity === this.reportSeverityFilter
+      );
+    }
+
+    this.filteredReports = filtered;
+  }
+
+  viewReportDetails(report: WorkerReport) {
+    this.selectedReport = report;
+    this.reportAdminNotes = report.adminNotes || '';
+    this.reportResolution = report.resolution || '';
+    this.isReportModalOpen = true;
+  }
+
+  closeReportModal() {
+    this.isReportModalOpen = false;
+    this.selectedReport = null;
+    this.reportAdminNotes = '';
+    this.reportResolution = '';
+  }
+
+  async updateReportStatus(status: WorkerReport['status']) {
+    if (!this.selectedReport) return;
+
+    const alert = await this.alertController.create({
+      header: `Mark as ${status.replace('_', ' ')}`,
+      message: `Are you sure you want to mark this report as ${status.replace(
+        '_',
+        ' '
+      )}?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Confirm',
+          handler: async () => {
+            await this.processReportStatusUpdate(status);
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  private async processReportStatusUpdate(status: WorkerReport['status']) {
+    if (!this.selectedReport || !this.userProfile) return;
+
+    this.isProcessingReport = true;
+    try {
+      await this.reportService.updateReportStatus(
+        this.selectedReport.id!,
+        status,
+        this.userProfile.uid,
+        this.reportAdminNotes,
+        this.reportResolution
+      );
+
+      // Update local report
+      const reportIndex = this.reports.findIndex(
+        (r) => r.id === this.selectedReport!.id
+      );
+      if (reportIndex !== -1) {
+        this.reports[reportIndex].status = status;
+        this.reports[reportIndex].adminNotes = this.reportAdminNotes;
+        this.reports[reportIndex].resolution = this.reportResolution;
+        this.reports[reportIndex].reviewedBy = this.userProfile.uid;
+        this.reports[reportIndex].reviewedAt = new Date();
+      }
+
+      this.filterReports();
+      this.closeReportModal();
+      this.showToast(
+        `Report marked as ${status.replace('_', ' ')} successfully`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Error updating report status:', error);
+      this.showToast('Error updating report status', 'danger');
+    } finally {
+      this.isProcessingReport = false;
+    }
+  }
+
+  getSeverityBadgeClass(severity: string): string {
+    switch (severity) {
+      case 'low':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800';
+      case 'medium':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
+      case 'high':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800';
+      case 'critical':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
+      default:
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800';
+    }
+  }
+
+  getReportStatusBadgeClass(status: string): string {
+    switch (status) {
+      case 'pending':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
+      case 'under_review':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800';
+      case 'resolved':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
+      case 'dismissed':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800';
+      default:
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800';
+    }
+  }
+
+  getReportTypeDisplayName(reportType: string): string {
+    const typeMap: { [key: string]: string } = {
+      poor_service: 'Poor Service Quality',
+      unprofessional_behavior: 'Unprofessional Behavior',
+      no_show: 'No Show / Late Arrival',
+      overcharging: 'Overcharging / Price Issues',
+      safety_concern: 'Safety Concerns',
+      other: 'Other Issues',
+    };
+    return typeMap[reportType] || reportType;
+  }
+
+  async refreshReports() {
+    await this.loadReports();
+    this.showToast('Reports refreshed successfully', 'success');
+  }
+
+  getReportsCount(): number {
+    return this.reports.length;
+  }
+
+  getPendingReportsCount(): number {
+    return this.reports.filter((r) => r.status === 'pending').length;
+  }
+
+  getCriticalReportsCount(): number {
+    return this.reports.filter(
+      (r) => r.severity === 'critical' && r.status !== 'dismissed'
+    ).length;
   }
 }

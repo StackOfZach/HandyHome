@@ -185,12 +185,15 @@ export class ReportWorkerModalComponent implements OnInit {
         severity: this.selectedCategory.severity,
         title: this.reportForm.title || this.selectedCategory.name,
         description: this.reportForm.description,
-        evidence:
-          this.reportForm.evidence.photos.length > 0 ||
-          this.reportForm.evidence.screenshots.length > 0
-            ? this.reportForm.evidence
-            : undefined,
       };
+
+      // Only add evidence if there are photos or screenshots
+      if (
+        this.reportForm.evidence.photos.length > 0 ||
+        this.reportForm.evidence.screenshots.length > 0
+      ) {
+        reportData.evidence = this.reportForm.evidence;
+      }
 
       const reportId = await this.reportService.submitReport(reportData);
 
