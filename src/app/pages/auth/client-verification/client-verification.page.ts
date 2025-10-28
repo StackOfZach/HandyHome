@@ -123,13 +123,23 @@ export class ClientVerificationPage implements OnInit {
       });
 
       if (image.dataUrl) {
+        // Resize and compress to ensure Firestore base64 size limits are respected
+        const compressedDataUrl = await this.compressDataUrl(
+          image.dataUrl,
+          1024,
+          1024,
+          0.7
+        );
         if (type === 'id') {
-          this.idImageUrl = image.dataUrl;
-          this.idImageFile = this.dataURLtoFile(image.dataUrl, 'id-image.jpg');
+          this.idImageUrl = compressedDataUrl;
+          this.idImageFile = this.dataURLtoFile(
+            compressedDataUrl,
+            'id-image.jpg'
+          );
         } else {
-          this.profileImageUrl = image.dataUrl;
+          this.profileImageUrl = compressedDataUrl;
           this.profileImageFile = this.dataURLtoFile(
-            image.dataUrl,
+            compressedDataUrl,
             'profile-image.jpg'
           );
         }
@@ -140,9 +150,48 @@ export class ClientVerificationPage implements OnInit {
     }
   }
 
+  private async compressDataUrl(
+    dataUrl: string,
+    maxWidth: number,
+    maxHeight: number,
+    quality: number
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const originalWidth = img.width;
+        const originalHeight = img.height;
+
+        const widthRatio = maxWidth / originalWidth;
+        const heightRatio = maxHeight / originalHeight;
+        const scale = Math.min(1, widthRatio, heightRatio);
+
+        const targetWidth = Math.floor(originalWidth * scale);
+        const targetHeight = Math.floor(originalHeight * scale);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas not supported'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+        // Always export as JPEG to get better compression
+        const compressed = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressed);
+      };
+      img.onerror = (e) => reject(e);
+      img.src = dataUrl;
+    });
+  }
+
   private dataURLtoFile(dataURL: string, filename: string): File {
     const arr = dataURL.split(',');
-    const mime = arr[0].match(/:(.*?);/)![1];
+    const headerMatch = arr[0].match(/:(.*?);/);
+    const mime = headerMatch ? headerMatch[1] : 'image/jpeg';
     const bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);

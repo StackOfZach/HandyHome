@@ -121,7 +121,8 @@ export class InterviewPage implements OnInit, OnDestroy {
   ];
 
   // Time availability for each day
-  timeAvailability: { [key: string]: { startTime: string; endTime: string } } = {};
+  timeAvailability: { [key: string]: { startTime: string; endTime: string } } =
+    {};
 
   // Photo previews
   idPhotoPreview: string | null = null;
@@ -171,11 +172,24 @@ export class InterviewPage implements OnInit, OnDestroy {
     // Step 1: Personal Information
     this.personalInfoForm = this.fb.group({
       fullAddress: ['', [Validators.required, Validators.minLength(10)]],
-      phone: ['', [Validators.required, Validators.pattern(/^[0-9]{11}$/), Validators.minLength(11), Validators.maxLength(11)]],
+      phone: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^[0-9]{11}$/),
+          Validators.minLength(11),
+          Validators.maxLength(11),
+        ],
+      ],
       emergencyContact: ['', [Validators.required]],
       emergencyPhone: [
         '',
-        [Validators.required, Validators.pattern(/^[0-9]{11}$/), Validators.minLength(11), Validators.maxLength(11)],
+        [
+          Validators.required,
+          Validators.pattern(/^[0-9]{11}$/),
+          Validators.minLength(11),
+          Validators.maxLength(11),
+        ],
       ],
     });
 
@@ -241,11 +255,11 @@ export class InterviewPage implements OnInit, OnDestroy {
             status: 'pending_verification',
             createdAt: new Date(),
           };
-          
+
           // Populate the phone number in the form from registration data
           console.log('Populating phone from registration:', userProfile.phone);
           this.personalInfoForm.patchValue({
-            phone: userProfile.phone || ''
+            phone: userProfile.phone || '',
           });
         }
       }
@@ -808,17 +822,21 @@ export class InterviewPage implements OnInit, OnDestroy {
    * Get unit pricing for a specific sub-service from service categories
    */
   getSubServiceUnit(categoryName: string, subService: string): string {
-    const category = this.serviceCategories.find(cat => cat.name === categoryName);
+    const category = this.serviceCategories.find(
+      (cat) => cat.name === categoryName
+    );
     if (!category || !category.services || !category.servicesPricing) {
       return 'hour'; // Default fallback
     }
-    
+
     const subServiceIndex = category.services.indexOf(subService);
     if (subServiceIndex === -1 || !category.servicesPricing[subServiceIndex]) {
       return 'hour'; // Default fallback
     }
-    
-    return category.servicesPricing[subServiceIndex] === 'per_hour' ? 'hour' : 'day';
+
+    return category.servicesPricing[subServiceIndex] === 'per_hour'
+      ? 'hour'
+      : 'day';
   }
 
   /**
@@ -844,7 +862,7 @@ export class InterviewPage implements OnInit, OnDestroy {
       currentDays.push(day);
       this.timeAvailability[day] = {
         startTime: '08:00',
-        endTime: '17:00'
+        endTime: '17:00',
       };
     }
 
@@ -933,24 +951,32 @@ export class InterviewPage implements OnInit, OnDestroy {
       input.accept = 'image/*,application/pdf';
       input.multiple = false;
 
-      input.onchange = (event: any) => {
+      input.onchange = async (event: any) => {
         const file = event.target.files[0];
         if (file) {
-          // Check file size (limit to 5MB)
-          if (file.size > 5 * 1024 * 1024) {
-            this.showErrorToast('File size should not exceed 5MB');
-            return;
-          }
-
-          const reader = new FileReader();
-          reader.onload = (e: any) => {
-            this.certificatePreviews[skillName] = e.target.result;
-            this.certificateForm.get(skillName)?.setValue(e.target.result);
+          try {
+            if (file.type && file.type.startsWith('image/')) {
+              const dataUrl = await this.readFileAsDataUrl(file);
+              const compressed = await this.compressDataUrl(
+                dataUrl,
+                1400,
+                1400,
+                0.7
+              );
+              this.certificatePreviews[skillName] = compressed;
+              this.certificateForm.get(skillName)?.setValue(compressed);
+            } else {
+              const dataUrl = await this.readFileAsDataUrl(file);
+              this.certificatePreviews[skillName] = dataUrl;
+              this.certificateForm.get(skillName)?.setValue(dataUrl);
+            }
             this.showSuccessToast(
               `Certificate for ${skillName} uploaded successfully`
             );
-          };
-          reader.readAsDataURL(file);
+          } catch (err) {
+            console.error('Certificate processing failed:', err);
+            this.showErrorToast('Failed to process file. Please try again.');
+          }
         }
       };
 
@@ -1025,16 +1051,24 @@ export class InterviewPage implements OnInit, OnDestroy {
       input.accept = 'image/*';
       input.capture = 'environment'; // Use back camera for ID photos
 
-      input.onchange = (event: any) => {
+      input.onchange = async (event: any) => {
         const file = event.target.files[0];
         if (file) {
-          const reader = new FileReader();
-          reader.onload = (e: any) => {
-            this.idPhotoPreview = e.target.result;
-            this.verificationForm.patchValue({ idPhoto: e.target.result });
+          try {
+            const dataUrl = await this.readFileAsDataUrl(file);
+            const compressed = await this.compressDataUrl(
+              dataUrl,
+              1024,
+              1024,
+              0.7
+            );
+            this.idPhotoPreview = compressed;
+            this.verificationForm.patchValue({ idPhoto: compressed });
             this.showSuccessToast('ID photo captured successfully');
-          };
-          reader.readAsDataURL(file);
+          } catch (err) {
+            console.error('Compression failed for ID photo:', err);
+            this.showErrorToast('Failed to process image. Please try again.');
+          }
         }
       };
 
@@ -1056,16 +1090,24 @@ export class InterviewPage implements OnInit, OnDestroy {
       input.accept = 'image/*';
       input.capture = 'user'; // Use front camera for selfies
 
-      input.onchange = (event: any) => {
+      input.onchange = async (event: any) => {
         const file = event.target.files[0];
         if (file) {
-          const reader = new FileReader();
-          reader.onload = (e: any) => {
-            this.profilePhotoPreview = e.target.result;
-            this.verificationForm.patchValue({ profilePhoto: e.target.result });
+          try {
+            const dataUrl = await this.readFileAsDataUrl(file);
+            const compressed = await this.compressDataUrl(
+              dataUrl,
+              1024,
+              1024,
+              0.7
+            );
+            this.profilePhotoPreview = compressed;
+            this.verificationForm.patchValue({ profilePhoto: compressed });
             this.showSuccessToast('Profile photo captured successfully');
-          };
-          reader.readAsDataURL(file);
+          } catch (err) {
+            console.error('Compression failed for profile photo:', err);
+            this.showErrorToast('Failed to process image. Please try again.');
+          }
         }
       };
 
@@ -1227,10 +1269,59 @@ export class InterviewPage implements OnInit, OnDestroy {
     await toast.present();
   }
 
+  private readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (e) => reject(e);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  private compressDataUrl(
+    dataUrl: string,
+    maxWidth: number,
+    maxHeight: number,
+    quality: number
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const originalWidth = img.width;
+        const originalHeight = img.height;
+
+        const widthRatio = maxWidth / originalWidth;
+        const heightRatio = maxHeight / originalHeight;
+        const scale = Math.min(1, widthRatio, heightRatio);
+
+        const targetWidth = Math.floor(originalWidth * scale);
+        const targetHeight = Math.floor(originalHeight * scale);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas not supported'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+        const compressed = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressed);
+      };
+      img.onerror = (e) => reject(e);
+      img.src = dataUrl;
+    });
+  }
+
   /**
    * Update time availability for a specific day
    */
-  updateTimeAvailability(day: string, timeType: 'startTime' | 'endTime', value: string) {
+  updateTimeAvailability(
+    day: string,
+    timeType: 'startTime' | 'endTime',
+    value: string
+  ) {
     if (!this.timeAvailability[day]) {
       this.timeAvailability[day] = { startTime: '08:00', endTime: '17:00' };
     }
@@ -1241,6 +1332,8 @@ export class InterviewPage implements OnInit, OnDestroy {
    * Get time availability for a day
    */
   getTimeAvailability(day: string): { startTime: string; endTime: string } {
-    return this.timeAvailability[day] || { startTime: '08:00', endTime: '17:00' };
+    return (
+      this.timeAvailability[day] || { startTime: '08:00', endTime: '17:00' }
+    );
   }
 }
