@@ -509,9 +509,14 @@ export class DashboardService {
   }
 
   /**
-   * Get admin analytics data
+   * Get admin analytics data using existing dashboard data
    */
-  async getAnalytics(): Promise<{
+  async getAnalytics(
+    pendingVerifications: any[] = [],
+    pendingWorkers: any[] = [],
+    regularBookings: any[] = [],
+    quickBookings: any[] = []
+  ): Promise<{
     totalClients: number;
     totalWorkers: number;
     pendingVerifications: number;
@@ -520,69 +525,97 @@ export class DashboardService {
     totalRevenue: number;
   }> {
     try {
+      console.log('Loading admin analytics using existing dashboard data...');
+
       // Get client count from users collection
       const usersRef = collection(this.firestore, 'users');
       const clientsQuery = query(usersRef, where('role', '==', 'client'));
       const clientsSnapshot = await getDocs(clientsQuery);
       const totalClients = clientsSnapshot.size;
 
-      // Get worker statistics from workers collection
-      const workersRef = collection(this.firestore, 'workers');
-      const workersSnapshot = await getDocs(workersRef);
+      // Get worker count from users collection (workers have role 'worker')
+      const workersQuery = query(usersRef, where('role', '==', 'worker'));
+      const workersSnapshot = await getDocs(workersQuery);
       const totalWorkers = workersSnapshot.size;
 
-      let pendingVerifications = 0;
-      workersSnapshot.forEach((doc) => {
-        const worker = doc.data();
-        if (worker['status'] === 'pending_verification') {
-          pendingVerifications++;
-        }
-      });
+      // Calculate pending verifications using existing dashboard data
+      const pendingVerificationsCount =
+        pendingVerifications.length + pendingWorkers.length;
 
-      // Get booking statistics
+      // Fetch all bookings from Firestore for accurate revenue calculation
       const bookingsRef = collection(this.firestore, 'bookings');
       const bookingsSnapshot = await getDocs(bookingsRef);
+
+      const quickBookingsRef = collection(this.firestore, 'quickbookings');
+      const quickBookingsSnapshot = await getDocs(quickBookingsRef);
 
       let activeBookings = 0;
       let completedBookings = 0;
       let totalRevenue = 0;
 
+      // Process regular bookings from Firestore - sum all serviceCharge
       bookingsSnapshot.forEach((doc) => {
         const booking = doc.data();
         const status = booking['status'];
 
-        if (
-          ['pending', 'accepted', 'on-the-way', 'in-progress'].includes(status)
-        ) {
-          activeBookings++;
-        } else if (status === 'completed') {
+        // Sum up serviceCharge for revenue (from all bookings, not just completed)
+        // Regular bookings have serviceCharge directly on the booking object
+        const serviceCharge = booking['serviceCharge'] || 0;
+        totalRevenue += serviceCharge;
+
+        if (status === 'payment-confirmed') {
           completedBookings++;
-          // Calculate revenue (assuming 10% service fee from booking price)
-          const bookingPrice = booking['price'] || 0;
-          totalRevenue += bookingPrice * 0.1; // 10% service fee
+        } else {
+          // All other statuses are considered active
+          activeBookings++;
         }
       });
 
-      console.log('Analytics Data:', {
-        totalClients,
-        totalWorkers,
-        pendingVerifications,
-        activeBookings,
-        completedBookings,
-        totalRevenue,
+      // Process quick bookings from Firestore - sum all serviceCharge
+      quickBookingsSnapshot.forEach((doc) => {
+        const booking = doc.data();
+        const status = booking['status'];
+
+        // Sum up serviceCharge for revenue (from all bookings, not just completed)
+        // serviceCharge is nested under pricing object
+        const serviceCharge = booking['pricing']?.['serviceCharge'] || 0;
+        totalRevenue += serviceCharge;
+
+        if (status === 'payment-confirmed') {
+          completedBookings++;
+        } else {
+          // All other statuses are considered active
+          activeBookings++;
+        }
       });
 
-      return {
+      const analyticsData = {
         totalClients,
         totalWorkers,
-        pendingVerifications,
+        pendingVerifications: pendingVerificationsCount,
         activeBookings,
         completedBookings,
         totalRevenue,
       };
+
+      console.log('Analytics Data:', analyticsData);
+      console.log('Detailed breakdown:', {
+        clientVerifications: `${pendingVerifications.length} pending client verifications`,
+        workerVerifications: `${pendingWorkers.length} pending worker verifications`,
+        totalRegularBookings: bookingsSnapshot.size,
+        totalQuickBookings: quickBookingsSnapshot.size,
+        activeBookings: `${activeBookings} bookings with status !== 'payment-confirmed'`,
+        completedBookings: `${completedBookings} bookings with status === 'payment-confirmed'`,
+        totalRevenue: `₱${totalRevenue.toFixed(
+          2
+        )} from all serviceCharge fields`,
+        revenueDetails: `Sum of serviceCharge from ${bookingsSnapshot.size} regular bookings (direct field) + ${quickBookingsSnapshot.size} quick bookings (pricing.serviceCharge)`,
+      });
+
+      return analyticsData;
     } catch (error) {
       console.error('Error getting admin analytics:', error);
-      // Return mock data as fallback
+      // Return fallback data
       return {
         totalClients: 0,
         totalWorkers: 0,

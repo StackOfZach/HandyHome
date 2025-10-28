@@ -122,6 +122,18 @@ export class AdminDashboardPage implements OnInit {
   isClientReportModalOpen: boolean = false;
   reportViewType: 'worker' | 'client' = 'worker'; // Toggle between worker and client reports
 
+  // Booking Management Properties
+  bookingActiveTab: string = 'regular';
+  regularBookings: any[] = [];
+  quickBookings: any[] = [];
+  filteredRegularBookings: any[] = [];
+  filteredQuickBookings: any[] = [];
+  isLoadingBookings: boolean = false;
+  bookingSearchTerm: string = '';
+  bookingStatusFilter: string = 'all';
+  selectedBooking: any | null = null;
+  isBookingModalOpen: boolean = false;
+
   // Analytics refresh
   isRefreshingAnalytics: boolean = false;
   lastAnalyticsUpdate: Date | null = null;
@@ -424,18 +436,24 @@ export class AdminDashboardPage implements OnInit {
     this.initializeServiceForm();
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.authService.userProfile$.subscribe((profile) => {
       this.userProfile = profile;
     });
 
-    this.loadAnalytics();
-    this.loadPendingWorkers();
-    this.loadVerifiedWorkers();
-    this.loadServices();
-    this.loadClients();
-    this.loadPendingVerifications();
-    this.loadReports();
+    // Load all data first
+    await Promise.all([
+      this.loadPendingWorkers(),
+      this.loadVerifiedWorkers(),
+      this.loadServices(),
+      this.loadClients(),
+      this.loadPendingVerifications(),
+      this.loadReports(),
+      this.loadBookings(),
+    ]);
+
+    // Load analytics last so it can use all the loaded data
+    await this.loadAnalytics();
     this.initializeIconPicker();
   }
 
@@ -469,7 +487,12 @@ export class AdminDashboardPage implements OnInit {
     this.isRefreshingAnalytics = true;
     try {
       console.log('Loading analytics data...');
-      this.analytics = await this.dashboardService.getAnalytics();
+      this.analytics = await this.dashboardService.getAnalytics(
+        this.pendingVerifications,
+        this.pendingWorkers,
+        this.regularBookings,
+        this.quickBookings
+      );
       this.lastAnalyticsUpdate = new Date();
       console.log('Analytics loaded successfully:', this.analytics);
     } catch (error) {
@@ -1479,8 +1502,9 @@ export class AdminDashboardPage implements OnInit {
         );
       }
 
-      // Refresh the list
+      // Refresh the list and analytics
       await this.loadPendingVerifications();
+      await this.loadAnalytics();
       this.closeVerificationModal();
     } catch (error) {
       console.error(`Error ${action}ing verification:`, error);
@@ -1864,5 +1888,236 @@ export class AdminDashboardPage implements OnInit {
     } finally {
       this.isProcessingReport = false;
     }
+  }
+
+  // Booking Management Methods
+
+  setBookingTab(tab: string) {
+    this.bookingActiveTab = tab;
+    // Reset search and filters when switching tabs
+    this.bookingSearchTerm = '';
+    this.bookingStatusFilter = 'all';
+
+    if (tab === 'regular' && this.regularBookings.length === 0) {
+      this.loadRegularBookings();
+    } else if (tab === 'quick' && this.quickBookings.length === 0) {
+      this.loadQuickBookings();
+    } else {
+      // Apply current filters to the selected tab
+      this.filterBookings();
+    }
+  }
+
+  async loadBookings() {
+    await Promise.all([this.loadRegularBookings(), this.loadQuickBookings()]);
+  }
+
+  async loadRegularBookings() {
+    this.isLoadingBookings = true;
+    try {
+      const bookingsCollection = collection(this.firestore, 'bookings');
+      const q = query(bookingsCollection, orderBy('createdAt', 'desc'));
+
+      const querySnapshot = await getDocs(q);
+      this.regularBookings = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        this.regularBookings.push({
+          id: doc.id,
+          ...data,
+          createdAt: data['createdAt']?.toDate
+            ? data['createdAt'].toDate()
+            : new Date(),
+          date: data['date']?.toDate ? data['date'].toDate() : data['date'],
+          updatedAt: data['updatedAt']?.toDate
+            ? data['updatedAt'].toDate()
+            : undefined,
+          completedAt: data['completedAt']?.toDate
+            ? data['completedAt'].toDate()
+            : undefined,
+          type: 'regular',
+        });
+      });
+
+      this.filteredRegularBookings = [...this.regularBookings];
+      console.log('Loaded regular bookings:', this.regularBookings);
+    } catch (error) {
+      console.error('Error loading regular bookings:', error);
+      this.showToast('Error loading regular bookings', 'danger');
+    } finally {
+      this.isLoadingBookings = false;
+    }
+  }
+
+  async loadQuickBookings() {
+    this.isLoadingBookings = true;
+    try {
+      const quickBookingsCollection = collection(
+        this.firestore,
+        'quickbookings'
+      );
+      const q = query(quickBookingsCollection, orderBy('createdAt', 'desc'));
+
+      const querySnapshot = await getDocs(q);
+      this.quickBookings = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        this.quickBookings.push({
+          id: doc.id,
+          ...data,
+          createdAt: data['createdAt']?.toDate
+            ? data['createdAt'].toDate()
+            : new Date(),
+          scheduledDate: data['scheduledDate']?.toDate
+            ? data['scheduledDate'].toDate()
+            : undefined,
+          updatedAt: data['updatedAt']?.toDate
+            ? data['updatedAt'].toDate()
+            : undefined,
+          completedAt: data['completedAt']?.toDate
+            ? data['completedAt'].toDate()
+            : undefined,
+          type: 'quick',
+        });
+      });
+
+      this.filteredQuickBookings = [...this.quickBookings];
+      console.log('Loaded quick bookings:', this.quickBookings);
+    } catch (error) {
+      console.error('Error loading quick bookings:', error);
+      this.showToast('Error loading quick bookings', 'danger');
+    } finally {
+      this.isLoadingBookings = false;
+    }
+  }
+
+  filterBookings() {
+    if (this.bookingActiveTab === 'regular') {
+      this.filterRegularBookings();
+    } else {
+      this.filterQuickBookings();
+    }
+  }
+
+  filterRegularBookings() {
+    let filtered = [...this.regularBookings];
+
+    // Filter by search term
+    if (this.bookingSearchTerm.trim()) {
+      const searchTerm = this.bookingSearchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (booking) =>
+          booking.clientName?.toLowerCase().includes(searchTerm) ||
+          booking.workerName?.toLowerCase().includes(searchTerm) ||
+          booking.serviceName?.toLowerCase().includes(searchTerm) ||
+          booking.specificService?.toLowerCase().includes(searchTerm) ||
+          booking.address?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Filter by status
+    if (this.bookingStatusFilter !== 'all') {
+      filtered = filtered.filter(
+        (booking) => booking.status === this.bookingStatusFilter
+      );
+    }
+
+    this.filteredRegularBookings = filtered;
+  }
+
+  filterQuickBookings() {
+    let filtered = [...this.quickBookings];
+
+    // Filter by search term
+    if (this.bookingSearchTerm.trim()) {
+      const searchTerm = this.bookingSearchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (booking) =>
+          booking.clientId?.toLowerCase().includes(searchTerm) ||
+          booking.categoryName?.toLowerCase().includes(searchTerm) ||
+          booking.subService?.toLowerCase().includes(searchTerm) ||
+          booking.location?.address?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Filter by status
+    if (this.bookingStatusFilter !== 'all') {
+      filtered = filtered.filter(
+        (booking) => booking.status === this.bookingStatusFilter
+      );
+    }
+
+    this.filteredQuickBookings = filtered;
+  }
+
+  viewBookingDetails(booking: any) {
+    this.selectedBooking = booking;
+    this.isBookingModalOpen = true;
+  }
+
+  closeBookingModal() {
+    this.isBookingModalOpen = false;
+    this.selectedBooking = null;
+  }
+
+  getBookingStatusBadgeClass(status: string): string {
+    switch (status) {
+      case 'pending':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
+      case 'accepted':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800';
+      case 'on-the-way':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800';
+      case 'in-progress':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800';
+      case 'completed':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
+      case 'payment-confirmed':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800';
+      case 'cancelled':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
+      case 'searching':
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800';
+      default:
+        return 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800';
+    }
+  }
+
+  getBookingTypeDisplayName(type: string): string {
+    return type === 'quick' ? 'Quick Booking' : 'Regular Booking';
+  }
+
+  async refreshBookings() {
+    await this.loadBookings();
+    await this.loadAnalytics();
+    this.showToast('Bookings refreshed successfully', 'success');
+  }
+
+  getTotalBookingsCount(): number {
+    return this.regularBookings.length + this.quickBookings.length;
+  }
+
+  getActiveBookingsCount(): number {
+    const activeStatuses = [
+      'pending',
+      'accepted',
+      'on-the-way',
+      'in-progress',
+      'searching',
+    ];
+    return (
+      this.regularBookings.filter((b) => activeStatuses.includes(b.status))
+        .length +
+      this.quickBookings.filter((b) => activeStatuses.includes(b.status)).length
+    );
+  }
+
+  getCompletedBookingsCount(): number {
+    return (
+      this.regularBookings.filter((b) => b.status === 'completed').length +
+      this.quickBookings.filter((b) => b.status === 'completed').length
+    );
   }
 }

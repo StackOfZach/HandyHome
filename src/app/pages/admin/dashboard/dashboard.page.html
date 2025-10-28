@@ -2774,6 +2774,656 @@
         </div>
       </div>
 
+      <!-- Booking Management Section -->
+      <div *ngIf="activeSection === 'bookings'" class="animate-fadeIn">
+        <!-- Enhanced Header with Gradient Background -->
+        <div
+          class="relative bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 rounded-2xl p-8 mb-8 overflow-hidden"
+        >
+          <!-- Background Pattern -->
+          <div class="absolute inset-0 opacity-5">
+            <div
+              class="absolute top-4 left-4 w-32 h-32 bg-blue-500 rounded-full blur-3xl"
+            ></div>
+            <div
+              class="absolute bottom-4 right-4 w-24 h-24 bg-indigo-500 rounded-full blur-2xl"
+            ></div>
+            <div
+              class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-blue-400 rounded-full blur-3xl"
+            ></div>
+          </div>
+
+          <div class="relative z-10">
+            <div
+              class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
+            >
+              <div class="flex-1">
+                <div class="flex items-center mb-4">
+                  <div
+                    class="bg-white/20 backdrop-blur-sm p-3 rounded-xl mr-4 shadow-lg"
+                  >
+                    <ion-icon
+                      name="calendar"
+                      class="text-3xl text-blue-600"
+                    ></ion-icon>
+                  </div>
+                  <div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-1">
+                      Booking Management
+                    </h2>
+                    <div class="flex items-center text-gray-600">
+                      <ion-icon
+                        name="time-outline"
+                        class="mr-2 text-lg"
+                      ></ion-icon>
+                      <span>Manage all bookings and quick bookings</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                  <div
+                    class="bg-white/30 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-2xl font-bold text-gray-800">
+                          {{ getTotalBookingsCount() }}
+                        </p>
+                        <p class="text-sm text-gray-600">Total Bookings</p>
+                      </div>
+                      <div class="bg-blue-100 p-2 rounded-lg">
+                        <ion-icon
+                          name="calendar-outline"
+                          class="text-blue-600 text-xl"
+                        ></ion-icon>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="bg-white/30 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-2xl font-bold text-orange-600">
+                          {{ getActiveBookingsCount() }}
+                        </p>
+                        <p class="text-sm text-gray-600">Active Bookings</p>
+                      </div>
+                      <div class="bg-orange-100 p-2 rounded-lg">
+                        <ion-icon
+                          name="time-outline"
+                          class="text-orange-600 text-xl"
+                        ></ion-icon>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="bg-white/30 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-2xl font-bold text-green-600">
+                          {{ getCompletedBookingsCount() }}
+                        </p>
+                        <p class="text-sm text-gray-600">Completed</p>
+                      </div>
+                      <div class="bg-green-100 p-2 rounded-lg">
+                        <ion-icon
+                          name="checkmark-circle-outline"
+                          class="text-green-600 text-xl"
+                        ></ion-icon>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-col sm:flex-row gap-3">
+                <button
+                  (click)="refreshBookings()"
+                  [disabled]="isLoadingBookings"
+                  class="bg-white/80 hover:bg-white text-blue-600 px-4 py-2 rounded-xl font-semibold transition-all duration-200 flex items-center space-x-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ion-icon
+                    [name]="isLoadingBookings ? 'sync' : 'refresh'"
+                    [class]="isLoadingBookings ? 'animate-spin' : ''"
+                    class="text-lg"
+                  ></ion-icon>
+                  <span
+                    >{{ isLoadingBookings ? 'Refreshing...' : 'Refresh' }}</span
+                  >
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Tabs -->
+        <div class="mb-6">
+          <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8">
+              <button
+                (click)="setBookingTab('regular')"
+                [class]="'py-4 px-1 border-b-2 font-medium text-sm transition-colors ' + (bookingActiveTab === 'regular' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')"
+              >
+                <div class="flex items-center">
+                  <ion-icon name="calendar-outline" class="mr-2"></ion-icon>
+                  Regular Bookings ({{ regularBookings.length }})
+                </div>
+              </button>
+              <button
+                (click)="setBookingTab('quick')"
+                [class]="'py-4 px-1 border-b-2 font-medium text-sm transition-colors ' + (bookingActiveTab === 'quick' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')"
+              >
+                <div class="flex items-center">
+                  <ion-icon name="flash" class="mr-2"></ion-icon>
+                  Quick Bookings ({{ quickBookings.length }})
+                </div>
+              </button>
+            </nav>
+          </div>
+        </div>
+        <!-- Regular Bookings Tab -->
+        <div *ngIf="bookingActiveTab === 'regular'">
+          <!-- Header and Search -->
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-semibold text-gray-800">
+                Regular Bookings
+              </h2>
+              <button
+                (click)="loadRegularBookings()"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+              >
+                <ion-icon name="refresh" class="mr-2"></ion-icon>
+                Refresh
+              </button>
+            </div>
+
+            <!-- Search and Filter Controls -->
+            <div class="flex flex-col sm:flex-row gap-4">
+              <!-- Search Input -->
+              <div class="flex-1">
+                <div class="relative">
+                  <ion-icon
+                    name="search"
+                    class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  ></ion-icon>
+                  <input
+                    type="text"
+                    [(ngModel)]="bookingSearchTerm"
+                    (input)="filterBookings()"
+                    placeholder="Search by client, worker, service, or address..."
+                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <!-- Status Filter -->
+              <div class="sm:w-48">
+                <select
+                  [(ngModel)]="bookingStatusFilter"
+                  (change)="filterBookings()"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="on-the-way">On the Way</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="payment-confirmed">Payment Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="isLoadingBookings" class="text-center py-8">
+            <ion-spinner color="primary"></ion-spinner>
+            <p class="mt-2 text-gray-500">Loading regular bookings...</p>
+          </div>
+
+          <!-- No Results -->
+          <div
+            *ngIf="!isLoadingBookings && filteredRegularBookings.length === 0 && bookingSearchTerm"
+            class="bg-white rounded-xl shadow-lg p-8 text-center"
+          >
+            <ion-icon
+              name="search"
+              class="text-6xl text-gray-300 mb-4"
+            ></ion-icon>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">
+              No Results Found
+            </h3>
+            <p class="text-gray-500">
+              No regular bookings found matching "{{ bookingSearchTerm }}"
+            </p>
+          </div>
+
+          <!-- Empty State -->
+          <div
+            *ngIf="!isLoadingBookings && regularBookings.length === 0 && !bookingSearchTerm"
+            class="bg-white rounded-xl shadow-lg p-8 text-center"
+          >
+            <ion-icon
+              name="calendar-outline"
+              class="text-6xl text-gray-300 mb-4"
+            ></ion-icon>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">
+              No Regular Bookings
+            </h3>
+            <p class="text-gray-500">
+              No regular bookings have been created yet.
+            </p>
+          </div>
+
+          <!-- Bookings Table -->
+          <div
+            *ngIf="!isLoadingBookings && filteredRegularBookings.length > 0"
+            class="bg-white rounded-xl shadow-lg overflow-hidden"
+          >
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Booking ID
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Client
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Worker
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Service
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Status
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Created
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr
+                    *ngFor="let booking of filteredRegularBookings"
+                    class="hover:bg-gray-50 transition-colors"
+                  >
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                    >
+                      <div class="flex items-center">
+                        <div class="bg-blue-100 rounded-lg p-2 mr-3">
+                          <ion-icon
+                            name="calendar"
+                            class="text-blue-600 text-sm"
+                          ></ion-icon>
+                        </div>
+                        <span class="font-mono"
+                          >{{ booking.id?.substring(0, 8) }}...</span
+                        >
+                      </div>
+                    </td>
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    >
+                      <div class="flex items-center">
+                        <div class="bg-gray-100 rounded-full p-2 mr-3">
+                          <ion-icon
+                            name="person"
+                            class="text-gray-600 text-sm"
+                          ></ion-icon>
+                        </div>
+                        <div>
+                          <div class="font-medium">
+                            {{ booking.clientName || 'N/A' }}
+                          </div>
+                          <div class="text-gray-500 text-xs">
+                            {{ booking.clientId?.substring(0, 8) }}...
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    >
+                      <div class="flex items-center">
+                        <div class="bg-orange-100 rounded-full p-2 mr-3">
+                          <ion-icon
+                            name="hammer"
+                            class="text-orange-600 text-sm"
+                          ></ion-icon>
+                        </div>
+                        <div>
+                          <div class="font-medium">
+                            {{ booking.workerName || 'Not Assigned' }}
+                          </div>
+                          <div
+                            class="text-gray-500 text-xs"
+                            *ngIf="booking.workerPhone"
+                          >
+                            {{ booking.workerPhone }}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    >
+                      <div>
+                        <div class="font-medium">
+                          {{ booking.serviceName || booking.specificService ||
+                          'N/A' }}
+                        </div>
+                        <div
+                          class="text-gray-500 text-xs"
+                          *ngIf="booking.price"
+                        >
+                          ₱{{ booking.price | number:'1.2-2' }}
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span
+                        [class]="getBookingStatusBadgeClass(booking.status)"
+                      >
+                        {{ booking.status?.replace('-', ' ') || 'Unknown' }}
+                      </span>
+                    </td>
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                    >
+                      {{ booking.createdAt | date:'short' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        (click)="viewBookingDetails(booking)"
+                        class="text-blue-600 hover:text-blue-900 transition-colors flex items-center"
+                      >
+                        <ion-icon name="eye" class="mr-1"></ion-icon>
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Bookings Tab -->
+        <div *ngIf="bookingActiveTab === 'quick'">
+          <!-- Header and Search -->
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-semibold text-gray-800">
+                Quick Bookings
+              </h2>
+              <button
+                (click)="loadQuickBookings()"
+                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+              >
+                <ion-icon name="refresh" class="mr-2"></ion-icon>
+                Refresh
+              </button>
+            </div>
+
+            <!-- Search and Filter Controls -->
+            <div class="flex flex-col sm:flex-row gap-4">
+              <!-- Search Input -->
+              <div class="flex-1">
+                <div class="relative">
+                  <ion-icon
+                    name="search"
+                    class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  ></ion-icon>
+                  <input
+                    type="text"
+                    [(ngModel)]="bookingSearchTerm"
+                    (input)="filterBookings()"
+                    placeholder="Search by client, service, or address..."
+                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <!-- Status Filter -->
+              <div class="sm:w-48">
+                <select
+                  [(ngModel)]="bookingStatusFilter"
+                  (change)="filterBookings()"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="searching">Searching</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="on-the-way">On the Way</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                  <option value="payment-confirmed">Payment Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="isLoadingBookings" class="text-center py-8">
+            <ion-spinner color="primary"></ion-spinner>
+            <p class="mt-2 text-gray-500">Loading quick bookings...</p>
+          </div>
+
+          <!-- No Results -->
+          <div
+            *ngIf="!isLoadingBookings && filteredQuickBookings.length === 0 && bookingSearchTerm"
+            class="bg-white rounded-xl shadow-lg p-8 text-center"
+          >
+            <ion-icon
+              name="search"
+              class="text-6xl text-gray-300 mb-4"
+            ></ion-icon>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">
+              No Results Found
+            </h3>
+            <p class="text-gray-500">
+              No quick bookings found matching "{{ bookingSearchTerm }}"
+            </p>
+          </div>
+
+          <!-- Empty State -->
+          <div
+            *ngIf="!isLoadingBookings && quickBookings.length === 0 && !bookingSearchTerm"
+            class="bg-white rounded-xl shadow-lg p-8 text-center"
+          >
+            <ion-icon
+              name="flash-outline"
+              class="text-6xl text-gray-300 mb-4"
+            ></ion-icon>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">
+              No Quick Bookings
+            </h3>
+            <p class="text-gray-500">
+              No quick bookings have been created yet.
+            </p>
+          </div>
+
+          <!-- Bookings Table -->
+          <div
+            *ngIf="!isLoadingBookings && filteredQuickBookings.length > 0"
+            class="bg-white rounded-xl shadow-lg overflow-hidden"
+          >
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Booking ID
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Client
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Worker
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Service
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Status
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Created
+                    </th>
+                    <th
+                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr
+                    *ngFor="let booking of filteredQuickBookings"
+                    class="hover:bg-gray-50 transition-colors"
+                  >
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                    >
+                      <div class="flex items-center">
+                        <div class="bg-green-100 rounded-lg p-2 mr-3">
+                          <ion-icon
+                            name="flash"
+                            class="text-green-600 text-sm"
+                          ></ion-icon>
+                        </div>
+                        <span class="font-mono"
+                          >{{ booking.id?.substring(0, 8) }}...</span
+                        >
+                      </div>
+                    </td>
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    >
+                      <div class="flex items-center">
+                        <div class="bg-gray-100 rounded-full p-2 mr-3">
+                          <ion-icon
+                            name="person"
+                            class="text-gray-600 text-sm"
+                          ></ion-icon>
+                        </div>
+                        <div>
+                          <div class="font-medium">
+                            {{ booking.clientId?.substring(0, 8) }}...
+                          </div>
+                          <div class="text-gray-500 text-xs">Client ID</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    >
+                      <div class="flex items-center">
+                        <div class="bg-orange-100 rounded-full p-2 mr-3">
+                          <ion-icon
+                            name="hammer"
+                            class="text-orange-600 text-sm"
+                          ></ion-icon>
+                        </div>
+                        <div>
+                          <div class="font-medium">
+                            {{ booking.assignedWorker ? 'Assigned' : 'Not
+                            Assigned' }}
+                          </div>
+                          <div
+                            class="text-gray-500 text-xs"
+                            *ngIf="booking.assignedWorker"
+                          >
+                            {{ booking.assignedWorker.substring(0, 8) }}...
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    >
+                      <div>
+                        <div class="font-medium">
+                          {{ booking.categoryName }} - {{ booking.subService }}
+                        </div>
+                        <div
+                          class="text-gray-500 text-xs"
+                          *ngIf="booking.pricing"
+                        >
+                          ₱{{ booking.pricing.total | number:'1.2-2' }}
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span
+                        [class]="getBookingStatusBadgeClass(booking.status)"
+                      >
+                        {{ booking.status?.replace('-', ' ') || 'Unknown' }}
+                      </span>
+                    </td>
+                    <td
+                      class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                    >
+                      {{ booking.createdAt | date:'short' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        (click)="viewBookingDetails(booking)"
+                        class="text-green-600 hover:text-green-900 transition-colors flex items-center"
+                      >
+                        <ion-icon name="eye" class="mr-1"></ion-icon>
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Client Management Section -->
       <div *ngIf="activeSection === 'clients'" class="animate-fadeIn">
         <!-- Enhanced Header -->
@@ -3076,6 +3726,479 @@
         <p class="text-gray-500">This section is under development.</p>
       </div> -->
     </main>
+  </div>
+
+  <!-- Booking Details Modal -->
+  <div
+    *ngIf="isBookingModalOpen"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+  >
+    <div
+      class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+    >
+      <!-- Modal Header -->
+      <div
+        class="flex items-center justify-between p-6 border-b border-gray-200"
+      >
+        <h3 class="text-lg font-semibold text-gray-900">
+          Booking Details - {{ selectedBooking?.type === 'quick' ? 'Quick
+          Booking' : 'Regular Booking' }}
+        </h3>
+        <button
+          (click)="closeBookingModal()"
+          class="text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <ion-icon name="close" class="text-xl"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="p-6" *ngIf="selectedBooking">
+        <!-- Booking Type Badge -->
+        <div class="mb-6">
+          <span
+            [class]="selectedBooking.type === 'quick' ? 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800' : 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800'"
+          >
+            {{ selectedBooking.type === 'quick' ? 'Quick Booking' : 'Regular
+            Booking' }}
+          </span>
+        </div>
+
+        <!-- Booking Information Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- Basic Information -->
+          <div class="space-y-4">
+            <h4
+              class="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2"
+            >
+              Basic Information
+            </h4>
+
+            <div class="space-y-3">
+              <div>
+                <label class="text-sm font-medium text-gray-500"
+                  >Booking ID</label
+                >
+                <p class="text-sm text-gray-900 font-mono">
+                  {{ selectedBooking.id }}
+                </p>
+              </div>
+
+              <div>
+                <label class="text-sm font-medium text-gray-500">Status</label>
+                <div class="mt-1">
+                  <span
+                    [class]="getBookingStatusBadgeClass(selectedBooking.status)"
+                  >
+                    {{ selectedBooking.status?.replace('-', ' ') || 'Unknown' }}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label class="text-sm font-medium text-gray-500"
+                  >Created At</label
+                >
+                <p class="text-sm text-gray-900">
+                  {{ selectedBooking.createdAt | date:'medium' }}
+                </p>
+              </div>
+
+              <div *ngIf="selectedBooking.updatedAt">
+                <label class="text-sm font-medium text-gray-500"
+                  >Last Updated</label
+                >
+                <p class="text-sm text-gray-900">
+                  {{ selectedBooking.updatedAt | date:'medium' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Client & Worker Information -->
+          <div class="space-y-4">
+            <h4
+              class="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2"
+            >
+              Client & Worker Information
+            </h4>
+
+            <div class="space-y-3">
+              <div>
+                <label class="text-sm font-medium text-gray-500">Client</label>
+                <p class="text-sm text-gray-900">
+                  {{ selectedBooking.clientName || selectedBooking.clientId ||
+                  'N/A' }}
+                </p>
+              </div>
+
+              <div>
+                <label class="text-sm font-medium text-gray-500">Worker</label>
+                <p class="text-sm text-gray-900">
+                  {{ selectedBooking.workerName ||
+                  selectedBooking.assignedWorker || 'Not Assigned' }}
+                </p>
+              </div>
+
+              <div *ngIf="selectedBooking.workerPhone">
+                <label class="text-sm font-medium text-gray-500"
+                  >Worker Phone</label
+                >
+                <p class="text-sm text-gray-900">
+                  {{ selectedBooking.workerPhone }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Service Information -->
+        <div class="mb-6">
+          <h4
+            class="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-4"
+          >
+            Service Information
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div>
+                <label class="text-sm font-medium text-gray-500"
+                  >Service Category</label
+                >
+                <p class="text-sm text-gray-900">
+                  {{ selectedBooking.categoryName || selectedBooking.serviceName
+                  || 'N/A' }}
+                </p>
+              </div>
+
+              <div>
+                <label class="text-sm font-medium text-gray-500"
+                  >Specific Service</label
+                >
+                <p class="text-sm text-gray-900">
+                  {{ selectedBooking.subService ||
+                  selectedBooking.specificService || 'N/A' }}
+                </p>
+              </div>
+
+              <div *ngIf="selectedBooking.estimatedDuration">
+                <label class="text-sm font-medium text-gray-500"
+                  >Estimated Duration</label
+                >
+                <p class="text-sm text-gray-900">
+                  {{ selectedBooking.estimatedDuration }} hours
+                </p>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <div *ngIf="selectedBooking.price">
+                <label class="text-sm font-medium text-gray-500">Price</label>
+                <p class="text-sm text-gray-900">
+                  ₱{{ selectedBooking.price | number:'1.2-2' }}
+                </p>
+              </div>
+
+              <div *ngIf="selectedBooking.total">
+                <label class="text-sm font-medium text-gray-500"
+                  >Total Amount</label
+                >
+                <p class="text-sm text-gray-900">
+                  ₱{{ selectedBooking.total | number:'1.2-2' }}
+                </p>
+              </div>
+
+              <div *ngIf="selectedBooking.pricing">
+                <label class="text-sm font-medium text-gray-500"
+                  >Pricing Details</label
+                >
+                <div class="text-sm text-gray-900">
+                  <p>
+                    Base Price: ₱{{ selectedBooking.pricing.basePrice |
+                    number:'1.2-2' }}
+                  </p>
+                  <p>
+                    Service Charge: ₱{{ selectedBooking.pricing.serviceCharge |
+                    number:'1.2-2' }}
+                  </p>
+                  <p>
+                    Total: ₱{{ selectedBooking.pricing.total | number:'1.2-2' }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Location Information -->
+        <div
+          class="mb-6"
+          *ngIf="selectedBooking.location || selectedBooking.address"
+        >
+          <h4
+            class="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-4"
+          >
+            Location Information
+          </h4>
+
+          <div class="space-y-3">
+            <div>
+              <label class="text-sm font-medium text-gray-500">Address</label>
+              <p class="text-sm text-gray-900">
+                {{ selectedBooking.location?.address || selectedBooking.address
+                || 'N/A' }}
+              </p>
+            </div>
+
+            <div *ngIf="selectedBooking.location?.city || selectedBooking.city">
+              <label class="text-sm font-medium text-gray-500">City</label>
+              <p class="text-sm text-gray-900">
+                {{ selectedBooking.location?.city || selectedBooking.city ||
+                'N/A' }}
+              </p>
+            </div>
+
+            <div
+              *ngIf="selectedBooking.location?.coordinates || selectedBooking.coordinates"
+            >
+              <label class="text-sm font-medium text-gray-500"
+                >Coordinates</label
+              >
+              <p class="text-sm text-gray-900 font-mono">
+                {{ selectedBooking.location?.lat ||
+                selectedBooking.coordinates?.lat }}, {{
+                selectedBooking.location?.lng ||
+                selectedBooking.coordinates?.lng }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule Information -->
+        <div
+          class="mb-6"
+          *ngIf="selectedBooking.schedule || selectedBooking.date || selectedBooking.scheduledDate"
+        >
+          <h4
+            class="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-4"
+          >
+            Schedule Information
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div *ngIf="selectedBooking.schedule">
+              <div>
+                <label class="text-sm font-medium text-gray-500"
+                  >Scheduled Date</label
+                >
+                <p class="text-sm text-gray-900">
+                  {{ selectedBooking.schedule.date }}
+                </p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-500"
+                  >Scheduled Time</label
+                >
+                <p class="text-sm text-gray-900">
+                  {{ selectedBooking.schedule.time }}
+                </p>
+              </div>
+            </div>
+
+            <div *ngIf="selectedBooking.date || selectedBooking.scheduledDate">
+              <div>
+                <label class="text-sm font-medium text-gray-500">Date</label>
+                <p class="text-sm text-gray-900">
+                  {{ (selectedBooking.date || selectedBooking.scheduledDate) |
+                  date:'medium' }}
+                </p>
+              </div>
+              <div *ngIf="selectedBooking.time">
+                <label class="text-sm font-medium text-gray-500">Time</label>
+                <p class="text-sm text-gray-900">{{ selectedBooking.time }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Details -->
+        <div
+          class="mb-6"
+          *ngIf="selectedBooking.notes || selectedBooking.additionalDetails || selectedBooking.description"
+        >
+          <h4
+            class="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-4"
+          >
+            Additional Details
+          </h4>
+
+          <div class="space-y-3">
+            <div *ngIf="selectedBooking.notes">
+              <label class="text-sm font-medium text-gray-500">Notes</label>
+              <p class="text-sm text-gray-900">{{ selectedBooking.notes }}</p>
+            </div>
+
+            <div *ngIf="selectedBooking.additionalDetails">
+              <label class="text-sm font-medium text-gray-500"
+                >Additional Details</label
+              >
+              <p class="text-sm text-gray-900">
+                {{ selectedBooking.additionalDetails }}
+              </p>
+            </div>
+
+            <div *ngIf="selectedBooking.description">
+              <label class="text-sm font-medium text-gray-500"
+                >Description</label
+              >
+              <p class="text-sm text-gray-900">
+                {{ selectedBooking.description }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Completion Information -->
+        <div class="mb-6" *ngIf="selectedBooking.status === 'completed'">
+          <h4
+            class="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-4"
+          >
+            Completion Information
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <div *ngIf="selectedBooking.completedAt">
+                <label class="text-sm font-medium text-gray-500"
+                  >Completed At</label
+                >
+                <p class="text-sm text-gray-900">
+                  {{ selectedBooking.completedAt | date:'medium' }}
+                </p>
+              </div>
+
+              <div *ngIf="selectedBooking.rating">
+                <label class="text-sm font-medium text-gray-500">Rating</label>
+                <div class="flex items-center">
+                  <div class="flex text-yellow-400">
+                    <ion-icon
+                      *ngFor="let star of [1,2,3,4,5]"
+                      [name]="star <= selectedBooking.rating ? 'star' : 'star-outline'"
+                      class="text-sm"
+                    >
+                    </ion-icon>
+                  </div>
+                  <span class="ml-2 text-sm text-gray-900"
+                    >{{ selectedBooking.rating }}/5</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="selectedBooking.review">
+              <label class="text-sm font-medium text-gray-500">Review</label>
+              <p class="text-sm text-gray-900">{{ selectedBooking.review }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cancellation Information -->
+        <div class="mb-6" *ngIf="selectedBooking.status === 'cancelled'">
+          <h4
+            class="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-4"
+          >
+            Cancellation Information
+          </h4>
+
+          <div class="space-y-3">
+            <div *ngIf="selectedBooking.cancelledAt">
+              <label class="text-sm font-medium text-gray-500"
+                >Cancelled At</label
+              >
+              <p class="text-sm text-gray-900">
+                {{ selectedBooking.cancelledAt | date:'medium' }}
+              </p>
+            </div>
+
+            <div *ngIf="selectedBooking.cancellationReason">
+              <label class="text-sm font-medium text-gray-500"
+                >Cancellation Reason</label
+              >
+              <p class="text-sm text-gray-900">
+                {{ selectedBooking.cancellationReason }}
+              </p>
+            </div>
+
+            <div *ngIf="selectedBooking.cancellationFee">
+              <label class="text-sm font-medium text-gray-500"
+                >Cancellation Fee</label
+              >
+              <p class="text-sm text-gray-900">
+                ₱{{ selectedBooking.cancellationFee | number:'1.2-2' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Information -->
+        <div class="mb-6" *ngIf="selectedBooking.paymentDetails">
+          <h4
+            class="text-md font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-4"
+          >
+            Payment Information
+          </h4>
+
+          <div class="space-y-3">
+            <div>
+              <label class="text-sm font-medium text-gray-500"
+                >Payment Status</label
+              >
+              <span
+                [class]="selectedBooking.paymentDetails.status === 'completed' ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800' : selectedBooking.paymentDetails.status === 'pending' ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800' : 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800'"
+              >
+                {{ selectedBooking.paymentDetails.status }}
+              </span>
+            </div>
+
+            <div *ngIf="selectedBooking.paymentDetails.amount">
+              <label class="text-sm font-medium text-gray-500">Amount</label>
+              <p class="text-sm text-gray-900">
+                ₱{{ selectedBooking.paymentDetails.amount | number:'1.2-2' }}
+              </p>
+            </div>
+
+            <div *ngIf="selectedBooking.paymentDetails.receiptId">
+              <label class="text-sm font-medium text-gray-500"
+                >Receipt ID</label
+              >
+              <p class="text-sm text-gray-900 font-mono">
+                {{ selectedBooking.paymentDetails.receiptId }}
+              </p>
+            </div>
+
+            <div *ngIf="selectedBooking.paymentDetails.completedAt">
+              <label class="text-sm font-medium text-gray-500"
+                >Payment Completed At</label
+              >
+              <p class="text-sm text-gray-900">
+                {{ selectedBooking.paymentDetails.completedAt | date:'medium' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end space-x-3 p-6 border-t border-gray-200">
+        <button
+          (click)="closeBookingModal()"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Close
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
