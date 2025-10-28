@@ -37,6 +37,7 @@ interface BookingDetails {
   pricing: {
     basePrice: number;
     serviceCharge: number;
+    transportFee?: number;
     total: number;
   };
   status:
@@ -1089,13 +1090,34 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
       const categoryData = categoryDoc.data();
       const services = categoryData['services'] || [];
 
+      // Get subService from booking - it's a top-level field in quickbookings
+      const bookingSubService =
+        this.booking?.subService || (this.booking as any)?.subService;
+
+      console.log('Looking for sub-service:', bookingSubService);
+      console.log('Available services:', services);
+      console.log('Booking data:', this.booking);
+
+      if (!bookingSubService) {
+        console.error('Sub-service not found in booking data');
+        return this.booking.pricing;
+      }
+
       // Find the specific sub-service
       const subService = services.find(
-        (service: any) => service.name === (this.booking as any).subService
+        (service: any) =>
+          service.name === bookingSubService || service === bookingSubService
       );
 
       if (!subService) {
-        console.error('Sub-service not found');
+        console.error(
+          'Sub-service not found in services array:',
+          bookingSubService
+        );
+        console.error(
+          'Available service names:',
+          services.map((s: any) => s.name || s)
+        );
         return this.booking.pricing;
       }
 
@@ -1143,10 +1165,14 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
 
       // Calculate other fees
       const serviceCharge = calculatedBasePrice * 0.1; // 10% service charge
-      const transportFee = 50; // Fixed transport fee as requested
+      // Get transportFee from booking data if available, otherwise use default
+      const transportFee =
+        this.booking.pricing?.transportFee ||
+        this.booking.finalPricing?.transportFee ||
+        50; // Default transport fee
       const total = calculatedBasePrice + serviceCharge + transportFee;
 
-      // Worker earnings = base price + transport fee (no service charge for worker)
+      // Worker earnings = base amount + transport fee (no service charge for worker)
       const workerEarnings = calculatedBasePrice + transportFee;
 
       const dynamicPricing = {
