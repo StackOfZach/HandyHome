@@ -304,7 +304,7 @@ export class BookServicePage implements OnInit {
     // Validate that the selected date/time is not in the past
     const selectedDate = new Date(this.selectedDateTime);
     const now = new Date();
-    
+
     if (selectedDate <= now) {
       const toast = await this.toastController.create({
         message: 'Please select a future date and time for your service',
@@ -319,7 +319,8 @@ export class BookServicePage implements OnInit {
     const selectedHour = selectedDate.getHours();
     if (selectedHour < 6 || selectedHour > 22) {
       const toast = await this.toastController.create({
-        message: 'Please select a time between 6:00 AM and 10:00 PM for better worker availability',
+        message:
+          'Please select a time between 6:00 AM and 10:00 PM for better worker availability',
         duration: 4000,
         color: 'warning',
       });

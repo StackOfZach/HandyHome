@@ -14,9 +14,14 @@ import {
   doc,
   updateDoc,
   getDoc,
+  addDoc,
+  serverTimestamp,
 } from '@angular/fire/firestore';
 import { AuthService } from '../../../services/auth.service';
-import { DashboardService, ServiceCategory } from '../../../services/dashboard.service';
+import {
+  DashboardService,
+  ServiceCategory,
+} from '../../../services/dashboard.service';
 
 interface ServicePrice {
   name: string;
@@ -147,7 +152,8 @@ export class WorkerResultsPage implements OnInit {
 
   async loadServiceCategories() {
     try {
-      this.serviceCategories = await this.dashboardService.getServiceCategories();
+      this.serviceCategories =
+        await this.dashboardService.getServiceCategories();
       console.log('Loaded service categories:', this.serviceCategories);
     } catch (error) {
       console.error('Error loading service categories:', error);
@@ -197,7 +203,8 @@ export class WorkerResultsPage implements OnInit {
           const priceMatch = this.workerMatchesPrice(workerData);
           const locationMatch = this.workerMatchesLocation(workerData);
 
-          const workerName = userData['fullName'] || workerData['fullName'] || 'Unknown';
+          const workerName =
+            userData['fullName'] || workerData['fullName'] || 'Unknown';
           console.log(`\n🔍 === WORKER EVALUATION: ${workerName} ===`);
           console.log('📋 Booking requirements:', {
             service: this.booking.neededService,
@@ -205,19 +212,30 @@ export class WorkerResultsPage implements OnInit {
             date: this.booking.scheduleDate,
             time: this.booking.scheduleTime,
             budget: `₱${this.booking.minBudget}-₱${this.booking.maxBudget}`,
-            location: this.booking.coordinates
+            location: this.booking.coordinates,
           });
           console.log('✅ Service match:', serviceMatch);
           console.log('📅 Day available:', isAvailable);
           console.log('⏰ Time available:', timeAvailable);
           console.log('💰 Price match:', priceMatch);
           console.log('📍 Location match:', locationMatch);
-          
-          const passedChecks = [serviceMatch, isAvailable, timeAvailable, priceMatch, locationMatch].filter(Boolean).length;
+
+          const passedChecks = [
+            serviceMatch,
+            isAvailable,
+            timeAvailable,
+            priceMatch,
+            locationMatch,
+          ].filter(Boolean).length;
           console.log(`🎯 RESULT: ${passedChecks}/5 checks passed`);
 
           // ✅ STRICT MATCH: Include time availability check
-          const fullMatch = serviceMatch && isAvailable && timeAvailable && priceMatch && locationMatch;
+          const fullMatch =
+            serviceMatch &&
+            isAvailable &&
+            timeAvailable &&
+            priceMatch &&
+            locationMatch;
           console.log(`🎯 FULL MATCH (all criteria): ${fullMatch}`);
 
           if (fullMatch) {
@@ -264,18 +282,30 @@ export class WorkerResultsPage implements OnInit {
 
       console.log(`\n🏁 === FINAL RESULTS ===`);
       console.log(`📊 Total verified workers found: ${workersSnapshot.size}`);
-      console.log(`✅ Workers that passed all criteria: ${this.workers.length}`);
-      
+      console.log(
+        `✅ Workers that passed all criteria: ${this.workers.length}`
+      );
+
       if (this.workers.length === 0) {
         console.log(`\n❌ NO WORKERS FOUND! Possible issues:`);
-        console.log(`1. 🔍 Service matching too strict (check serviceWithPricing data)`);
-        console.log(`2. 💰 Price matching too strict (check budget vs worker prices)`);
-        console.log(`3. ⏰ Time availability too strict (check timeAvailability data)`);
-        console.log(`4. 📍 Location matching too strict (check coordinates & workRadius)`);
+        console.log(
+          `1. 🔍 Service matching too strict (check serviceWithPricing data)`
+        );
+        console.log(
+          `2. 💰 Price matching too strict (check budget vs worker prices)`
+        );
+        console.log(
+          `3. ⏰ Time availability too strict (check timeAvailability data)`
+        );
+        console.log(
+          `4. 📍 Location matching too strict (check coordinates & workRadius)`
+        );
         console.log(`5. 📅 Day availability issue (check availableDays)`);
-        console.log(`\n🔧 Check the detailed logs above for each worker evaluation.`);
+        console.log(
+          `\n🔧 Check the detailed logs above for each worker evaluation.`
+        );
       }
-      
+
       this.applyFilters();
     } catch (error) {
       console.error('Error loading workers:', error);
@@ -298,52 +328,84 @@ export class WorkerResultsPage implements OnInit {
 
     console.log(`🔍 === SERVICE MATCHING DEBUG ===`);
     console.log(`🎯 Looking for: "${neededService}" | "${specificService}"`);
-    console.log(`📋 Worker has serviceWithPricing:`, !!workerData['serviceWithPricing']);
-    console.log(`📋 Worker serviceWithPricing data:`, workerData['serviceWithPricing']);
+    console.log(
+      `📋 Worker has serviceWithPricing:`,
+      !!workerData['serviceWithPricing']
+    );
+    console.log(
+      `📋 Worker serviceWithPricing data:`,
+      workerData['serviceWithPricing']
+    );
 
     // 1. PRIORITY: Check serviceWithPricing for exact sub-service match
     const serviceWithPricing = workerData['serviceWithPricing'] || [];
     if (serviceWithPricing.length > 0) {
       console.log('📋 Checking serviceWithPricing...');
-      
-      serviceWithPricing.forEach((category: ServiceWithPricing, index: number) => {
-        const categoryName = (category.categoryName || '').toLowerCase();
-        console.log(`📂 Category ${index}: "${categoryName}"`);
-        console.log(`📂 Sub-services:`, category.subServices?.map(s => s.subServiceName));
-        
-        const categoryMatches = neededService.includes(categoryName) || categoryName.includes(neededService);
-        console.log(`📂 Category matches "${neededService}": ${categoryMatches}`);
-        
-        if (categoryMatches && specificService) {
-          category.subServices?.forEach((subService: SubServicePrice) => {
-            const subServiceName = (subService.subServiceName || '').toLowerCase();
-            const matches = specificService.includes(subServiceName) || subServiceName.includes(specificService);
-            console.log(`   🔸 "${subServiceName}" matches "${specificService}": ${matches}`);
-          });
-        }
-      });
-      
-      const exactMatch = serviceWithPricing.some((category: ServiceWithPricing) => {
-        const categoryName = (category.categoryName || '').toLowerCase();
-        const categoryMatches = neededService.includes(categoryName) || categoryName.includes(neededService);
-        
-        if (categoryMatches) {
-          if (specificService) {
-            // Check if worker offers the specific sub-service
-            const subServiceMatch = category.subServices.some((subService: SubServicePrice) => {
-              const subServiceName = (subService.subServiceName || '').toLowerCase();
-              return specificService.includes(subServiceName) || subServiceName.includes(specificService);
+
+      serviceWithPricing.forEach(
+        (category: ServiceWithPricing, index: number) => {
+          const categoryName = (category.categoryName || '').toLowerCase();
+          console.log(`📂 Category ${index}: "${categoryName}"`);
+          console.log(
+            `📂 Sub-services:`,
+            category.subServices?.map((s) => s.subServiceName)
+          );
+
+          const categoryMatches =
+            neededService.includes(categoryName) ||
+            categoryName.includes(neededService);
+          console.log(
+            `📂 Category matches "${neededService}": ${categoryMatches}`
+          );
+
+          if (categoryMatches && specificService) {
+            category.subServices?.forEach((subService: SubServicePrice) => {
+              const subServiceName = (
+                subService.subServiceName || ''
+              ).toLowerCase();
+              const matches =
+                specificService.includes(subServiceName) ||
+                subServiceName.includes(specificService);
+              console.log(
+                `   🔸 "${subServiceName}" matches "${specificService}": ${matches}`
+              );
             });
-            return subServiceMatch;
-          } else {
-            // If no specific service, category match is enough
-            return true;
           }
         }
-        
-        return false;
-      });
-      
+      );
+
+      const exactMatch = serviceWithPricing.some(
+        (category: ServiceWithPricing) => {
+          const categoryName = (category.categoryName || '').toLowerCase();
+          const categoryMatches =
+            neededService.includes(categoryName) ||
+            categoryName.includes(neededService);
+
+          if (categoryMatches) {
+            if (specificService) {
+              // Check if worker offers the specific sub-service
+              const subServiceMatch = category.subServices.some(
+                (subService: SubServicePrice) => {
+                  const subServiceName = (
+                    subService.subServiceName || ''
+                  ).toLowerCase();
+                  return (
+                    specificService.includes(subServiceName) ||
+                    subServiceName.includes(specificService)
+                  );
+                }
+              );
+              return subServiceMatch;
+            } else {
+              // If no specific service, category match is enough
+              return true;
+            }
+          }
+
+          return false;
+        }
+      );
+
       if (exactMatch) {
         console.log('🎯 MATCH FOUND in serviceWithPricing');
         return true;
@@ -356,11 +418,16 @@ export class WorkerResultsPage implements OnInit {
 
     // 2. Fallback: Check category-level match only
     if (serviceWithPricing.length > 0) {
-      const categoryMatch = serviceWithPricing.some((category: ServiceWithPricing) => {
-        const categoryName = (category.categoryName || '').toLowerCase();
-        return neededService.includes(categoryName) || categoryName.includes(neededService);
-      });
-      
+      const categoryMatch = serviceWithPricing.some(
+        (category: ServiceWithPricing) => {
+          const categoryName = (category.categoryName || '').toLowerCase();
+          return (
+            neededService.includes(categoryName) ||
+            categoryName.includes(neededService)
+          );
+        }
+      );
+
       if (categoryMatch) {
         console.log('✅ Category-level match found in serviceWithPricing');
         return true;
@@ -386,7 +453,12 @@ export class WorkerResultsPage implements OnInit {
         neededService.includes(skill) || skill.includes(neededService)
     );
 
-    console.log('Legacy service match:', serviceMatch, 'Skill match:', skillMatch);
+    console.log(
+      'Legacy service match:',
+      serviceMatch,
+      'Skill match:',
+      skillMatch
+    );
     return serviceMatch || skillMatch;
   }
 
@@ -396,51 +468,84 @@ export class WorkerResultsPage implements OnInit {
     const neededService = this.booking.neededService.toLowerCase();
     const specificService = this.booking.specificService?.toLowerCase() || '';
     const userMinBudget = this.booking.minBudget || 0;
-    const userMaxBudget = this.booking.maxBudget || this.booking.priceRange || Infinity;
+    const userMaxBudget =
+      this.booking.maxBudget || this.booking.priceRange || Infinity;
 
     console.log(`💰 === PRICE MATCHING DEBUG ===`);
     console.log(`💵 Client budget: ₱${userMinBudget} - ₱${userMaxBudget}`);
-    console.log(`🎯 Looking for pricing: "${neededService}" - "${specificService}"`);
+    console.log(
+      `🎯 Looking for pricing: "${neededService}" - "${specificService}"`
+    );
 
     // 1. PRIORITY: Check serviceWithPricing for exact budget match
     const serviceWithPricing = workerData['serviceWithPricing'] || [];
     if (serviceWithPricing.length > 0) {
-      console.log(`💼 Worker has ${serviceWithPricing.length} service categories with pricing`);
-      
-      const categoryPricing = serviceWithPricing.find((category: ServiceWithPricing) => {
-        const categoryName = (category.categoryName || '').toLowerCase();
-        const matches = neededService.includes(categoryName) || categoryName.includes(neededService);
-        console.log(`💼 Category "${categoryName}" matches "${neededService}": ${matches}`);
-        return matches;
-      });
+      console.log(
+        `💼 Worker has ${serviceWithPricing.length} service categories with pricing`
+      );
+
+      const categoryPricing = serviceWithPricing.find(
+        (category: ServiceWithPricing) => {
+          const categoryName = (category.categoryName || '').toLowerCase();
+          const matches =
+            neededService.includes(categoryName) ||
+            categoryName.includes(neededService);
+          console.log(
+            `💼 Category "${categoryName}" matches "${neededService}": ${matches}`
+          );
+          return matches;
+        }
+      );
 
       if (categoryPricing) {
-        console.log(`💼 Found matching category: ${categoryPricing.categoryName}`);
-        console.log(`💼 Sub-services in category:`, categoryPricing.subServices?.map((s: SubServicePrice) => `${s.subServiceName}: ₱${s.price}`));
-        
+        console.log(
+          `💼 Found matching category: ${categoryPricing.categoryName}`
+        );
+        console.log(
+          `💼 Sub-services in category:`,
+          categoryPricing.subServices?.map(
+            (s: SubServicePrice) => `${s.subServiceName}: ₱${s.price}`
+          )
+        );
+
         if (specificService) {
-          const subServicePricing = categoryPricing.subServices.find((sub: SubServicePrice) => {
-            const subServiceName = (sub.subServiceName || '').toLowerCase();
-            const matches = specificService.includes(subServiceName) || subServiceName.includes(specificService);
-            console.log(`   💰 "${subServiceName}" matches "${specificService}": ${matches} (Price: ₱${sub.price})`);
-            return matches;
-          });
+          const subServicePricing = categoryPricing.subServices.find(
+            (sub: SubServicePrice) => {
+              const subServiceName = (sub.subServiceName || '').toLowerCase();
+              const matches =
+                specificService.includes(subServiceName) ||
+                subServiceName.includes(specificService);
+              console.log(
+                `   💰 "${subServiceName}" matches "${specificService}": ${matches} (Price: ₱${sub.price})`
+              );
+              return matches;
+            }
+          );
 
           if (subServicePricing && subServicePricing.price > 0) {
             const workerPrice = subServicePricing.price;
-            
-            console.log(`💲 Worker's ${specificService} price: ₱${workerPrice}`);
-            
+
+            console.log(
+              `💲 Worker's ${specificService} price: ₱${workerPrice}`
+            );
+
             // Check if worker's price falls within client's budget
-            const priceMatch = workerPrice >= userMinBudget && workerPrice <= userMaxBudget;
-            console.log(`🎯 Price within budget (₱${userMinBudget}-₱${userMaxBudget}): ${priceMatch}`);
-            
+            const priceMatch =
+              workerPrice >= userMinBudget && workerPrice <= userMaxBudget;
+            console.log(
+              `🎯 Price within budget (₱${userMinBudget}-₱${userMaxBudget}): ${priceMatch}`
+            );
+
             return priceMatch;
           } else {
-            console.log(`❌ No pricing found for specific service "${specificService}"`);
+            console.log(
+              `❌ No pricing found for specific service "${specificService}"`
+            );
           }
         } else {
-          console.log(`✅ No specific service required, category match sufficient`);
+          console.log(
+            `✅ No specific service required, category match sufficient`
+          );
           return true; // If no specific service, just having the category is enough
         }
       } else {
@@ -461,17 +566,20 @@ export class WorkerResultsPage implements OnInit {
     });
 
     if (!matchingService) {
-      console.log("❓ No specific pricing found - allowing worker to show up");
+      console.log('❓ No specific pricing found - allowing worker to show up');
       return true; // If no specific pricing, allow worker to show up
     }
 
     const workerMinPrice = matchingService.minPrice || 0;
     const workerMaxPrice = matchingService.maxPrice || Infinity;
 
-    console.log(`💲 Worker price range: ₱${workerMinPrice} - ₱${workerMaxPrice}`);
+    console.log(
+      `💲 Worker price range: ₱${workerMinPrice} - ₱${workerMaxPrice}`
+    );
 
     // Check if there's any overlap between user budget and worker prices
-    const priceMatch = userMaxBudget >= workerMinPrice && userMinBudget <= workerMaxPrice;
+    const priceMatch =
+      userMaxBudget >= workerMinPrice && userMinBudget <= workerMaxPrice;
     console.log('🎯 Price range overlap:', priceMatch);
 
     return priceMatch;
@@ -492,7 +600,10 @@ export class WorkerResultsPage implements OnInit {
 
     console.log(`💰 === GETTING PRICE WITH UNIT ===`);
     console.log(`💰 Looking for: ${neededService} - ${specificService}`);
-    console.log(`💰 Worker has serviceWithPricing:`, !!workerData['serviceWithPricing']);
+    console.log(
+      `💰 Worker has serviceWithPricing:`,
+      !!workerData['serviceWithPricing']
+    );
 
     // Check new detailed pricing first
     if (workerData['serviceWithPricing'] && specificService) {
@@ -504,24 +615,44 @@ export class WorkerResultsPage implements OnInit {
 
       if (categoryPricing) {
         console.log(`💰 Found category: ${categoryPricing.categoryName}`);
-        console.log(`💰 Sub-services:`, categoryPricing.subServices?.map((s: SubServicePrice) => s.subServiceName));
-        
+        console.log(
+          `💰 Sub-services:`,
+          categoryPricing.subServices?.map(
+            (s: SubServicePrice) => s.subServiceName
+          )
+        );
+
         const subServicePricing = categoryPricing.subServices.find(
           (sub: SubServicePrice) => sub.subServiceName === specificService
         );
 
         if (subServicePricing && subServicePricing.price > 0) {
           // Get the unit for this sub-service from serviceCategories
-          const unit = this.getSubServiceUnitShort(neededService, specificService);
-          console.log(`💰 Found specific pricing: ₱${subServicePricing.price}${unit}`);
+          const unit = this.getSubServiceUnitShort(
+            neededService,
+            specificService
+          );
+          console.log(
+            `💰 Found specific pricing: ₱${subServicePricing.price}${unit}`
+          );
           return `₱${subServicePricing.price}${unit}`;
         } else {
-          console.log(`💰 No sub-service pricing found for: ${specificService}`);
-          console.log(`💰 Available sub-services:`, categoryPricing.subServices?.map((s: SubServicePrice) => `${s.subServiceName}: ₱${s.price}`));
+          console.log(
+            `💰 No sub-service pricing found for: ${specificService}`
+          );
+          console.log(
+            `💰 Available sub-services:`,
+            categoryPricing.subServices?.map(
+              (s: SubServicePrice) => `${s.subServiceName}: ₱${s.price}`
+            )
+          );
         }
       } else {
         console.log(`💰 No category pricing found for: ${neededService}`);
-        console.log(`💰 Available categories:`, workerData['serviceWithPricing']?.map((c: any) => c.categoryName));
+        console.log(
+          `💰 Available categories:`,
+          workerData['serviceWithPricing']?.map((c: any) => c.categoryName)
+        );
       }
     } else {
       console.log(`💰 No serviceWithPricing or specificService missing`);
@@ -647,7 +778,8 @@ export class WorkerResultsPage implements OnInit {
 
       if (subServiceIndex !== -1 && category.servicesPricing[subServiceIndex]) {
         const unit = category.servicesPricing[subServiceIndex];
-        const shortUnit = unit === 'per_hour' ? '/hr' : unit === 'per_day' ? '/day' : '/hr';
+        const shortUnit =
+          unit === 'per_hour' ? '/hr' : unit === 'per_day' ? '/day' : '/hr';
         console.log(`🏷️ Unit found: ${unit} → ${shortUnit}`);
         return shortUnit;
       }
@@ -688,12 +820,16 @@ export class WorkerResultsPage implements OnInit {
   /**
    * Get worker location from currentLocation field in workers collection
    */
-  getWorkerLocation(workerData: any): { latitude: number; longitude: number; address: string } {
+  getWorkerLocation(workerData: any): {
+    latitude: number;
+    longitude: number;
+    address: string;
+  } {
     console.log(`📍 Getting worker location from:`, {
       currentLocation: workerData['currentLocation'],
       location: workerData['location'],
       hasCurrentLocation: !!workerData['currentLocation'],
-      hasLocation: !!workerData['location']
+      hasLocation: !!workerData['location'],
     });
 
     // Priority order for worker location:
@@ -704,13 +840,16 @@ export class WorkerResultsPage implements OnInit {
     if (workerData['currentLocation']) {
       const currentLocation = workerData['currentLocation'];
       console.log(`✅ Using currentLocation:`, currentLocation);
-      
+
       // Handle Firebase GeoPoint
-      if (currentLocation.latitude !== undefined && currentLocation.longitude !== undefined) {
+      if (
+        currentLocation.latitude !== undefined &&
+        currentLocation.longitude !== undefined
+      ) {
         return {
           latitude: currentLocation.latitude,
           longitude: currentLocation.longitude,
-          address: workerData['address'] || 'Current Location'
+          address: workerData['address'] || 'Current Location',
         };
       }
     }
@@ -719,12 +858,12 @@ export class WorkerResultsPage implements OnInit {
     if (workerData['location']) {
       const location = workerData['location'];
       console.log(`⚠️ Using legacy location:`, location);
-      
+
       if (location.latitude !== undefined && location.longitude !== undefined) {
         return {
           latitude: location.latitude,
           longitude: location.longitude,
-          address: location.address || 'Unknown Location'
+          address: location.address || 'Unknown Location',
         };
       }
     }
@@ -734,7 +873,7 @@ export class WorkerResultsPage implements OnInit {
     return {
       latitude: 0,
       longitude: 0,
-      address: 'Location not available'
+      address: 'Location not available',
     };
   }
 
@@ -848,9 +987,19 @@ export class WorkerResultsPage implements OnInit {
     const timeAvailability = workerData['timeAvailability'] || {};
     const dayAvailability = timeAvailability[dayOfWeek];
 
-    if (!dayAvailability || !dayAvailability.startTime || !dayAvailability.endTime) {
-      console.log(`❌ No time availability set for ${dayOfWeek} for worker ${workerData.fullName || 'Unknown'}`);
-      console.log(`⚠️ Worker will be EXCLUDED due to missing availability data`);
+    if (
+      !dayAvailability ||
+      !dayAvailability.startTime ||
+      !dayAvailability.endTime
+    ) {
+      console.log(
+        `❌ No time availability set for ${dayOfWeek} for worker ${
+          workerData.fullName || 'Unknown'
+        }`
+      );
+      console.log(
+        `⚠️ Worker will be EXCLUDED due to missing availability data`
+      );
       return false; // If no specific time availability, exclude worker for safety
     }
 
@@ -859,8 +1008,16 @@ export class WorkerResultsPage implements OnInit {
     const workerEndTime = dayAvailability.endTime; // Format: "HH:MM"
 
     // Validate time formats
-    if (!this.isValidTimeFormat(bookingTime) || !this.isValidTimeFormat(workerStartTime) || !this.isValidTimeFormat(workerEndTime)) {
-      console.warn(`❌ Invalid time format detected for worker ${workerData.fullName || 'Unknown'}:`);
+    if (
+      !this.isValidTimeFormat(bookingTime) ||
+      !this.isValidTimeFormat(workerStartTime) ||
+      !this.isValidTimeFormat(workerEndTime)
+    ) {
+      console.warn(
+        `❌ Invalid time format detected for worker ${
+          workerData.fullName || 'Unknown'
+        }:`
+      );
       console.warn(`- Booking time: "${bookingTime}"`);
       console.warn(`- Worker start: "${workerStartTime}"`);
       console.warn(`- Worker end: "${workerEndTime}"`);
@@ -877,21 +1034,37 @@ export class WorkerResultsPage implements OnInit {
     let isTimeAvailable: boolean;
     if (endMinutes < startMinutes) {
       // Overnight shift: available if booking is after start OR before end
-      isTimeAvailable = bookingMinutes >= startMinutes || bookingMinutes <= endMinutes;
+      isTimeAvailable =
+        bookingMinutes >= startMinutes || bookingMinutes <= endMinutes;
     } else {
       // Normal shift: available if booking is between start and end
-      isTimeAvailable = bookingMinutes >= startMinutes && bookingMinutes <= endMinutes;
+      isTimeAvailable =
+        bookingMinutes >= startMinutes && bookingMinutes <= endMinutes;
     }
-    
-    console.log(`⏰ Time availability check for ${workerData.fullName || 'Unknown'} on ${dayOfWeek}:`);
+
+    console.log(
+      `⏰ Time availability check for ${
+        workerData.fullName || 'Unknown'
+      } on ${dayOfWeek}:`
+    );
     console.log(`- Booking time: ${bookingTime} (${bookingMinutes} min)`);
-    console.log(`- Worker hours: ${workerStartTime} - ${workerEndTime} (${startMinutes} - ${endMinutes} min)`);
-    console.log(`- Overnight shift: ${endMinutes < startMinutes ? 'Yes' : 'No'}`);
+    console.log(
+      `- Worker hours: ${workerStartTime} - ${workerEndTime} (${startMinutes} - ${endMinutes} min)`
+    );
+    console.log(
+      `- Overnight shift: ${endMinutes < startMinutes ? 'Yes' : 'No'}`
+    );
     console.log(`- Available: ${isTimeAvailable ? '✅ YES' : '❌ NO'}`);
-    
+
     if (!isTimeAvailable) {
-      console.log(`🚫 WORKER EXCLUDED: ${workerData.fullName || 'Unknown'} is NOT available at ${bookingTime} on ${dayOfWeek}`);
-      console.log(`   Reason: Booking time ${bookingTime} is outside worker's hours ${workerStartTime}-${workerEndTime}`);
+      console.log(
+        `🚫 WORKER EXCLUDED: ${
+          workerData.fullName || 'Unknown'
+        } is NOT available at ${bookingTime} on ${dayOfWeek}`
+      );
+      console.log(
+        `   Reason: Booking time ${bookingTime} is outside worker's hours ${workerStartTime}-${workerEndTime}`
+      );
     }
 
     return isTimeAvailable;
@@ -910,7 +1083,11 @@ export class WorkerResultsPage implements OnInit {
     const workerLocation = this.getWorkerLocation(workerData);
     const workRadius = workerData['workRadius'] || 10; // Default 10km radius
 
-    if (!workerLocation || workerLocation.latitude === 0 || workerLocation.longitude === 0) {
+    if (
+      !workerLocation ||
+      workerLocation.latitude === 0 ||
+      workerLocation.longitude === 0
+    ) {
       console.log('📍 No valid worker location data available');
       return true; // If no worker location, assume location match
     }
@@ -923,10 +1100,14 @@ export class WorkerResultsPage implements OnInit {
     );
 
     const locationMatch = distance <= workRadius;
-    
+
     console.log(`📍 === LOCATION MATCH CHECK ===`);
-    console.log(`📍 Booking location: ${this.booking.coordinates.lat}, ${this.booking.coordinates.lng}`);
-    console.log(`📍 Worker location: ${workerLocation.latitude}, ${workerLocation.longitude} (${workerLocation.address})`);
+    console.log(
+      `📍 Booking location: ${this.booking.coordinates.lat}, ${this.booking.coordinates.lng}`
+    );
+    console.log(
+      `📍 Worker location: ${workerLocation.latitude}, ${workerLocation.longitude} (${workerLocation.address})`
+    );
     console.log(`📍 Distance: ${distance.toFixed(2)}km`);
     console.log(`📍 Work radius: ${workRadius}km`);
     console.log(`📍 Location match: ${locationMatch}`);
@@ -956,11 +1137,11 @@ export class WorkerResultsPage implements OnInit {
    */
   formatTime(timeString: string): string {
     if (!timeString || !this.isValidTimeFormat(timeString)) return timeString;
-    
+
     const [hours, minutes] = timeString.split(':').map(Number);
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-    
+
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   }
 
@@ -971,37 +1152,50 @@ export class WorkerResultsPage implements OnInit {
     if (!this.booking || !this.booking.scheduleDate) return '';
 
     const scheduleDate = new Date(this.booking.scheduleDate.toDate());
-    const dayOfWeek = scheduleDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    
+    const dayOfWeek = scheduleDate
+      .toLocaleDateString('en-US', { weekday: 'long' })
+      .toLowerCase();
+
     const timeAvailability = workerData['timeAvailability'] || {};
     const dayAvailability = timeAvailability[dayOfWeek];
-    
-    if (!dayAvailability || !dayAvailability.startTime || !dayAvailability.endTime) {
+
+    if (
+      !dayAvailability ||
+      !dayAvailability.startTime ||
+      !dayAvailability.endTime
+    ) {
       return 'Availability not specified';
     }
-    
+
     const startTime = this.formatTime(dayAvailability.startTime);
     const endTime = this.formatTime(dayAvailability.endTime);
-    
+
     return `Available ${startTime} - ${endTime}`;
   }
 
   /**
    * Calculate real distance between two coordinates using Haversine formula
    */
-  private calculateRealDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  private calculateRealDistance(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number
+  ): number {
     const R = 6371; // Earth's radius in kilometers
     const dLat = this.degreesToRadians(lat2 - lat1);
     const dLng = this.degreesToRadians(lng2 - lng1);
-    
-    const a = 
+
+    const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.degreesToRadians(lat1)) * Math.cos(this.degreesToRadians(lat2)) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    
+      Math.cos(this.degreesToRadians(lat1)) *
+        Math.cos(this.degreesToRadians(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
-    
+
     return distance;
   }
 
@@ -1012,14 +1206,26 @@ export class WorkerResultsPage implements OnInit {
     return degrees * (Math.PI / 180);
   }
 
-  calculateDistance(workerLocation: { latitude: number; longitude: number; address: string }): number {
+  calculateDistance(workerLocation: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  }): number {
     if (!this.booking || !this.booking.coordinates) {
-      console.log('📍 No booking coordinates for distance calculation, using mock distance');
+      console.log(
+        '📍 No booking coordinates for distance calculation, using mock distance'
+      );
       return Math.floor(Math.random() * 20) + 1;
     }
 
-    if (!workerLocation || workerLocation.latitude === 0 || workerLocation.longitude === 0) {
-      console.log('📍 No valid worker location for distance calculation, using mock distance');
+    if (
+      !workerLocation ||
+      workerLocation.latitude === 0 ||
+      workerLocation.longitude === 0
+    ) {
+      console.log(
+        '📍 No valid worker location for distance calculation, using mock distance'
+      );
       return Math.floor(Math.random() * 20) + 1;
     }
 
@@ -1037,40 +1243,47 @@ export class WorkerResultsPage implements OnInit {
   applyFilters() {
     console.log(`\n🔧 === APPLYING FILTERS ===`);
     console.log(`📊 Starting with ${this.workers.length} workers`);
-    
+
     this.filteredWorkers = [...this.workers];
 
     // Filter by distance
     console.log(`📍 Distance filter: max ${this.filters.maxDistance}km`);
     const beforeDistanceFilter = this.filteredWorkers.length;
-    this.filteredWorkers = this.filteredWorkers.filter(
-      (worker) => {
-        const distance = worker.distance || 0;
-        const passes = distance <= this.filters.maxDistance;
-        console.log(`   ${worker.fullName}: ${distance}km <= ${this.filters.maxDistance}km = ${passes}`);
-        return passes;
-      }
+    this.filteredWorkers = this.filteredWorkers.filter((worker) => {
+      const distance = worker.distance || 0;
+      const passes = distance <= this.filters.maxDistance;
+      console.log(
+        `   ${worker.fullName}: ${distance}km <= ${this.filters.maxDistance}km = ${passes}`
+      );
+      return passes;
+    });
+    console.log(
+      `📍 After distance filter: ${beforeDistanceFilter} → ${this.filteredWorkers.length}`
     );
-    console.log(`📍 After distance filter: ${beforeDistanceFilter} → ${this.filteredWorkers.length}`);
 
     // Filter by rating
     console.log(`⭐ Rating filter: min ${this.filters.minRating}`);
     const beforeRatingFilter = this.filteredWorkers.length;
-    this.filteredWorkers = this.filteredWorkers.filter(
-      (worker) => {
-        const rating = worker.rating;
-        const passes = rating >= this.filters.minRating;
-        console.log(`   ${worker.fullName}: ${rating} >= ${this.filters.minRating} = ${passes}`);
-        return passes;
-      }
+    this.filteredWorkers = this.filteredWorkers.filter((worker) => {
+      const rating = worker.rating;
+      const passes = rating >= this.filters.minRating;
+      console.log(
+        `   ${worker.fullName}: ${rating} >= ${this.filters.minRating} = ${passes}`
+      );
+      return passes;
+    });
+    console.log(
+      `⭐ After rating filter: ${beforeRatingFilter} → ${this.filteredWorkers.length}`
     );
-    console.log(`⭐ After rating filter: ${beforeRatingFilter} → ${this.filteredWorkers.length}`);
 
     // Sort workers
     this.sortWorkers();
-    
+
     console.log(`🏁 Final filtered workers: ${this.filteredWorkers.length}`);
-    console.log(`🏁 Workers in filteredWorkers:`, this.filteredWorkers.map(w => w.fullName));
+    console.log(
+      `🏁 Workers in filteredWorkers:`,
+      this.filteredWorkers.map((w) => w.fullName)
+    );
   }
 
   sortWorkers() {
@@ -1151,6 +1364,35 @@ export class WorkerResultsPage implements OnInit {
       });
 
       console.log('✅ Booking successfully updated with worker assignment');
+
+      // Create a notification for the selected worker
+      try {
+        const notifRef = collection(
+          this.firestore,
+          `workers/${worker.uid}/notifications`
+        );
+        await addDoc(notifRef, {
+          title: 'New Booking Request',
+          message: `A client requested ${
+            this.booking?.specificService ||
+            this.booking?.neededService ||
+            'a service'
+          }. Tap to view.`,
+          bookingId: this.bookingId,
+          categoryId: '',
+          categoryName: this.booking?.neededService || '',
+          read: false,
+          priority: 'urgent',
+          type: 'job_request',
+          createdAt: serverTimestamp(),
+          bookingType: 'regular',
+        });
+      } catch (notifyErr) {
+        console.error(
+          'Error creating worker notification from worker-results:',
+          notifyErr
+        );
+      }
 
       await loading.dismiss();
 

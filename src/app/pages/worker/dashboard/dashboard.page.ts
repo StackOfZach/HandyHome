@@ -959,7 +959,18 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
   async onNotificationClick(notification: WorkerNotification) {
     if (notification.type === 'job_request') {
-      await this.openJobDetailsModal(notification.bookingId, notification.id!);
+      const anyNotif = notification as any;
+      const bookingType: 'quick' | 'regular' =
+        anyNotif.bookingType || 'regular';
+
+      // Route based on origin
+      if (bookingType === 'quick') {
+        this.router.navigate(['/pages/worker/worker-booking-details'], {
+          queryParams: { bookingId: notification.bookingId, type: 'quick' },
+        });
+      } else {
+        this.router.navigate(['/worker-booking-requests']);
+      }
     }
 
     // Mark as read

@@ -146,14 +146,15 @@ export class ConfirmBookingPage implements OnInit {
     // Get service-specific price from servicesQuickBookingPricing
     const serviceIndex = this.category.services.indexOf(this.selectedService);
     this.basePrice = this.getServicePrice(serviceIndex);
-    
+
     // Platform fee is 10% of base price
     this.platformFee = Math.round(
       this.basePrice * (this.category.serviceChargeRate || 0.1)
     );
-    
+
     // Calculate total: base price + platform fee + transportation fee
-    this.totalPrice = this.basePrice + this.platformFee + this.transportationFee;
+    this.totalPrice =
+      this.basePrice + this.platformFee + this.transportationFee;
   }
 
   async confirmBooking() {
@@ -247,6 +248,9 @@ export class ConfirmBookingPage implements OnInit {
       }
 
       // Start worker matching process in background (don't await)
+      const bookingType = (this.isQuickBooking ? 'quick' : 'regular') as
+        | 'quick'
+        | 'regular';
       const completeBookingData = {
         id: bookingDoc.id,
         ...bookingData,
@@ -255,6 +259,7 @@ export class ConfirmBookingPage implements OnInit {
           ...bookingData.pricing,
           transportFee: 0, // Will be calculated by worker matching service
         },
+        bookingType,
       };
 
       // Fire and forget - let this run in background
@@ -353,8 +358,10 @@ export class ConfirmBookingPage implements OnInit {
 
   // Helper method to get service price from servicesQuickBookingPricing
   getServicePrice(serviceIndex: number): number {
-    if (this.category?.servicesQuickBookingPricing && 
-        this.category.servicesQuickBookingPricing[serviceIndex] !== undefined) {
+    if (
+      this.category?.servicesQuickBookingPricing &&
+      this.category.servicesQuickBookingPricing[serviceIndex] !== undefined
+    ) {
       return this.category.servicesQuickBookingPricing[serviceIndex];
     }
     // Fallback to average price
@@ -363,8 +370,10 @@ export class ConfirmBookingPage implements OnInit {
 
   // Helper method to get formatted unit from servicesQuickBookingUnit
   getServiceUnit(serviceIndex: number): string {
-    if (this.category?.servicesQuickBookingUnit && 
-        this.category.servicesQuickBookingUnit[serviceIndex]) {
+    if (
+      this.category?.servicesQuickBookingUnit &&
+      this.category.servicesQuickBookingUnit[serviceIndex]
+    ) {
       const unit = this.category.servicesQuickBookingUnit[serviceIndex];
       // Convert unit format: per_hour -> /hr, per_day -> /day, etc.
       switch (unit.toLowerCase()) {
@@ -398,25 +407,30 @@ export class ConfirmBookingPage implements OnInit {
   // Helper method to get formatted address
   getFormattedAddress(): string {
     if (!this.selectedLocation) return 'No location selected';
-    
+
     // If we have a proper address, use it
-    if (this.selectedLocation.address && 
-        !this.selectedLocation.address.includes('Selected Location') &&
-        !this.selectedLocation.address.match(/^-?\d+\.\d+, -?\d+\.\d+$/)) {
+    if (
+      this.selectedLocation.address &&
+      !this.selectedLocation.address.includes('Selected Location') &&
+      !this.selectedLocation.address.match(/^-?\d+\.\d+, -?\d+\.\d+$/)
+    ) {
       return this.selectedLocation.address;
     }
-    
+
     // Otherwise, show city and province if available
     const parts = [];
     if (this.selectedLocation.city) parts.push(this.selectedLocation.city);
-    if (this.selectedLocation.province) parts.push(this.selectedLocation.province);
-    
+    if (this.selectedLocation.province)
+      parts.push(this.selectedLocation.province);
+
     if (parts.length > 0) {
       return parts.join(', ');
     }
-    
+
     // Fallback to coordinates
-    return `${this.selectedLocation.latitude.toFixed(4)}, ${this.selectedLocation.longitude.toFixed(4)}`;
+    return `${this.selectedLocation.latitude.toFixed(
+      4
+    )}, ${this.selectedLocation.longitude.toFixed(4)}`;
   }
 
   // Helper method to format price

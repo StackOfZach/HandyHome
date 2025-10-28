@@ -15,6 +15,12 @@ import {
   NewBookingData,
 } from '../../../services/booking.service';
 import {
+  Firestore,
+  collection,
+  addDoc,
+  Timestamp,
+} from '@angular/fire/firestore';
+import {
   LoadingController,
   ToastController,
   AlertController,
@@ -126,6 +132,7 @@ export class ScheduleBookingPage implements OnInit {
     private authService: AuthService,
     private dashboardService: DashboardService,
     private firebaseBookingService: FirebaseBookingService,
+    private firestore: Firestore,
     private loadingController: LoadingController,
     private toastController: ToastController,
     private alertController: AlertController,
@@ -627,6 +634,33 @@ Address: ${this.getCurrentAddress()}`;
         bookingData
       );
       console.log('Booking created with ID:', bookingId);
+
+      // Notify the selected worker about this direct booking request
+      try {
+        const notificationRef = collection(
+          this.firestore,
+          `workers/${this.workerId}/notifications`
+        );
+        await addDoc(notificationRef, {
+          title: `New ${this.selectedService!.name} Request`,
+          message: `A client scheduled a ${this.selectedService!.name} on ${this
+            .selectedDate!} at ${this.selectedTimeSlot!.time}.`,
+          bookingId: bookingId,
+          categoryId: this.selectedService!.id,
+          categoryName: this.selectedService!.name,
+          read: false,
+          priority: 'urgent',
+          type: 'job_request',
+          createdAt: Timestamp.now(),
+          // indicate this came from regular scheduled booking
+          bookingType: 'regular',
+        });
+      } catch (notifyErr) {
+        console.error(
+          'Error notifying worker about direct booking:',
+          notifyErr
+        );
+      }
 
       await this.showSuccessMessage();
       this.router.navigate(['/pages/my-bookings']);

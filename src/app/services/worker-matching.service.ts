@@ -49,6 +49,8 @@ interface BookingData {
   estimatedDuration: string;
   status: string;
   createdAt: any;
+  // quick | regular booking origin; optional for backward compatibility
+  bookingType?: 'quick' | 'regular';
 }
 
 @Injectable({
@@ -267,6 +269,8 @@ export class WorkerMatchingService {
         type: 'job_request',
         createdAt: serverTimestamp(),
         expiresAt: Timestamp.fromDate(expiresAt),
+        // include origin to aid routing on click
+        bookingType: bookingData.bookingType || 'regular',
       });
 
       console.log(`Notification created for worker: ${workerId}`);
