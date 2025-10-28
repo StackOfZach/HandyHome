@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
 
 @Component({
   selector: 'app-root',
@@ -18,6 +20,18 @@ export class AppComponent implements OnInit {
 
   async ngOnInit() {
     try {
+      // On Android, proactively request location permission on first launch
+      if (Capacitor.getPlatform() === 'android') {
+        try {
+          const status = await Geolocation.checkPermissions();
+          if (status.location !== 'granted') {
+            await Geolocation.requestPermissions();
+          }
+        } catch (permError) {
+          console.warn('Location permission check/request failed:', permError);
+        }
+      }
+
       // Wait for auth service to initialize
       await this.authService.waitForAuthInitialization();
 

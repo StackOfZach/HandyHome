@@ -9,6 +9,8 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  deleteDoc,
+  getDocs,
   addDoc,
   serverTimestamp,
   Timestamp,
@@ -133,6 +135,41 @@ export class NotificationService {
     );
 
     await Promise.all(promises);
+  }
+
+  async clearAllNotifications(): Promise<void> {
+    if (!this.currentUserId) return;
+
+    const notificationsRef = collection(
+      this.firestore,
+      `workers/${this.currentUserId}/notifications`
+    );
+
+    // Prefer deleting by current in-memory list to avoid extra read
+    const current = this.notifications$.value;
+    if (current.length > 0) {
+      await Promise.all(
+        current
+          .filter((n) => !!n.id)
+          .map((n) =>
+            deleteDoc(
+              doc(
+                this.firestore,
+                `workers/${this.currentUserId}/notifications/${n.id}`
+              )
+            )
+          )
+      );
+    } else {
+      // Fallback: fetch and delete
+      const snapshot = await getDocs(notificationsRef);
+      const deletions = snapshot.docs.map((d) => deleteDoc(d.ref));
+      await Promise.all(deletions);
+    }
+
+    // Reset local state
+    this.notifications$.next([]);
+    this.unreadCount$.next(0);
   }
 
   async createJobNotification(

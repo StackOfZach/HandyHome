@@ -23,6 +23,7 @@ import {
   Timestamp,
   doc,
   updateDoc,
+  deleteDoc,
 } from '@angular/fire/firestore';
 import { ToastController } from '@ionic/angular';
 
@@ -598,6 +599,46 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
     }
     this.showNotificationModal = false;
     document.body.style.overflow = '';
+  }
+
+  async clearAllClientNotifications() {
+    if (!this.userProfile?.uid || this.clientNotifications.length === 0) return;
+
+    try {
+      const deletions = this.clientNotifications
+        .filter((n) => !!n.id)
+        .map((n) =>
+          deleteDoc(
+            doc(
+              this.firestore,
+              `users/${this.userProfile!.uid}/notifications/${n.id}`
+            )
+          )
+        );
+      await Promise.all(deletions);
+
+      // Update local state immediately
+      this.clientNotifications = [];
+      this.unreadCount = 0;
+
+      // Optional toast feedback
+      await this.toastController
+        .create({
+          message: 'All notifications cleared',
+          duration: 1500,
+          color: 'success',
+        })
+        .then((t) => t.present());
+    } catch (error) {
+      console.error('Error clearing client notifications:', error);
+      await this.toastController
+        .create({
+          message: 'Failed to clear notifications',
+          duration: 1800,
+          color: 'danger',
+        })
+        .then((t) => t.present());
+    }
   }
 
   private async loadClientNotificationsForModal() {

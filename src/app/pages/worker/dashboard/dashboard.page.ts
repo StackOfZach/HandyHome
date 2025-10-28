@@ -887,10 +887,10 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
           role: 'destructive',
           handler: async () => {
             try {
-              // Mark all notifications as read first
-              await this.notificationService.markAllAsRead();
+              // Delete all notifications from Firestore
+              await this.notificationService.clearAllNotifications();
 
-              // Clear local arrays
+              // Local state will be cleared by service's subject update, but ensure immediate UI update
               this.notifications = [];
               this.unreadCount = 0;
 
