@@ -644,7 +644,10 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
         source: CameraSource.Camera,
       });
 
-      await this.submitReport(type, description, image.dataUrl);
+      const compressed = image.dataUrl
+        ? await this.compressDataUrl(image.dataUrl, 1024, 1024, 0.7)
+        : undefined;
+      await this.submitReport(type, description, compressed);
     } catch (error) {
       console.error('Error taking photo:', error);
       this.showToast('Could not take photo', 'danger');
@@ -749,7 +752,16 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
         source: CameraSource.Camera,
       });
 
-      this.completionPhoto = image.dataUrl || '';
+      if (image.dataUrl) {
+        this.completionPhoto = await this.compressDataUrl(
+          image.dataUrl,
+          1280,
+          1280,
+          0.72
+        );
+      } else {
+        this.completionPhoto = '';
+      }
     } catch (error) {
       console.error('Error taking photo:', error);
       this.showToast('Could not take photo', 'danger');
@@ -1032,6 +1044,42 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
       position: 'bottom',
     });
     await toast.present();
+  }
+
+  private compressDataUrl(
+    dataUrl: string,
+    maxWidth: number,
+    maxHeight: number,
+    quality: number
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const originalWidth = img.width;
+        const originalHeight = img.height;
+
+        const widthRatio = maxWidth / originalWidth;
+        const heightRatio = maxHeight / originalHeight;
+        const scale = Math.min(1, widthRatio, heightRatio);
+
+        const targetWidth = Math.floor(originalWidth * scale);
+        const targetHeight = Math.floor(originalHeight * scale);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas not supported'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+        const compressed = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressed);
+      };
+      img.onerror = (e) => reject(e);
+      img.src = dataUrl;
+    });
   }
 
   /**
