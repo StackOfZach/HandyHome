@@ -7,7 +7,16 @@
     class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 pt-12 pb-6 px-6 rounded-bl-3xl rounded-br-3xl shadow-xl mb-6"
   >
     <div class="flex items-center justify-between">
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-3">
+        <button
+          (click)="goBack()"
+          class="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200"
+        >
+          <ion-icon
+            name="arrow-back-outline"
+            class="text-white text-xl"
+          ></ion-icon>
+        </button>
         <h1 class="text-white text-2xl font-bold">My Bookings</h1>
       </div>
       <div class="flex items-center space-x-3">
@@ -257,7 +266,9 @@
                 ></ion-icon>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-gray-600 text-xs font-medium">{{ getPriceLabel(booking) }}</p>
+                <p class="text-gray-600 text-xs font-medium">
+                  {{ getPriceLabel(booking) }}
+                </p>
                 <p class="font-bold text-handy-navy-800 text-sm">
                   {{ getTotalPrice(booking) }}
                 </p>

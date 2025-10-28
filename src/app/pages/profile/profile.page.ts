@@ -22,8 +22,10 @@ import {
   query,
   orderBy,
   writeBatch,
+  where,
 } from '@angular/fire/firestore';
 import { Auth, sendPasswordResetEmail } from '@angular/fire/auth';
+import { ClientVerificationService } from '../../services/client-verification.service';
 
 export interface Address {
   id?: string;
@@ -57,6 +59,7 @@ export interface ExtendedUserProfile extends UserProfile {
   gender?: string;
   dateOfBirth?: string;
   profilePicture?: string;
+  profileImageBase64?: string;
 }
 
 @Component({
@@ -88,6 +91,7 @@ export class ProfilePage implements OnInit {
   isLoading = true;
   isEditingProfile = false;
   isAddingAddress = false;
+  profileImageBase64: string | null = null;
 
   // Form data
   profileForm = {
@@ -136,7 +140,8 @@ export class ProfilePage implements OnInit {
     private firestore: Firestore,
     private auth: Auth,
     private alertController: AlertController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private clientVerificationService: ClientVerificationService
   ) {}
 
   ngOnInit() {
@@ -162,12 +167,33 @@ export class ProfilePage implements OnInit {
           // Load addresses and preferences after user is authenticated
           await this.loadAddresses();
           await this.loadPreferences();
+          await this.loadClientVerificationImage();
         }
         this.isLoading = false;
       });
     } catch (error) {
       console.error('Error loading user profile:', error);
       this.isLoading = false;
+    }
+  }
+
+  async loadClientVerificationImage() {
+    if (!this.currentUser?.uid) return;
+
+    try {
+      const verification =
+        await this.clientVerificationService.getVerificationByUserId(
+          this.currentUser.uid
+        );
+
+      if (verification && verification.profileImageBase64) {
+        this.profileImageBase64 = verification.profileImageBase64;
+        if (this.userProfile) {
+          this.userProfile.profileImageBase64 = verification.profileImageBase64;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading client verification image:', error);
     }
   }
 

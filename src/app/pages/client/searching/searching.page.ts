@@ -6,8 +6,12 @@ import {
   onSnapshot,
   getDoc,
   Unsubscribe,
+  updateDoc,
+  deleteDoc,
+  Timestamp,
 } from '@angular/fire/firestore';
 import { ToastController, AlertController } from '@ionic/angular';
+import { QuickBookingService } from '../../../services/quick-booking.service';
 
 interface BookingData {
   id: string;
@@ -70,6 +74,7 @@ export class SearchingPage implements OnInit, OnDestroy {
   searchRadius: number = 3; // km
   timeElapsed: number = 0;
   isSearching: boolean = true;
+  hasShownTimeoutAlert: boolean = false; // Track if timeout alert has been shown
 
   // For template access
   Math = Math;
@@ -93,7 +98,8 @@ export class SearchingPage implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private toastController: ToastController,
-    private alertController: AlertController
+    private alertController: AlertController,
+    private quickBookingService: QuickBookingService
   ) {}
 
   ngOnInit() {
@@ -228,7 +234,7 @@ export class SearchingPage implements OnInit, OnDestroy {
       console.log('Booking ID:', this.bookingId);
       console.log('Assigned Worker:', this.bookingData.assignedWorker);
       console.log('Navigation URL:', `/client/worker-found/${this.bookingId}`);
-      
+
       await this.showToast('Worker found! Redirecting...', 'success');
       setTimeout(() => {
         console.log('Executing navigation to worker-found page...');
@@ -242,7 +248,9 @@ export class SearchingPage implements OnInit, OnDestroy {
         );
       }, 1500);
     } else {
-      console.warn('Worker accepted but no assignedWorker found in booking data');
+      console.warn(
+        'Worker accepted but no assignedWorker found in booking data'
+      );
     }
   }
 
@@ -258,7 +266,7 @@ export class SearchingPage implements OnInit, OnDestroy {
         {
           text: 'Try Again',
           handler: () => {
-            this.retrySearch();
+            this.restartSearch();
           },
         },
         {
@@ -281,7 +289,8 @@ export class SearchingPage implements OnInit, OnDestroy {
   }
 
   private async handleSearchTimeout() {
-    if (!this.isSearching) return;
+    if (!this.isSearching || this.hasShownTimeoutAlert) return;
+    this.hasShownTimeoutAlert = true; // Mark that we've shown the alert
 
     const alert = await this.alertController.create({
       header: 'Still Searching',
@@ -291,35 +300,23 @@ export class SearchingPage implements OnInit, OnDestroy {
         {
           text: 'Keep Waiting',
           handler: () => {
-            // Continue searching
-            this.timeElapsed = 0;
+            // Reset the flag so it can show again if needed
+            this.hasShownTimeoutAlert = false;
+            // Restart the search properly
+            this.restartSearch();
           },
         },
         {
           text: 'Try Later',
-          handler: () => {
-            this.cancelBooking();
+          handler: async () => {
+            // Directly delete the quickbooking and go to dashboard
+            await this.deleteBookingAndNavigate();
           },
         },
       ],
     });
 
     await alert.present();
-  }
-
-  private async retrySearch() {
-    // Reset search state
-    this.timeElapsed = 0;
-    this.searchRadius = 3;
-    this.isSearching = true;
-    this.searchProgress = 'Looking for nearby professionals...';
-    this.currentAnimationIndex = 0;
-
-    // Restart timers
-    this.startSearchTimer();
-
-    // TODO: Trigger worker matching service again
-    await this.showToast('Restarting search...', 'primary');
   }
 
   async cancelBooking() {
@@ -335,27 +332,78 @@ export class SearchingPage implements OnInit, OnDestroy {
           text: 'Yes, Cancel',
           role: 'destructive',
           handler: async () => {
-            try {
-              // Update booking status to cancelled
-              const bookingRef = doc(
-                this.firestore,
-                `bookings/${this.bookingId}`
-              );
-              // TODO: Update booking status to cancelled in Firestore
-
-              this.cleanup();
-              await this.showToast('Booking cancelled', 'medium');
-              this.router.navigate(['/client/dashboard']);
-            } catch (error) {
-              console.error('Error cancelling booking:', error);
-              await this.showToast('Error cancelling booking', 'danger');
-            }
+            await this.deleteBookingAndNavigate();
           },
         },
       ],
     });
 
     await alert.present();
+  }
+
+  private async deleteBookingAndNavigate() {
+    try {
+      // Delete the booking document
+      const collection = this.isQuickBooking ? 'quickbookings' : 'bookings';
+      const bookingRef = doc(this.firestore, `${collection}/${this.bookingId}`);
+      await deleteDoc(bookingRef);
+
+      this.cleanup();
+      await this.showToast('Booking cancelled', 'medium');
+      this.router.navigate(['/client/dashboard']);
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      await this.showToast('Error cancelling booking', 'danger');
+    }
+  }
+
+  private async restartSearch() {
+    if (!this.bookingData) return;
+
+    try {
+      // Reset search state
+      this.timeElapsed = 0;
+      this.searchRadius = 3;
+      this.isSearching = true;
+      this.searchProgress = 'Looking for nearby professionals...';
+      this.currentAnimationIndex = 0;
+
+      // Update booking status back to searching
+      const collection = this.isQuickBooking ? 'quickbookings' : 'bookings';
+      const bookingRef = doc(this.firestore, `${collection}/${this.bookingId}`);
+
+      await updateDoc(bookingRef, {
+        status: 'searching',
+        searchStartedAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+
+      // Find and notify workers again
+      const matchingWorkers =
+        await this.quickBookingService.findMatchingWorkers(
+          this.bookingData.categoryId,
+          this.bookingData.subService,
+          this.bookingData.location
+        );
+
+      if (matchingWorkers.length > 0) {
+        await this.quickBookingService.notifyMatchingWorkers(
+          this.bookingId,
+          this.bookingData.categoryName,
+          this.bookingData.subService,
+          matchingWorkers
+        );
+      }
+
+      // Restart timers
+      this.startSearchTimer();
+      this.startAnimationCycle();
+
+      await this.showToast('Continuing search...', 'primary');
+    } catch (error) {
+      console.error('Error restarting search:', error);
+      await this.showToast('Error restarting search', 'danger');
+    }
   }
 
   getTimeElapsedText(): string {
