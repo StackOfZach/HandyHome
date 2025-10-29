@@ -26,6 +26,7 @@ import {
 } from '@angular/fire/firestore';
 import { Auth, sendPasswordResetEmail } from '@angular/fire/auth';
 import { ClientVerificationService } from '../../services/client-verification.service';
+import { MapPickerComponent } from '../../components/map-picker/map-picker.component';
 
 export interface Address {
   id?: string;
@@ -67,7 +68,7 @@ export interface ExtendedUserProfile extends UserProfile {
   templateUrl: './profile.page.html',
   styleUrls: ['./profile.page.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [CommonModule, FormsModule, IonicModule, MapPickerComponent],
 })
 export class ProfilePage implements OnInit {
   @ViewChild('addressModal', { static: false }) addressModal!: IonModal;
@@ -92,6 +93,11 @@ export class ProfilePage implements OnInit {
   isEditingProfile = false;
   isAddingAddress = false;
   profileImageBase64: string | null = null;
+  
+  // Map-related properties
+  selectedLocation: { lat: number; lng: number } | null = null;
+  isLoadingAddress = false;
+  addressFromCoordinates = '';
 
   // Form data
   profileForm = {
@@ -108,6 +114,8 @@ export class ProfilePage implements OnInit {
     phoneNumber: '',
     fullAddress: '',
     isDefault: false,
+    latitude: undefined,
+    longitude: undefined,
     createdAt: new Date(),
   };
 
@@ -318,13 +326,23 @@ export class ProfilePage implements OnInit {
       phoneNumber: this.userProfile?.phone || '',
       fullAddress: '',
       isDefault: this.addresses.length === 0,
+      latitude: undefined,
+      longitude: undefined,
       createdAt: new Date(),
     };
+    this.selectedLocation = null;
+    this.addressFromCoordinates = '';
     this.addressModal.present();
   }
 
   async saveAddress() {
     if (!this.currentUser?.uid) return;
+
+    // Validate required fields
+    if (!this.newAddress.contactPerson || !this.newAddress.phoneNumber || !this.newAddress.fullAddress) {
+      this.showToast('Please fill in all required fields', 'warning');
+      return;
+    }
 
     try {
       const userRef = doc(this.firestore, 'users', this.currentUser.uid);
@@ -343,22 +361,23 @@ export class ProfilePage implements OnInit {
         }
 
         // Create new location object matching UserLocation interface
-        const newLocation = {
+        const newLocation: any = {
           id: `location_${Date.now()}`,
           contactPerson: this.newAddress.contactPerson,
           phoneNumber: this.newAddress.phoneNumber,
           fullAddress: this.newAddress.fullAddress,
-          coordinates:
-            this.newAddress.latitude && this.newAddress.longitude
-              ? {
-                  latitude: this.newAddress.latitude,
-                  longitude: this.newAddress.longitude,
-                }
-              : undefined,
           isDefault: this.newAddress.isDefault,
           createdAt: new Date(),
           label: this.newAddress.label, // Add label for easier identification
         };
+
+        // Only add coordinates if they exist (avoid undefined values)
+        if (this.selectedLocation) {
+          newLocation.coordinates = {
+            latitude: this.selectedLocation.lat,
+            longitude: this.selectedLocation.lng,
+          };
+        }
 
         // Add new location to the array
         savedLocations.push(newLocation);
@@ -370,6 +389,7 @@ export class ProfilePage implements OnInit {
 
         await this.loadAddresses();
         this.addressModal.dismiss();
+        this.isAddingAddress = false;
         this.showToast('Address added successfully!', 'success');
       }
     } catch (error) {
@@ -558,5 +578,53 @@ export class ProfilePage implements OnInit {
   getHandyHomeId(): string {
     if (!this.userProfile?.uid) return '';
     return `HH${this.userProfile.uid.substring(0, 8).toUpperCase()}`;
+  }
+
+  // Map location selection handler
+  async onLocationSelected(location: { lat: number; lng: number }) {
+    this.selectedLocation = location;
+    this.isLoadingAddress = true;
+    
+    try {
+      // Convert coordinates to address using Nominatim
+      const address = await this.reverseGeocode(location.lat, location.lng);
+      this.addressFromCoordinates = address;
+      
+      // Auto-fill the full address field if it's empty
+      if (!this.newAddress.fullAddress.trim()) {
+        this.newAddress.fullAddress = address;
+      }
+    } catch (error) {
+      console.error('Error getting address from coordinates:', error);
+      this.addressFromCoordinates = `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
+    } finally {
+      this.isLoadingAddress = false;
+    }
+  }
+
+  // Reverse geocoding using Nominatim API
+  async reverseGeocode(lat: number, lng: number): Promise<string> {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      } else {
+        return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      }
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+      return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    }
+  }
+
+  // Use address from coordinates
+  useAddressFromCoordinates() {
+    if (this.addressFromCoordinates) {
+      this.newAddress.fullAddress = this.addressFromCoordinates;
+    }
   }
 }

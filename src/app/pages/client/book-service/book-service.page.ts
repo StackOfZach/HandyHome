@@ -150,7 +150,7 @@ export class BookServicePage implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/client']);
+    this.router.navigate(['/pages/client/dashboard']);
   }
 
   // Location Methods

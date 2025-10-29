@@ -216,6 +216,12 @@
               <p class="text-sm text-handy-navy-600 mt-1">
                 {{ address.fullAddress }}
               </p>
+              <div *ngIf="address.latitude && address.longitude" class="mt-1">
+                <p class="text-xs text-gray-500 flex items-center">
+                  <ion-icon name="location" class="mr-1 text-xs"></ion-icon>
+                  {{ address.latitude.toFixed(6) }}, {{ address.longitude.toFixed(6) }}
+                </p>
+              </div>
             </div>
             <div class="flex space-x-2">
               <button
@@ -305,7 +311,7 @@
     </div> -->
 
     <!-- Account Security -->
-    <div
+    <!-- <div
       class="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-white/20"
     >
       <h3 class="text-lg font-bold text-handy-navy-800 flex items-center mb-4">
@@ -334,10 +340,10 @@
           ></ion-icon>
         </button>
       </div>
-    </div>
+    </div> -->
 
     <!-- Support & Help -->
-    <div
+    <!-- <div
       class="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-6 border border-white/20"
     >
       <h3 class="text-lg font-bold text-handy-navy-800 flex items-center mb-4">
@@ -399,7 +405,7 @@
           ></ion-icon>
         </button>
       </div>
-    </div>
+    </div> -->
 
     <!-- Logout Button -->
     <div class="mb-6">
@@ -430,6 +436,57 @@
 
     <ion-content class="ion-padding">
       <div class="space-y-4">
+        <!-- Map Section -->
+        <div>
+          <label class="block text-sm font-medium text-handy-navy-700 mb-2"
+            >Pin Location on Map</label
+          >
+          <div class="border border-gray-200 rounded-xl overflow-hidden">
+            <div class="h-64 relative">
+              <app-map-picker
+                [initialLocation]="selectedLocation"
+                (locationSelected)="onLocationSelected($event)"
+              ></app-map-picker>
+              
+              <!-- Loading overlay -->
+              <div
+                *ngIf="isLoadingAddress"
+                class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10"
+              >
+                <div class="text-center">
+                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-handy-blue-500 mx-auto mb-2"></div>
+                  <p class="text-sm text-handy-navy-600">Getting address...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Address from coordinates -->
+          <div *ngIf="addressFromCoordinates && selectedLocation" class="mt-2">
+            <div class="bg-handy-blue-50 border border-handy-blue-200 rounded-lg p-3">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <p class="text-xs font-medium text-handy-blue-800 mb-1">Detected Address:</p>
+                  <p class="text-sm text-handy-navy-700">{{ addressFromCoordinates }}</p>
+                </div>
+                <button
+                  (click)="useAddressFromCoordinates()"
+                  class="ml-2 text-xs bg-handy-blue-500 text-white px-2 py-1 rounded hover:bg-handy-blue-600 transition-colors"
+                >
+                  Use This
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Coordinates display -->
+          <div *ngIf="selectedLocation" class="mt-2">
+            <p class="text-xs text-gray-500">
+              Coordinates: {{ selectedLocation.lat.toFixed(6) }}, {{ selectedLocation.lng.toFixed(6) }}
+            </p>
+          </div>
+        </div>
+
         <div>
           <label class="block text-sm font-medium text-handy-navy-700 mb-1"
             >Address Label</label
@@ -453,6 +510,7 @@
             type="text"
             class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-handy-blue-500 focus:border-transparent"
             placeholder="Enter contact person name"
+            required
           />
         </div>
 
@@ -465,6 +523,7 @@
             type="tel"
             class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-handy-blue-500 focus:border-transparent"
             placeholder="Enter phone number"
+            required
           />
         </div>
 
@@ -476,7 +535,8 @@
             [(ngModel)]="newAddress.fullAddress"
             rows="3"
             class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-handy-blue-500 focus:border-transparent"
-            placeholder="Enter complete address"
+            placeholder="Enter complete address or use detected address from map"
+            required
           ></textarea>
         </div>
 

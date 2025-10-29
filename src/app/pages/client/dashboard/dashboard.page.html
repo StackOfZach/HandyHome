@@ -204,8 +204,7 @@
         >
           <swiper-slide *ngFor="let ad of ads" class="!h-auto">
             <div
-              class="relative overflow-hidden shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105"
-              (click)="onAdClick(ad)"
+              class="relative overflow-hidden shadow-lg"
             >
               <!-- Ad Image -->
               <img
@@ -215,10 +214,6 @@
                 (error)="onImageError($event, ad)"
               />
 
-              <!-- Overlay for better interaction feedback -->
-              <div
-                class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-300"
-              ></div>
 
               <!-- Loading placeholder (shown while image loads) -->
               <div
@@ -268,7 +263,7 @@
     </div> -->
 
     <!-- Recent Workers / Favorites -->
-    <div class="mb-6" *ngIf="recentWorkers.length > 0">
+    <!-- <div class="mb-6" *ngIf="recentWorkers.length > 0">
       <h3 class="text-xl font-bold text-handy-navy-800 mb-4 px-2">
         Recent Workers
       </h3>
@@ -320,7 +315,7 @@
           </button>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Notifications / Updates -->
     <div class="mb-6" *ngIf="notifications.length > 0">
