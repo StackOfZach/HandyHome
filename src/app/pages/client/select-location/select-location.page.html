@@ -159,7 +159,13 @@
             <div
               class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 mt-0.5"
             >
+              <ion-spinner 
+                *ngIf="isLoadingAddress" 
+                name="crescent" 
+                class="text-green-600 text-sm"
+              ></ion-spinner>
               <ion-icon
+                *ngIf="!isLoadingAddress"
                 name="location"
                 class="text-green-600 text-sm"
               ></ion-icon>
@@ -168,17 +174,47 @@
               <h4 class="font-medium text-handy-navy-800 text-sm mb-1">
                 Selected Location
               </h4>
-              <p
-                class="text-xs text-handy-navy-600 leading-relaxed"
-                *ngIf="selectedLocation.address"
-              >
-                {{ selectedLocation.address }}
-              </p>
-              <p class="text-xs text-handy-navy-500 mt-1">
-                {{ selectedLocation.latitude.toFixed(6) }}, {{
-                selectedLocation.longitude.toFixed(6) }}
-              </p>
+              
+              <!-- Loading State for Address -->
+              <div *ngIf="isLoadingAddress" class="flex items-center">
+                <p class="text-xs text-handy-navy-500 italic">
+                  Getting address information...
+                </p>
+              </div>
+              
+              <!-- Address Display -->
+              <div *ngIf="!isLoadingAddress">
+                <p
+                  class="text-xs text-handy-navy-600 leading-relaxed"
+                  *ngIf="selectedLocation.address && selectedLocation.address !== 'Selected Location'"
+                >
+                  {{ selectedLocation.address }}
+                </p>
+                
+                <!-- City and Province Display -->
+                <div class="flex items-center text-xs text-handy-navy-500 mt-1" *ngIf="selectedLocation.city || selectedLocation.province">
+                  <ion-icon name="business-outline" class="mr-1"></ion-icon>
+                  <span *ngIf="selectedLocation.city">{{ selectedLocation.city }}</span>
+                  <span *ngIf="selectedLocation.city && selectedLocation.province">, </span>
+                  <span *ngIf="selectedLocation.province">{{ selectedLocation.province }}</span>
+                </div>
+                
+                <!-- Coordinates -->
+                <p class="text-xs text-handy-navy-400 mt-1">
+                  📍 {{ selectedLocation.latitude.toFixed(6) }}, {{ selectedLocation.longitude.toFixed(6) }}
+                </p>
+              </div>
             </div>
+            
+            <!-- Refresh Address Button -->
+            <button 
+              *ngIf="!isLoadingAddress"
+              (click)="refreshAddress()"
+              class="p-2 text-handy-blue-500 hover:bg-handy-blue-50 rounded-lg transition-colors self-start"
+              title="Refresh address"
+            >
+              <ion-icon name="refresh-outline" class="text-sm"></ion-icon>
+            </button>
           </div>
         </div>
 

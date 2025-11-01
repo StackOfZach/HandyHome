@@ -1466,7 +1466,7 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
   // Load available bookings from quickbookings collection
   async loadAvailableBookings() {
-    if (!this.userProfile?.uid || !this.workerProfile) return;
+    if (!this.userProfile?.uid || !this.workerProfile || !this.isAvailableForQuickBookings) return;
 
     try {
       const quickBookingsRef = collection(this.firestore, 'quickbookings');
@@ -1766,10 +1766,14 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
       });
       toast.present();
 
-      // If disabling quick bookings, hide any current notification
+      // If disabling quick bookings, hide any current notification and clear bookings list
       if (!this.isAvailableForQuickBookings) {
         this.quickBookingNotification = null;
         this.showQuickNotification = false;
+        this.availableBookings = []; // Clear the available bookings list
+      } else {
+        // If enabling quick bookings, reload available bookings
+        this.loadAvailableBookings();
       }
     } catch (error) {
       console.error('Error updating quick booking availability:', error);

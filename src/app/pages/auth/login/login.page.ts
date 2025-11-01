@@ -28,14 +28,27 @@ export class LoginPage implements OnInit {
     });
   }
 
-  ngOnInit() {
-    // Check if user is already logged in
+  async ngOnInit() {
+    // Check if user is already logged in (additional safety check)
     if (this.authService.isAuthenticated()) {
       const profile = this.authService.getCurrentUserProfile();
       if (profile) {
-        this.redirectBasedOnRole(profile.role);
+        console.log('LoginPage: User already authenticated, redirecting...');
+        await this.redirectBasedOnRole(profile.role);
+        return;
       }
     }
+
+    // Also listen for authentication changes
+    this.authService.currentUser$.subscribe(async (user) => {
+      if (user) {
+        const profile = this.authService.getCurrentUserProfile();
+        if (profile) {
+          console.log('LoginPage: User authenticated during session, redirecting...');
+          await this.redirectBasedOnRole(profile.role);
+        }
+      }
+    });
   }
 
   async onLogin() {
@@ -100,16 +113,42 @@ export class LoginPage implements OnInit {
     await alert.present();
   }
 
-  private redirectBasedOnRole(role: 'client' | 'worker' | 'admin') {
+  private async redirectBasedOnRole(role: 'client' | 'worker' | 'admin'): Promise<void> {
+    console.log('LoginPage: Redirecting based on role:', role);
+    
     switch (role) {
       case 'client':
-        this.router.navigate(['/pages/client/dashboard']);
+        this.router.navigate(['/pages/client/dashboard'], { replaceUrl: true });
         break;
       case 'worker':
-        this.router.navigate(['/pages/worker/dashboard']);
+        try {
+          const user = this.authService.getCurrentUser();
+          if (user) {
+            // Import WorkerService dynamically to avoid circular dependency
+            const { WorkerService } = await import('../../../services/worker.service');
+            const workerService = new (WorkerService as any)(
+              (this.authService as any).firestore
+            );
+
+            const hasCompleted = await workerService.hasCompletedInterview(
+              user.uid
+            );
+
+            if (!hasCompleted) {
+              this.router.navigate(['/pages/worker/interview'], { replaceUrl: true });
+            } else {
+              this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+            }
+          } else {
+            this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+          }
+        } catch (error) {
+          console.error('LoginPage: Error checking worker status:', error);
+          this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+        }
         break;
       case 'admin':
-        this.router.navigate(['/pages/admin/dashboard']);
+        this.router.navigate(['/pages/admin/dashboard'], { replaceUrl: true });
         break;
     }
   }

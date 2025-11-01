@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { BookingProgressPageRoutingModule } from './booking-progress-routing.module';
 import { BookingProgressPage } from './booking-progress.page';
+import { SharedComponentsModule } from '../../../modules/shared-components.module';
 
 @NgModule({
   imports: [
@@ -11,6 +12,7 @@ import { BookingProgressPage } from './booking-progress.page';
     FormsModule,
     IonicModule,
     BookingProgressPageRoutingModule,
+    SharedComponentsModule,
   ],
   declarations: [BookingProgressPage],
 })

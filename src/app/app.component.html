@@ -1,6 +1,7 @@
 <ion-app>
   <!-- Splash Screen -->
-  <div *ngIf="showSplash" class="splash-container bg-white">
+  <div *ngIf="showSplash" class="splash-container bg-white" 
+       [class.splash-fade-out]="splashFadeOut">
     <!-- Animated color blobs (Tailwind enhanced) -->
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
       <div

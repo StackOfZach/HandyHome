@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
@@ -10,7 +10,7 @@ import { ToastController, LoadingController } from '@ionic/angular';
   styleUrls: ['./forgot-password.page.scss'],
   standalone: false,
 })
-export class ForgotPasswordPage {
+export class ForgotPasswordPage implements OnInit {
   isSubmitting = false;
 
   form = this.fb.group({
@@ -24,6 +24,29 @@ export class ForgotPasswordPage {
     private toastController: ToastController,
     private loadingController: LoadingController
   ) {}
+
+  async ngOnInit() {
+    // Check if user is already logged in (additional safety check)
+    if (this.authService.isAuthenticated()) {
+      const profile = this.authService.getCurrentUserProfile();
+      if (profile) {
+        console.log('ForgotPasswordPage: User already authenticated, redirecting...');
+        await this.redirectBasedOnRole(profile.role);
+        return;
+      }
+    }
+
+    // Also listen for authentication changes
+    this.authService.currentUser$.subscribe(async (user) => {
+      if (user) {
+        const profile = this.authService.getCurrentUserProfile();
+        if (profile) {
+          console.log('ForgotPasswordPage: User authenticated during session, redirecting...');
+          await this.redirectBasedOnRole(profile.role);
+        }
+      }
+    });
+  }
 
   async sendResetLink() {
     if (this.form.invalid) {
@@ -68,5 +91,45 @@ export class ForgotPasswordPage {
       position: 'bottom',
     });
     await toast.present();
+  }
+
+  private async redirectBasedOnRole(role: 'client' | 'worker' | 'admin'): Promise<void> {
+    console.log('ForgotPasswordPage: Redirecting based on role:', role);
+    
+    switch (role) {
+      case 'client':
+        this.router.navigate(['/pages/client/dashboard'], { replaceUrl: true });
+        break;
+      case 'worker':
+        try {
+          const user = this.authService.getCurrentUser();
+          if (user) {
+            // Import WorkerService dynamically to avoid circular dependency
+            const { WorkerService } = await import('../../../services/worker.service');
+            const workerService = new (WorkerService as any)(
+              (this.authService as any).firestore
+            );
+
+            const hasCompleted = await workerService.hasCompletedInterview(
+              user.uid
+            );
+
+            if (!hasCompleted) {
+              this.router.navigate(['/pages/worker/interview'], { replaceUrl: true });
+            } else {
+              this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+            }
+          } else {
+            this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+          }
+        } catch (error) {
+          console.error('ForgotPasswordPage: Error checking worker status:', error);
+          this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+        }
+        break;
+      case 'admin':
+        this.router.navigate(['/pages/admin/dashboard'], { replaceUrl: true });
+        break;
+    }
   }
 }

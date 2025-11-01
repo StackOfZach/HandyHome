@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from './services/auth.service';
+import { NavigationBlockService } from './services/navigation-block.service';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { Capacitor } from '@capacitor/core';
@@ -14,11 +15,20 @@ import { Geolocation } from '@capacitor/geolocation';
 })
 export class AppComponent implements OnInit {
   showSplash = true;
+  splashFadeOut = false;
   isAuthenticated = false;
+  private splashMinDuration = 1500; // Minimum splash screen duration
+  private splashStartTime = Date.now();
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService, 
+    private router: Router,
+    private navigationBlockService: NavigationBlockService
+  ) {}
 
   async ngOnInit() {
+    console.log('AppComponent: Initializing app...');
+    
     try {
       // On Android, proactively request location permission on first launch
       if (Capacitor.getPlatform() === 'android') {
@@ -33,43 +43,73 @@ export class AppComponent implements OnInit {
       }
 
       // Wait for auth service to initialize
+      console.log('AppComponent: Waiting for auth initialization...');
       await this.authService.waitForAuthInitialization();
 
       // Check if user is authenticated
       const currentUser = this.authService.getCurrentUser();
       const currentProfile = this.authService.getCurrentUserProfile();
 
+      console.log('AppComponent: User check result:', {
+        hasUser: !!currentUser,
+        hasProfile: !!currentProfile,
+        role: currentProfile?.role
+      });
+
       if (currentUser && currentProfile) {
         this.isAuthenticated = true;
         // User is authenticated, navigate to appropriate dashboard
+        console.log('AppComponent: User authenticated, navigating to dashboard...');
         await this.navigateToAppropriatePage(
           currentProfile.role,
           currentUser.uid
         );
       } else {
         // No user, show login page
+        console.log('AppComponent: No authenticated user, navigating to login...');
         this.isAuthenticated = false;
-        this.router.navigate(['/pages/auth/login']);
+        // Use replaceUrl to prevent navigation history issues
+        this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
       }
     } catch (error) {
       console.error('App initialization error:', error);
       this.isAuthenticated = false;
-      this.router.navigate(['/pages/auth/login']);
+      this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
     } finally {
-      // Hide splash screen after a minimum delay for better UX
-      setTimeout(() => {
-        this.showSplash = false;
-      }, 1000);
+      // Ensure splash screen is shown for minimum duration for better UX
+      this.hideSplashAfterMinimumDuration();
     }
+  }
+
+  /**
+   * Ensure splash screen is shown for minimum duration
+   */
+  private hideSplashAfterMinimumDuration(): void {
+    const elapsedTime = Date.now() - this.splashStartTime;
+    const remainingTime = Math.max(0, this.splashMinDuration - elapsedTime);
+    
+    setTimeout(() => {
+      console.log('AppComponent: Starting splash screen fade out');
+      this.splashFadeOut = true;
+      
+      // Hide splash screen completely after fade animation
+      setTimeout(() => {
+        console.log('AppComponent: Hiding splash screen');
+        this.showSplash = false;
+        this.splashFadeOut = false;
+      }, 400); // Match the CSS transition duration
+    }, remainingTime);
   }
 
   private async navigateToAppropriatePage(
     role: 'client' | 'worker' | 'admin',
     uid: string
   ): Promise<void> {
+    console.log('AppComponent: Navigating to appropriate page for role:', role);
+    
     switch (role) {
       case 'client':
-        this.router.navigate(['/pages/client/dashboard']);
+        this.router.navigate(['/pages/client/dashboard'], { replaceUrl: true });
         break;
       case 'worker':
         try {
@@ -80,20 +120,23 @@ export class AppComponent implements OnInit {
           const hasCompleted = await workerService.hasCompletedInterview(uid);
 
           if (!hasCompleted) {
-            this.router.navigate(['/pages/worker/interview']);
+            console.log('AppComponent: Worker interview not completed, navigating to interview');
+            this.router.navigate(['/pages/worker/interview'], { replaceUrl: true });
           } else {
-            this.router.navigate(['/pages/worker/dashboard']);
+            console.log('AppComponent: Worker interview completed, navigating to dashboard');
+            this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
           }
         } catch (error) {
-          console.error('Error checking worker status:', error);
-          this.router.navigate(['/pages/worker/dashboard']);
+          console.error('AppComponent: Error checking worker status:', error);
+          this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
         }
         break;
       case 'admin':
-        this.router.navigate(['/pages/admin/dashboard']);
+        this.router.navigate(['/pages/admin/dashboard'], { replaceUrl: true });
         break;
       default:
-        this.router.navigate(['/pages/auth/login']);
+        console.log('AppComponent: Unknown role, redirecting to login');
+        this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
     }
   }
 }

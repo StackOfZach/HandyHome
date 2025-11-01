@@ -70,6 +70,7 @@ export interface BookingData {
     | 'accepted'
     | 'rejected'
     | 'on-the-way'
+    | 'declined'
     | 'in-progress'
     | 'completed'
     | 'cancelled';

@@ -42,6 +42,7 @@ export class SelectLocationPage implements OnInit {
   initialMapLocation: { lat: number; lng: number } | null = null;
   isLoading = true;
   isLoadingLocation = false;
+  isLoadingAddress = false;
   isQuickBooking = false;
 
   constructor(
@@ -137,33 +138,76 @@ export class SelectLocationPage implements OnInit {
   }
 
   onLocationSelected(location: { lat: number; lng: number }) {
-    // Update the selected location
+    console.log('Location selected:', location);
+    
+    // Update the selected location with coordinates immediately
     this.selectedLocation = {
       latitude: location.lat,
       longitude: location.lng,
-      address: 'Selected Location',
+      address: 'Selected Location', // Temporary placeholder
+      city: '',
+      province: ''
     };
 
-    // Reverse geocode to get address
+    // Reverse geocode to get address details using Nominatim
     this.reverseGeocode(location.lat, location.lng);
   }
 
   async reverseGeocode(lat: number, lng: number) {
+    this.isLoadingAddress = true;
     try {
-      // Using a simple reverse geocoding service (you can replace with Google Maps API)
+      // Using Nominatim (OpenStreetMap) for reverse geocoding
       const response = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`
       );
-      const data = await response.json();
-
-      if (this.selectedLocation) {
-        this.selectedLocation.address =
-          data.displayName || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-        this.selectedLocation.city = data.city || data.locality;
-        this.selectedLocation.province = data.principalSubdivision;
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (this.selectedLocation) {
+          // Set the main address
+          this.selectedLocation.address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+          
+          // Extract city from various possible fields
+          this.selectedLocation.city = 
+            data.address?.city || 
+            data.address?.town || 
+            data.address?.village || 
+            data.address?.municipality || 
+            data.address?.county || '';
+            
+          // Extract province/state
+          this.selectedLocation.province = 
+            data.address?.state || 
+            data.address?.province || 
+            data.address?.region || '';
+            
+          console.log('Nominatim geocoding result:', {
+            address: this.selectedLocation.address,
+            city: this.selectedLocation.city,
+            province: this.selectedLocation.province,
+            coordinates: { lat, lng }
+          });
+        }
+      } else {
+        throw new Error('Nominatim API response not ok');
       }
     } catch (error) {
-      console.error('Error reverse geocoding:', error);
+      console.error('Error reverse geocoding with Nominatim:', error);
+      // Fallback to coordinates if geocoding fails
+      if (this.selectedLocation) {
+        this.selectedLocation.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        this.selectedLocation.city = '';
+        this.selectedLocation.province = '';
+      }
+    } finally {
+      this.isLoadingAddress = false;
+    }
+  }
+
+  refreshAddress() {
+    if (this.selectedLocation) {
+      this.reverseGeocode(this.selectedLocation.latitude, this.selectedLocation.longitude);
     }
   }
 

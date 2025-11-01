@@ -25,6 +25,7 @@ import {
   ServiceCategory,
 } from '../../../services/dashboard.service';
 import { WorkerService } from '../../../services/worker.service';
+import { ReportWorkerModalComponent } from '../../../components/report-worker-modal/report-worker-modal.component';
 import { Subscription, interval } from 'rxjs';
 
 interface BookingData {
@@ -426,6 +427,56 @@ export class BookingProgressPage implements OnInit, OnDestroy {
     // Open phone dialer
     const telUrl = `tel:${this.worker.phoneNumber}`;
     window.open(telUrl, '_system');
+  }
+
+  async openReportWorkerModal() {
+    if (!this.worker || !this.booking) {
+      const toast = await this.toastController.create({
+        message: 'Unable to report worker at this time',
+        duration: 2000,
+        color: 'warning',
+      });
+      toast.present();
+      return;
+    }
+
+    try {
+      const modal = await this.modalController.create({
+        component: ReportWorkerModalComponent,
+        componentProps: {
+          workerId: this.worker.uid,
+          workerName: this.worker.fullName,
+          bookingId: this.booking.id,
+        },
+        cssClass: 'report-worker-modal',
+      });
+
+      modal.onDidDismiss().then((result) => {
+        if (result.data?.reported) {
+          this.showReportSuccessToast();
+        }
+      });
+
+      return await modal.present();
+    } catch (error) {
+      console.error('Error opening report modal:', error);
+      const toast = await this.toastController.create({
+        message: 'Error opening report form. Please try again.',
+        duration: 3000,
+        color: 'danger',
+      });
+      toast.present();
+    }
+  }
+
+  private async showReportSuccessToast() {
+    const toast = await this.toastController.create({
+      message: 'Report submitted successfully. Our team will review it within 24 hours.',
+      duration: 5000,
+      color: 'success',
+      position: 'top',
+    });
+    toast.present();
   }
 
   goBack() {

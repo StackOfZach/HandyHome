@@ -622,7 +622,7 @@
     </div>
 
     <!-- Available Quick Bookings Section -->
-    <div class="mb-6" *ngIf="availableBookings.length > 0">
+    <div class="mb-6" *ngIf="isAvailableForQuickBookings && availableBookings.length > 0">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-xl font-bold text-gray-800 flex items-center">
           <ion-icon name="flash" class="text-orange-600 mr-2"></ion-icon>
@@ -758,7 +758,7 @@
 
     <!-- Empty State for Available Quick Bookings -->
     <div
-      *ngIf="availableBookings.length === 0"
+      *ngIf="isAvailableForQuickBookings && availableBookings.length === 0"
       class="bg-gradient-to-br from-white to-orange-50 rounded-2xl shadow-xl p-8 mb-6 text-center border-l-4 border-orange-500"
     >
       <div

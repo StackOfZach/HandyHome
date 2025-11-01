@@ -211,8 +211,8 @@ export class ConfirmBookingPage implements OnInit {
           lat: this.selectedLocation!.latitude,
           lng: this.selectedLocation!.longitude,
           address: this.selectedLocation!.address,
-          city: this.selectedLocation?.city,
-          province: this.selectedLocation?.province,
+          ...(this.selectedLocation?.city && { city: this.selectedLocation.city }),
+          ...(this.selectedLocation?.province && { province: this.selectedLocation.province }),
         },
         pricing: {
           basePrice: this.basePrice,

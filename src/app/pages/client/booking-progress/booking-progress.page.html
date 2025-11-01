@@ -146,6 +146,60 @@
       </div>
     </div>
 
+    <!-- 2.1. Report Worker Section -->
+    <div *ngIf="worker && booking?.status !== 'pending' && booking?.status !== 'completed'" class="mb-6">
+      <div
+        class="bg-white rounded-3xl shadow-2xl p-6 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card"
+      >
+        <!-- Decorative gradient overlay -->
+        <div
+          class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500"
+        ></div>
+
+        <div class="flex items-center justify-center mb-4">
+          <div
+            class="w-12 h-12 bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg float-animation mr-3"
+          >
+            <ion-icon
+              name="shield-outline"
+              class="text-white text-xl"
+            ></ion-icon>
+          </div>
+          <h3 class="font-bold text-handy-navy-800 text-xl">Need Help?</h3>
+        </div>
+
+        <div class="text-center mb-4">
+          <p class="text-gray-600 text-sm mb-3">
+            If you're experiencing any issues with this worker, you can report them to our support team.
+          </p>
+          <div class="bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl p-3 border border-red-200 mb-4">
+            <div class="flex items-center justify-center space-x-2 text-red-700">
+              <ion-icon name="warning-outline" class="text-lg"></ion-icon>
+              <span class="text-sm font-medium">Report inappropriate behavior, safety concerns, or service issues</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report Button -->
+        <div class="flex justify-center">
+          <button
+            (click)="openReportWorkerModal()"
+            class="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white px-8 py-4 rounded-2xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3"
+          >
+            <ion-icon name="flag-outline" class="text-white text-lg"></ion-icon>
+            <span>Report Worker</span>
+          </button>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="mt-4 text-center">
+          <p class="text-xs text-gray-500 leading-relaxed">
+            Reports are reviewed by our safety team within 24 hours. False reports may result in account restrictions.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- 3. Worker Arrived Status -->
     <div
       *ngIf="booking?.status === 'worker-arrived'"

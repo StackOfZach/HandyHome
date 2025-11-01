@@ -144,6 +144,8 @@ export class BookingHistoryPage implements OnInit, OnDestroy {
     { label: 'Accepted', value: 'accepted' },
     { label: 'In Progress', value: 'in-progress' },
     { label: 'Pending', value: 'pending' },
+    { label: 'Rejected', value: 'rejected' },
+    { label: 'Declined', value: 'declined' },
   ];
 
   private subscriptions: Subscription[] = [];
@@ -471,6 +473,12 @@ export class BookingHistoryPage implements OnInit, OnDestroy {
       return;
     }
 
+    // Prevent viewing details for rejected/declined bookings
+    if (booking.status === 'rejected' || booking.status === 'declined') {
+      this.showToast('Details not available for rejected or declined bookings', 'medium');
+      return;
+    }
+
     console.log('Viewing booking details:', booking.id);
     // Navigate to the correct booking details page with ID as route parameter
     this.router.navigate(['/pages/worker/booking-details', booking.id]);
@@ -513,6 +521,8 @@ export class BookingHistoryPage implements OnInit, OnDestroy {
       case 'in-progress': return 'time';
       case 'accepted': return 'thumbs-up';
       case 'payment-confirmed': return 'card';
+      case 'rejected': return 'thumbs-down';
+      case 'declined': return 'close-circle-outline';
       default: return 'ellipse';
     }
   }
@@ -557,6 +567,8 @@ export class BookingHistoryPage implements OnInit, OnDestroy {
       'pending': 'bg-gray-100 text-gray-800',
       'searching': 'bg-orange-100 text-orange-800',
       'payment-confirmed': 'bg-emerald-100 text-emerald-800',
+      'rejected': 'bg-red-100 text-red-800',
+      'declined': 'bg-red-100 text-red-800',
     };
     return colorMap[status] || 'bg-gray-100 text-gray-800';
   }

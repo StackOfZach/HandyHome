@@ -151,3 +151,10 @@
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* Splash screen fade out animation */
+.splash-fade-out {
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}

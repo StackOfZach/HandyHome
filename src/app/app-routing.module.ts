@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
+import { AuthenticatedGuard } from './guards/authenticated.guard';
 
 const routes: Routes = [
   {
@@ -12,12 +13,14 @@ const routes: Routes = [
     path: 'home',
     loadChildren: () =>
       import('./home/home.module').then((m) => m.HomePageModule),
+    canActivate: [AuthenticatedGuard],
   },
-  // Authentication Routes
+  // Authentication Routes - Protected from authenticated users
   {
     path: 'pages/auth/login',
     loadChildren: () =>
       import('./pages/auth/login/login.module').then((m) => m.LoginPageModule),
+    canActivate: [AuthenticatedGuard],
   },
   {
     path: 'pages/auth/signup',
@@ -25,6 +28,7 @@ const routes: Routes = [
       import('./pages/auth/signup/signup.module').then(
         (m) => m.SignupPageModule
       ),
+    canActivate: [AuthenticatedGuard],
   },
   {
     path: 'pages/auth/forgot-password',
@@ -32,6 +36,7 @@ const routes: Routes = [
       import('./pages/auth/forgot-password/forgot-password.module').then(
         (m) => m.ForgotPasswordPageModule
       ),
+    canActivate: [AuthenticatedGuard],
   },
   {
     path: 'pages/auth/client-verification',
@@ -39,6 +44,7 @@ const routes: Routes = [
       import(
         './pages/auth/client-verification/client-verification.module'
       ).then((m) => m.ClientVerificationPageModule),
+    canActivate: [AuthenticatedGuard],
   },
   // Client Dashboard - Protected Route
   {
