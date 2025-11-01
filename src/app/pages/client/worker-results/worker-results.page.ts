@@ -22,6 +22,7 @@ import {
   DashboardService,
   ServiceCategory,
 } from '../../../services/dashboard.service';
+import { WorkerAvailabilityService, BookingConflictCheck } from '../../../services/worker-availability.service';
 
 interface ServicePrice {
   name: string;
@@ -111,7 +112,8 @@ export class WorkerResultsPage implements OnInit {
     private toastController: ToastController,
     private firestore: Firestore,
     private authService: AuthService,
-    private dashboardService: DashboardService
+    private dashboardService: DashboardService,
+    private workerAvailabilityService: WorkerAvailabilityService
   ) {}
 
   async ngOnInit() {
@@ -187,7 +189,9 @@ export class WorkerResultsPage implements OnInit {
         userDataMap.set(doc.id, doc.data());
       });
 
-      workersSnapshot.forEach((doc) => {
+      // Process each worker with availability checks
+      for (let i = 0; i < workersSnapshot.docs.length; i++) {
+        const doc = workersSnapshot.docs[i];
         const workerData = doc.data();
         const userData = userDataMap.get(doc.id) || {};
 
@@ -203,6 +207,25 @@ export class WorkerResultsPage implements OnInit {
           const priceMatch = this.workerMatchesPrice(workerData);
           const locationMatch = this.workerMatchesLocation(workerData);
 
+          // NEW: Check actual booking conflicts (ignore online status for scheduled bookings)
+          let bookingAvailable = true;
+          if (this.booking.scheduleDate && this.booking.scheduleTime) {
+            const dateString = this.workerAvailabilityService.parseScheduleDate(this.booking.scheduleDate);
+            console.log('🗓️ Parsed date string:', dateString, 'from:', this.booking.scheduleDate);
+            if (dateString) {
+              const conflictCheck = await this.workerAvailabilityService.hasBookingConflicts(
+                doc.id,
+                dateString,
+                this.booking.scheduleTime,
+                1 // Assume 1 hour duration for now, could be made dynamic
+              );
+              bookingAvailable = !conflictCheck.hasConflict;
+              console.log('🔍 Conflict check result:', conflictCheck);
+            }
+          } else {
+            console.log('⚠️ No schedule date/time found:', { scheduleDate: this.booking.scheduleDate, scheduleTime: this.booking.scheduleTime });
+          }
+
           const workerName =
             userData['fullName'] || workerData['fullName'] || 'Unknown';
           console.log(`\n🔍 === WORKER EVALUATION: ${workerName} ===`);
@@ -217,26 +240,37 @@ export class WorkerResultsPage implements OnInit {
           console.log('✅ Service match:', serviceMatch);
           console.log('📅 Day available:', isAvailable);
           console.log('⏰ Time available:', timeAvailable);
+          console.log('🗓️ Booking available (no conflicts):', bookingAvailable);
           console.log('💰 Price match:', priceMatch);
           console.log('📍 Location match:', locationMatch);
+          
+          // Debug: Show which specific checks are failing
+          if (!serviceMatch) console.log('❌ Service match failed');
+          if (!isAvailable) console.log('❌ Day available failed');
+          if (!timeAvailable) console.log('❌ Time available failed');
+          if (!bookingAvailable) console.log('❌ Booking conflicts found');
+          if (!priceMatch) console.log('❌ Price match failed');
+          if (!locationMatch) console.log('❌ Location match failed');
 
           const passedChecks = [
             serviceMatch,
             isAvailable,
             timeAvailable,
+            bookingAvailable,
             priceMatch,
             locationMatch,
           ].filter(Boolean).length;
-          console.log(`🎯 RESULT: ${passedChecks}/5 checks passed`);
+          console.log(`🎯 RESULT: ${passedChecks}/6 checks passed`);
 
-          // ✅ STRICT MATCH: Include time availability check
+          // ✅ RELAXED MATCH: Make matching less strict temporarily for debugging
           const fullMatch =
             serviceMatch &&
-            isAvailable &&
-            timeAvailable &&
-            priceMatch &&
-            locationMatch;
-          console.log(`🎯 FULL MATCH (all criteria): ${fullMatch}`);
+            // isAvailable &&  // Temporarily disable day availability check
+            // timeAvailable && // Temporarily disable time availability check  
+            bookingAvailable &&
+            priceMatch;
+            // locationMatch;   // Temporarily disable location match
+          console.log(`🎯 FULL MATCH (relaxed criteria for debugging): ${fullMatch}`);
 
           if (fullMatch) {
             const worker: WorkerProfile = {
@@ -278,7 +312,7 @@ export class WorkerResultsPage implements OnInit {
             );
           }
         }
-      });
+      }
 
       console.log(`\n🏁 === FINAL RESULTS ===`);
       console.log(`📊 Total verified workers found: ${workersSnapshot.size}`);
@@ -544,9 +578,9 @@ export class WorkerResultsPage implements OnInit {
           }
         } else {
           console.log(
-            `✅ No specific service required, category match sufficient`
+            `❌ No specific pricing found for "${specificService}" in category`
           );
-          return true; // If no specific service, just having the category is enough
+          return false; // If no specific service pricing, exclude worker for budget safety
         }
       } else {
         console.log(`❌ No matching category found for "${neededService}"`);
@@ -566,8 +600,47 @@ export class WorkerResultsPage implements OnInit {
     });
 
     if (!matchingService) {
-      console.log('❓ No specific pricing found - allowing worker to show up');
-      return true; // If no specific pricing, allow worker to show up
+      console.log('🔍 No service-specific pricing found, checking if ANY pricing fits budget...');
+      
+      // Final fallback: Check if worker has ANY pricing that fits the budget
+      const allPrices: number[] = [];
+      
+      // Collect all prices from serviceWithPricing
+      if (serviceWithPricing.length > 0) {
+        serviceWithPricing.forEach((category: any) => {
+          if (category.subServices) {
+            category.subServices.forEach((sub: any) => {
+              if (sub.price && sub.price > 0) {
+                allPrices.push(sub.price);
+              }
+            });
+          }
+        });
+      }
+      
+      // Collect all prices from legacy servicePrices
+      if (servicePrices.length > 0) {
+        servicePrices.forEach((service: any) => {
+          if (service.minPrice && service.minPrice > 0) {
+            allPrices.push(service.minPrice);
+          }
+          if (service.maxPrice && service.maxPrice > 0) {
+            allPrices.push(service.maxPrice);
+          }
+        });
+      }
+      
+      if (allPrices.length > 0) {
+        const hasAffordablePrice = allPrices.some(price => 
+          price >= userMinBudget && price <= userMaxBudget
+        );
+        console.log(`💰 Worker's all prices: [${allPrices.join(', ')}]`);
+        console.log(`💰 Any price in budget: ${hasAffordablePrice}`);
+        return hasAffordablePrice;
+      }
+      
+      console.log('❌ No pricing data found at all - EXCLUDING worker');
+      return false; // If no pricing data at all, exclude worker
     }
 
     const workerMinPrice = matchingService.minPrice || 0;
@@ -1344,7 +1417,31 @@ export class WorkerResultsPage implements OnInit {
     await loading.present();
 
     try {
-      console.log('🔄 Updating booking with worker assignment:', {
+      // First, double-check worker availability and reserve the time slot
+      if (this.booking) {
+        // Verify worker is still available before proceeding
+        const conflictCheck = await this.workerAvailabilityService.hasBookingConflicts(
+          worker.uid,
+          this.booking.scheduleDate.toDate().toISOString().split('T')[0], // Convert to YYYY-MM-DD format
+          this.booking.scheduleTime || '09:00',
+          this.booking.estimatedDuration || 2
+        );
+
+        if (conflictCheck.hasConflict) {
+          throw new Error('Worker is no longer available at this time slot - conflicting bookings detected');
+        }
+        console.log('� Reserving worker time slot...');
+        await this.workerAvailabilityService.bookWorkerTimeSlot(
+          worker.uid,
+          this.booking.scheduleDate.toDate(),
+          this.booking.scheduleTime || '09:00', // Use booking time or default
+          this.booking.estimatedDuration || 2, // Duration in hours
+          this.bookingId
+        );
+        console.log('✅ Time slot reserved successfully');
+      }
+
+      console.log('�🔄 Updating booking with worker assignment:', {
         bookingId: this.bookingId,
         assignedWorker: worker.uid,
         workerId: worker.uid,
@@ -1360,6 +1457,7 @@ export class WorkerResultsPage implements OnInit {
         workerName: worker.fullName,
         workerPhone: worker.phoneNumber,
         status: 'pending',
+        timeSlotReserved: true, // Track that time slot is reserved
         updatedAt: new Date(),
       });
 
@@ -1409,12 +1507,25 @@ export class WorkerResultsPage implements OnInit {
       await loading.dismiss();
       console.error('Error booking worker:', error);
 
-      const toast = await this.toastController.create({
-        message: 'Error booking worker. Please try again.',
-        duration: 3000,
-        color: 'danger',
-      });
-      toast.present();
+      // If error occurred during time slot booking, show specific message
+      if (error instanceof Error && error.message.includes('time slot')) {
+        const toast = await this.toastController.create({
+          message: 'Worker is no longer available at this time. Please try another worker.',
+          duration: 4000,
+          color: 'warning',
+        });
+        toast.present();
+        
+        // Refresh the worker list to show updated availability
+        await this.loadWorkers();
+      } else {
+        const toast = await this.toastController.create({
+          message: 'Error booking worker. Please try again.',
+          duration: 3000,
+          color: 'danger',
+        });
+        toast.present();
+      }
     }
   }
 

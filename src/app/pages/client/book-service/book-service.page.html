@@ -285,79 +285,100 @@
             </div>
           </div>
 
-          <!-- Enter Custom Address -->
+          <!-- Pick on Map -->
           <div
             class="p-4 border-2 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-md"
-            [class.border-handy-blue-500]="locationType === 'custom'"
-            [class.bg-handy-blue-50]="locationType === 'custom'"
-            [class.border-gray-200]="locationType !== 'custom'"
-            (click)="selectLocationType('custom')"
+            [class.border-handy-blue-500]="locationType === 'map'"
+            [class.bg-handy-blue-50]="locationType === 'map'"
+            [class.border-gray-200]="locationType !== 'map'"
+            (click)="selectLocationType('map')"
           >
             <div class="flex items-center space-x-4">
               <div
                 class="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg"
               >
                 <ion-icon
-                  name="home-outline"
+                  name="map-outline"
                   class="text-white text-xl"
                 ></ion-icon>
               </div>
               <div class="flex-1">
                 <h4 class="font-bold text-handy-navy-800 text-lg">
-                  Enter Address
+                  Pick on Map
                 </h4>
-                <p class="text-gray-600 text-sm">Type your specific address</p>
+                <p class="text-gray-600 text-sm">Choose location from map</p>
               </div>
               <div
                 class="w-6 h-6 border-2 rounded-full flex items-center justify-center"
-                [class.border-handy-blue-500]="locationType === 'custom'"
-                [class.bg-handy-blue-500]="locationType === 'custom'"
-                [class.border-gray-300]="locationType !== 'custom'"
+                [class.border-handy-blue-500]="locationType === 'map'"
+                [class.bg-handy-blue-500]="locationType === 'map'"
+                [class.border-gray-300]="locationType !== 'map'"
               >
                 <div
-                  *ngIf="locationType === 'custom'"
+                  *ngIf="locationType === 'map'"
                   class="w-3 h-3 bg-white rounded-full"
                 ></div>
               </div>
             </div>
           </div>
 
-          <!-- Custom Address Input -->
+          <!-- Map Picker -->
           <div
-            *ngIf="locationType === 'custom'"
+            *ngIf="locationType === 'map'"
             class="mt-4 space-y-4 animate-fade-in"
           >
-            <div class="relative">
-              <input
-                type="text"
-                [(ngModel)]="customAddress"
-                placeholder="Enter your complete address"
-                class="w-full border-2 border-gray-200 rounded-2xl px-4 py-5 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 shadow-sm font-medium"
-                [class.border-red-400]="locationType === 'custom' && !customAddress && showValidation"
-                [class.bg-red-50]="locationType === 'custom' && !customAddress && showValidation"
-              />
-              <div class="absolute inset-y-0 right-0 flex items-center pr-4">
-                <ion-icon
-                  name="location"
-                  class="text-gray-400 text-lg"
-                ></ion-icon>
+            <!-- Map Container -->
+            <div class="relative bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-200">
+              <div class="h-80 w-full">
+                <app-map-picker
+                  [initialLocation]="mapPickedLocation"
+                  (locationSelected)="onMapLocationSelected($event)"
+                ></app-map-picker>
+              </div>
+              
+              <!-- Map Instructions -->
+              <div class="absolute top-4 left-4 right-4">
+                <div class="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-handy-blue-500 rounded-full flex items-center justify-center">
+                      <ion-icon name="information" class="text-white text-sm"></ion-icon>
+                    </div>
+                    <p class="text-sm text-gray-700 font-medium">
+                      Tap on the map or drag the marker to select your location
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- Address Details -->
-            <div class="grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                [(ngModel)]="city"
-                placeholder="City"
-                class="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 shadow-sm font-medium"
-              />
-              <input
-                type="text"
-                [(ngModel)]="zipCode"
-                placeholder="Zip Code"
-                class="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 focus:ring-4 focus:ring-handy-blue-400/30 focus:border-handy-blue-500 transition-all duration-300 shadow-sm font-medium"
-              />
+            <!-- Selected Location Display -->
+            <div *ngIf="mapSelectedAddress" class="bg-handy-blue-50 rounded-2xl p-4 border border-handy-blue-200">
+              <div class="flex items-start space-x-3">
+                <div class="w-10 h-10 bg-handy-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <ion-icon name="location" class="text-white text-lg"></ion-icon>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-bold text-handy-navy-800 text-sm mb-1">Selected Location:</h4>
+                  <p class="text-gray-600 text-sm leading-relaxed">{{ mapSelectedAddress }}</p>
+                  <p class="text-gray-500 text-xs mt-2">
+                    Coordinates: {{ mapPickedLocation?.lat | number:'1.6-6' }}, {{ mapPickedLocation?.lng | number:'1.6-6' }}
+                  </p>
+                </div>
+                <button 
+                  (click)="refreshMapLocation()"
+                  class="p-2 text-handy-blue-500 hover:bg-handy-blue-100 rounded-lg transition-colors"
+                >
+                  <ion-icon name="refresh-outline" class="text-lg"></ion-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- Loading State for Address -->
+            <div *ngIf="loadingMapAddress" class="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+              <div class="flex items-center space-x-3">
+                <ion-spinner name="crescent" class="text-handy-blue-500"></ion-spinner>
+                <p class="text-gray-600 text-sm">Getting address for selected location...</p>
+              </div>
             </div>
           </div>
 

@@ -85,6 +85,13 @@ interface BookingDetails {
     score: number;
     comment: string;
   };
+  // Additional fields for backward compatibility and fallbacks
+  price?: number;
+  serviceCharge?: number;
+  transportFee?: number;
+  total?: number;
+  description?: string;
+  schedule?: any;
 }
 
 interface ReportData {
@@ -134,6 +141,16 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
     postalCode?: string;
     nearbyLandmark?: string;
   } | null = null;
+
+  // Slider functionality
+  arrivedSliderPosition: number = 0;
+  completeSliderPosition: number = 0;
+  arrivedSliderCompleted: boolean = false;
+  completeSliderCompleted: boolean = false;
+  isDragging: boolean = false;
+  dragType: string = '';
+  private sliderStartX: number = 0;
+  private sliderMaxDistance: number = 0;
 
   private bookingSubscription?: Subscription;
 
@@ -206,9 +223,55 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
       }
 
       if (bookingDoc && bookingDoc.exists()) {
+        const data = bookingDoc.data();
+        console.log('Raw booking data:', data);
+
+        // Process and normalize the booking data
+        const pricing = data['pricing'] || {};
+        const finalPricing = data['finalPricing'] || {};
+        
         this.booking = {
           id: bookingDoc.id,
-          ...bookingDoc.data(),
+          clientId: data['clientId'] || '',
+          categoryName: data['categoryName'] || data['category'] || data['neededService'] || '',
+          subService: data['subService'] || data['specificService'] || '',
+          location: {
+            lat: data['location']?.lat || data['coordinates']?.lat || 0,
+            lng: data['location']?.lng || data['coordinates']?.lng || 0,
+            address: data['location']?.address || data['address'] || data['serviceLocation'] || '',
+            city: data['location']?.city || data['city'] || '',
+            province: data['location']?.province || data['province'] || ''
+          },
+          pricing: {
+            basePrice: finalPricing.basePrice || pricing.basePrice || data['price'] || data['basePrice'] || 0,
+            serviceCharge: finalPricing.serviceCharge || pricing.serviceCharge || data['serviceCharge'] || 0,
+            transportFee: finalPricing.transportFee || pricing.transportFee || data['transportFee'] || 50,
+            total: finalPricing.total || pricing.total || data['total'] || 0
+          },
+          status: data['status'] || 'pending',
+          assignedWorker: data['assignedWorker'] || '',
+          workerDetails: data['workerDetails'] || {
+            id: data['assignedWorker'] || '',
+            name: 'Worker',
+            phone: '',
+            rating: 0
+          },
+          clientDetails: data['clientDetails'] || undefined,
+          createdAt: data['createdAt'] || null,
+          acceptedAt: data['acceptedAt'] || null,
+          startedAt: data['startedAt'] || null,
+          completedAt: data['completedAt'] || null,
+          jobTimer: data['jobTimer'] || undefined,
+          completionPhoto: data['completionPhoto'] || undefined,
+          finalPricing: finalPricing || undefined,
+          rating: data['rating'] || undefined,
+          // Add missing fields with fallbacks
+          price: finalPricing.basePrice || pricing.basePrice || data['price'] || data['basePrice'] || 0,
+          serviceCharge: finalPricing.serviceCharge || pricing.serviceCharge || data['serviceCharge'] || 0,
+          transportFee: finalPricing.transportFee || pricing.transportFee || data['transportFee'] || 50,
+          total: finalPricing.total || pricing.total || data['total'] || 0,
+          description: data['description'] || data['serviceDescription'] || '',
+          schedule: data['schedule'] || data['scheduleDetails'] || {}
         } as BookingDetails;
 
         console.log(`Booking found in ${actualCollectionName} collection`);
@@ -505,6 +568,9 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
   }
 
   handleStatusChange(newStatus: string, previousStatus?: string) {
+    // Reset slider states when status changes
+    this.resetSliderStates();
+    
     switch (newStatus) {
       case 'in-progress':
         if (previousStatus === 'arrived') {
@@ -995,8 +1061,11 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
   }
 
   // Helper methods
-  formatPrice(price: number): string {
-    return `₱${price.toLocaleString()}`;
+  formatPrice(price: number | undefined | null): string {
+    if (price === undefined || price === null || isNaN(price)) {
+      return '₱0.00';
+    }
+    return `₱${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   getStatusColor(status: string): string {
@@ -1351,6 +1420,124 @@ export class WorkerBookingDetailsPage implements OnInit, OnDestroy {
     } finally {
       this.isLoadingServiceAddress = false;
     }
+  }
+
+  // Slider functionality methods
+  onSliderStart(event: any, type: string) {
+    event.preventDefault();
+    this.isDragging = true;
+    this.dragType = type;
+    
+    // Get the starting X position
+    const clientX = event.type.includes('touch') ? event.touches[0].clientX : event.clientX;
+    this.sliderStartX = clientX;
+    
+    // Calculate max distance (container width - slider width)
+    const container = event.target.parentElement;
+    this.sliderMaxDistance = container.offsetWidth - 64; // 64px is slider width (w-16)
+    
+    // Add global event listeners for mouse events
+    if (event.type.includes('mouse')) {
+      document.addEventListener('mousemove', (e) => this.onSliderMove(e, type));
+      document.addEventListener('mouseup', (e) => this.onSliderEnd(e, type));
+    }
+  }
+
+  onSliderMove(event: any, type: string) {
+    if (!this.isDragging || this.dragType !== type) return;
+    
+    event.preventDefault();
+    
+    // Get current X position
+    const clientX = event.type.includes('touch') ? event.touches[0].clientX : event.clientX;
+    const deltaX = clientX - this.sliderStartX;
+    
+    // Calculate new position (constrain between 0 and max distance)
+    const newPosition = Math.max(0, Math.min(deltaX, this.sliderMaxDistance));
+    
+    // Update position based on type
+    if (type === 'arrived') {
+      this.arrivedSliderPosition = newPosition;
+    } else if (type === 'complete') {
+      this.completeSliderPosition = newPosition;
+    }
+    
+    // Add haptic feedback simulation when near completion (80% threshold)
+    const threshold = this.sliderMaxDistance * 0.8;
+    if (newPosition >= threshold) {
+      // Add visual feedback class when near completion
+      const sliderElement = event.target;
+      if (sliderElement && !sliderElement.classList.contains('near-complete')) {
+        sliderElement.classList.add('near-complete');
+        // Simulate haptic feedback with a subtle vibration if available
+        if (navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+      }
+    } else {
+      // Remove visual feedback class
+      const sliderElement = event.target;
+      if (sliderElement) {
+        sliderElement.classList.remove('near-complete');
+      }
+    }
+  }
+
+  onSliderEnd(event: any, type: string) {
+    if (!this.isDragging || this.dragType !== type) return;
+    
+    // Remove global event listeners
+    document.removeEventListener('mousemove', (e) => this.onSliderMove(e, type));
+    document.removeEventListener('mouseup', (e) => this.onSliderEnd(e, type));
+    
+    // Clean up visual feedback classes
+    const sliderElement = event.target;
+    if (sliderElement) {
+      sliderElement.classList.remove('near-complete');
+    }
+    
+    this.isDragging = false;
+    this.dragType = '';
+    
+    // Check if slider was dragged far enough (80% of the way)
+    const threshold = this.sliderMaxDistance * 0.8;
+    const currentPosition = type === 'arrived' ? this.arrivedSliderPosition : this.completeSliderPosition;
+    
+    if (currentPosition >= threshold) {
+      // Complete the action with haptic feedback
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]); // Success vibration pattern
+      }
+      
+      if (type === 'arrived') {
+        this.arrivedSliderCompleted = true;
+        setTimeout(() => {
+          this.markAsArrived();
+        }, 500);
+      } else if (type === 'complete') {
+        this.completeSliderCompleted = true;
+        setTimeout(() => {
+          this.completeJob();
+        }, 500);
+      }
+    } else {
+      // Reset slider position with animation
+      if (type === 'arrived') {
+        this.arrivedSliderPosition = 0;
+      } else if (type === 'complete') {
+        this.completeSliderPosition = 0;
+      }
+    }
+  }
+
+  // Reset slider states when status changes
+  private resetSliderStates() {
+    this.arrivedSliderPosition = 0;
+    this.completeSliderPosition = 0;
+    this.arrivedSliderCompleted = false;
+    this.completeSliderCompleted = false;
+    this.isDragging = false;
+    this.dragType = '';
   }
 
   goBack() {

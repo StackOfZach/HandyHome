@@ -1,0 +1,131 @@
+// Custom slider styles
+.slider-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 9999px;
+  padding: 4px;
+  
+  .slider-track {
+    position: relative;
+    height: 56px; // 14 * 4px = 56px (h-14)
+  }
+  
+  .slider-button {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 64px; // 16 * 4px = 64px (w-16)
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease-out;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    
+    &:hover {
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    
+    &.dragging {
+      transition: none;
+    }
+  }
+  
+  .slider-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    pointer-events: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  
+  .success-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 1s infinite;
+  }
+}
+
+// Arrival slider specific styles
+.arrival-slider {
+  background-color: #fed7aa; // orange-100
+  
+  .slider-button {
+    background-color: #f97316; // orange-500
+    
+    &:hover {
+      background-color: #ea580c; // orange-600
+    }
+  }
+  
+  .slider-text {
+    color: #9a3412; // orange-800
+  }
+  
+  .success-overlay {
+    background-color: #22c55e; // green-500
+  }
+}
+
+// Complete slider specific styles
+.complete-slider {
+  background-color: #dcfce7; // green-100
+  
+  .slider-button {
+    background-color: #22c55e; // green-500
+    
+    &:hover {
+      background-color: #16a34a; // green-600
+    }
+  }
+  
+  .slider-text {
+    color: #166534; // green-800
+  }
+  
+  .success-overlay {
+    background-color: #10b981; // emerald-500
+  }
+}
+
+// Smooth transitions for slider position
+.slider-button {
+  &:not(.dragging) {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+// Pulse animation for success state
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Haptic feedback simulation (visual)
+.slider-button {
+  &.near-complete {
+    transform: scale(1.05);
+  }
+}
+
+// Disable text selection on slider elements
+.slider-container * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}

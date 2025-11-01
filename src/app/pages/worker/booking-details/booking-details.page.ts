@@ -78,6 +78,17 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
   showStartJobButton: boolean = false;
   showJobDoneSlider: boolean = false;
 
+  // Slider states for iPhone-style sliding
+  arrivalSlideProgress: number = 0;
+  arrivalSliderPosition: number = 8; // Initial left position (8px padding)
+  completeSlideProgress: number = 0;
+  completeSliderPosition: number = 8;
+  private isDraggingArrival: boolean = false;
+  private isDraggingComplete: boolean = false;
+  private startX: number = 0;
+  private startSliderPosition: number = 0;
+  private sliderWidth: number = 0;
+
   // Job timer
   jobStartTime: Date | null = null;
   jobEndTime: Date | null = null;
@@ -1435,5 +1446,132 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     }
 
     this.stopLocationTracking();
+  }
+
+  // iPhone-style sliding methods
+  startArrivalSlide(event: MouseEvent | TouchEvent) {
+    event.preventDefault();
+    this.isDraggingArrival = true;
+    this.isDraggingComplete = false;
+    
+    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+    this.startX = clientX;
+    this.startSliderPosition = this.arrivalSliderPosition;
+    
+    // Get slider track width
+    const trackElement = event.target as HTMLElement;
+    const sliderTrack = trackElement.closest('.h-16') as HTMLElement;
+    if (sliderTrack) {
+      this.sliderWidth = sliderTrack.offsetWidth - 64; // Subtract button width (48px) + padding (16px)
+    }
+    
+    // Add event listeners
+    document.addEventListener('mousemove', this.onArrivalSlideMove);
+    document.addEventListener('mouseup', this.onArrivalSlideEnd);
+    document.addEventListener('touchmove', this.onArrivalSlideMove, { passive: false });
+    document.addEventListener('touchend', this.onArrivalSlideEnd);
+  }
+
+  onArrivalSlideMove = (event: MouseEvent | TouchEvent) => {
+    if (!this.isDraggingArrival) return;
+    
+    event.preventDefault();
+    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+    const deltaX = clientX - this.startX;
+    let newPosition = this.startSliderPosition + deltaX;
+    
+    // Constrain position
+    newPosition = Math.max(8, Math.min(this.sliderWidth, newPosition));
+    
+    this.arrivalSliderPosition = newPosition;
+    this.arrivalSlideProgress = Math.max(0, Math.min(1, (newPosition - 8) / (this.sliderWidth - 8)));
+  }
+
+  onArrivalSlideEnd = () => {
+    if (!this.isDraggingArrival) return;
+    
+    this.isDraggingArrival = false;
+    
+    // Remove event listeners
+    document.removeEventListener('mousemove', this.onArrivalSlideMove);
+    document.removeEventListener('mouseup', this.onArrivalSlideEnd);
+    document.removeEventListener('touchmove', this.onArrivalSlideMove);
+    document.removeEventListener('touchend', this.onArrivalSlideEnd);
+    
+    // Check if slider was completed (85% or more)
+    if (this.arrivalSlideProgress >= 0.85) {
+      this.confirmArrival();
+    } else {
+      // Reset slider if not completed
+      this.resetArrivalSlider();
+    }
+  }
+
+  resetArrivalSlider() {
+    this.arrivalSliderPosition = 8;
+    this.arrivalSlideProgress = 0;
+  }
+
+  startCompleteSlide(event: MouseEvent | TouchEvent) {
+    event.preventDefault();
+    this.isDraggingComplete = true;
+    this.isDraggingArrival = false;
+    
+    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+    this.startX = clientX;
+    this.startSliderPosition = this.completeSliderPosition;
+    
+    // Get slider track width
+    const trackElement = event.target as HTMLElement;
+    const sliderTrack = trackElement.closest('.h-16') as HTMLElement;
+    if (sliderTrack) {
+      this.sliderWidth = sliderTrack.offsetWidth - 64; // Subtract button width (48px) + padding (16px)
+    }
+    
+    // Add event listeners
+    document.addEventListener('mousemove', this.onCompleteSlideMove);
+    document.addEventListener('mouseup', this.onCompleteSlideEnd);
+    document.addEventListener('touchmove', this.onCompleteSlideMove, { passive: false });
+    document.addEventListener('touchend', this.onCompleteSlideEnd);
+  }
+
+  onCompleteSlideMove = (event: MouseEvent | TouchEvent) => {
+    if (!this.isDraggingComplete) return;
+    
+    event.preventDefault();
+    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+    const deltaX = clientX - this.startX;
+    let newPosition = this.startSliderPosition + deltaX;
+    
+    // Constrain position
+    newPosition = Math.max(8, Math.min(this.sliderWidth, newPosition));
+    
+    this.completeSliderPosition = newPosition;
+    this.completeSlideProgress = Math.max(0, Math.min(1, (newPosition - 8) / (this.sliderWidth - 8)));
+  }
+
+  onCompleteSlideEnd = () => {
+    if (!this.isDraggingComplete) return;
+    
+    this.isDraggingComplete = false;
+    
+    // Remove event listeners
+    document.removeEventListener('mousemove', this.onCompleteSlideMove);
+    document.removeEventListener('mouseup', this.onCompleteSlideEnd);
+    document.removeEventListener('touchmove', this.onCompleteSlideMove);
+    document.removeEventListener('touchend', this.onCompleteSlideEnd);
+    
+    // Check if slider was completed (85% or more)
+    if (this.completeSlideProgress >= 0.85) {
+      this.completeJob();
+    } else {
+      // Reset slider if not completed
+      this.resetCompleteSlider();
+    }
+  }
+
+  resetCompleteSlider() {
+    this.completeSliderPosition = 8;
+    this.completeSlideProgress = 0;
   }
 }

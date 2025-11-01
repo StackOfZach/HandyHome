@@ -284,7 +284,7 @@
                 </div>
 
                 <!-- GPS Coordinates -->
-                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <div *ngIf="booking.location" class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                   <h4 class="font-medium text-gray-800 mb-2 flex items-center">
                     <ion-icon
                       name="navigate-outline"
@@ -317,7 +317,7 @@
                 <p class="text-sm text-gray-700">
                   {{ serviceLocationAddress }}
                 </p>
-                <div class="mt-2 pt-2 border-t border-gray-200">
+                <div *ngIf="booking.location" class="mt-2 pt-2 border-t border-gray-200">
                   <p class="text-xs text-gray-500">
                     <ion-icon name="navigate-outline" class="mr-1"></ion-icon>
                     GPS: {{ booking.location.lat | number:'1.6-6' }}°, {{
@@ -334,30 +334,30 @@
                 <div class="flex justify-between">
                   <span class="text-gray-600">Base Price:</span>
                   <span class="font-medium"
-                    >{{ formatPrice(booking.pricing.basePrice) }}</span
+                    >{{ formatPrice(booking.pricing?.basePrice || booking.price || 0) }}</span
                   >
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-600">Platform Fee:</span>
                   <span class="font-medium"
-                    >{{ formatPrice(booking.pricing.serviceCharge) }}</span
+                    >{{ formatPrice(booking.pricing?.serviceCharge || booking.serviceCharge || 0) }}</span
                   >
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-600">Transportation:</span>
-                  <span class="font-medium">₱50</span>
+                  <span class="font-medium">{{ formatPrice(booking.pricing?.transportFee || booking.transportFee || 50) }}</span>
                 </div>
                 <div class="border-t pt-2 mt-2">
                   <div class="flex justify-between font-semibold">
                     <span>Total:</span>
                     <span class="text-green-600"
-                      >{{ formatPrice(booking.pricing.total) }}</span
+                      >{{ formatPrice(booking.pricing?.total || booking.total || 0) }}</span
                     >
                   </div>
                   <div class="flex justify-between text-sm text-gray-600 mt-1">
                     <span>Your Earning:</span>
                     <span class="font-medium text-blue-600"
-                      >{{ formatPrice(booking.pricing.basePrice + 50) }}</span
+                      >{{ formatPrice((booking.pricing?.basePrice || booking.price || 0) + (booking.pricing?.transportFee || booking.transportFee || 50)) }}</span
                     >
                   </div>
                 </div>
@@ -439,18 +439,37 @@
               Slide when you arrive at the location
             </p>
             <!-- Custom Arrived Slider -->
-            <div class="bg-orange-100 rounded-full p-2 relative">
-              <div class="flex items-center justify-between px-4 py-2">
-                <span class="text-sm font-medium text-orange-800"
-                  >Slide to confirm arrival</span
+            <div class="slider-container arrival-slider">
+              <div class="slider-track">
+                <!-- Background Text -->
+                <div class="slider-text">
+                  <span>Slide to confirm arrival</span>
+                </div>
+                
+                <!-- Sliding Button -->
+                <div 
+                  class="slider-button"
+                  [class.dragging]="isDragging && dragType === 'arrived'"
+                  #arrivedSlider
+                  (touchstart)="onSliderStart($event, 'arrived')"
+                  (touchmove)="onSliderMove($event, 'arrived')"
+                  (touchend)="onSliderEnd($event, 'arrived')"
+                  (mousedown)="onSliderStart($event, 'arrived')"
+                  (mousemove)="onSliderMove($event, 'arrived')"
+                  (mouseup)="onSliderEnd($event, 'arrived')"
+                  (mouseleave)="onSliderEnd($event, 'arrived')"
+                  [style.transform]="'translateX(' + arrivedSliderPosition + 'px)'"
                 >
-                <button
-                  (click)="markAsArrived()"
-                  class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                  <ion-icon name="checkmark" class="text-white text-xl"></ion-icon>
+                </div>
+                
+                <!-- Success Feedback -->
+                <div 
+                  *ngIf="arrivedSliderCompleted"
+                  class="success-overlay"
                 >
-                  <ion-icon name="checkmark" class="mr-1"></ion-icon>
-                  Arrived
-                </button>
+                  <ion-icon name="checkmark-done" class="text-white text-2xl"></ion-icon>
+                </div>
               </div>
             </div>
           </div>
@@ -481,18 +500,37 @@
             </div>
             <p class="text-gray-600 mb-4">Slide when you complete the job</p>
             <!-- Custom Completion Slider -->
-            <div class="bg-green-100 rounded-full p-2 relative">
-              <div class="flex items-center justify-between px-4 py-2">
-                <span class="text-sm font-medium text-green-800"
-                  >Slide to complete job</span
+            <div class="slider-container complete-slider">
+              <div class="slider-track">
+                <!-- Background Text -->
+                <div class="slider-text">
+                  <span>Slide to complete job</span>
+                </div>
+                
+                <!-- Sliding Button -->
+                <div 
+                  class="slider-button"
+                  [class.dragging]="isDragging && dragType === 'complete'"
+                  #completeSlider
+                  (touchstart)="onSliderStart($event, 'complete')"
+                  (touchmove)="onSliderMove($event, 'complete')"
+                  (touchend)="onSliderEnd($event, 'complete')"
+                  (mousedown)="onSliderStart($event, 'complete')"
+                  (mousemove)="onSliderMove($event, 'complete')"
+                  (mouseup)="onSliderEnd($event, 'complete')"
+                  (mouseleave)="onSliderEnd($event, 'complete')"
+                  [style.transform]="'translateX(' + completeSliderPosition + 'px)'"
                 >
-                <button
-                  (click)="completeJob()"
-                  class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                  <ion-icon name="checkmark-done" class="text-white text-xl"></ion-icon>
+                </div>
+                
+                <!-- Success Feedback -->
+                <div 
+                  *ngIf="completeSliderCompleted"
+                  class="success-overlay"
                 >
-                  <ion-icon name="checkmark-done" class="mr-1"></ion-icon>
-                  Complete
-                </button>
+                  <ion-icon name="checkmark-done-outline" class="text-white text-2xl"></ion-icon>
+                </div>
               </div>
             </div>
           </div>

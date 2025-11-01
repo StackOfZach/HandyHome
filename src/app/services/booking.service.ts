@@ -17,6 +17,7 @@ import {
 } from '@angular/fire/firestore';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { WorkerAvailabilityService } from './worker-availability.service';
 
 export interface BookingLocation {
   address: string;
@@ -67,6 +68,7 @@ export interface BookingData {
   status:
     | 'pending'
     | 'accepted'
+    | 'rejected'
     | 'on-the-way'
     | 'in-progress'
     | 'completed'
@@ -127,7 +129,10 @@ export interface NewBookingData {
 export class BookingService {
   private bookingsCollection: CollectionReference<DocumentData>;
 
-  constructor(private firestore: Firestore) {
+  constructor(
+    private firestore: Firestore,
+    private workerAvailabilityService: WorkerAvailabilityService
+  ) {
     this.bookingsCollection = collection(this.firestore, 'bookings');
   }
 
@@ -257,6 +262,26 @@ export class BookingService {
   ): Promise<void> {
     try {
       const bookingRef = doc(this.firestore, 'bookings', bookingId);
+      
+      // If cancelling or rejecting, release worker's time slot
+      if (status === 'cancelled' || status === 'rejected') {
+        const bookingDoc = await getDoc(bookingRef);
+        if (bookingDoc.exists()) {
+          const bookingData = bookingDoc.data();
+          if (bookingData['workerId'] && bookingData['scheduleDate']) {
+            const dateString = this.workerAvailabilityService.parseScheduleDate(bookingData['scheduleDate']);
+            if (dateString) {
+              await this.workerAvailabilityService.releaseWorkerTimeSlot(
+                bookingData['workerId'],
+                dateString,
+                bookingId
+              );
+              console.log(`Released time slot for worker ${bookingData['workerId']} for booking ${bookingId}`);
+            }
+          }
+        }
+      }
+
       const updateData: any = {
         status,
         updatedAt: new Date(),
@@ -646,7 +671,36 @@ export class BookingService {
    */
   async acceptBooking(bookingId: string, workerId: string): Promise<void> {
     try {
+      // First, get the booking data to extract schedule information
       const bookingRef = doc(this.firestore, 'bookings', bookingId);
+      const bookingDoc = await getDoc(bookingRef);
+      
+      if (!bookingDoc.exists()) {
+        throw new Error('Booking not found');
+      }
+
+      const bookingData = bookingDoc.data();
+      
+      // Book the worker's time slot if scheduling info is available
+      if (bookingData['scheduleDate'] && bookingData['scheduleTime']) {
+        const dateString = this.workerAvailabilityService.parseScheduleDate(bookingData['scheduleDate']);
+        if (dateString) {
+          const duration = 1; // Default 1 hour, could be made dynamic based on service type
+          const booked = await this.workerAvailabilityService.bookWorkerTimeSlot(
+            workerId,
+            dateString,
+            bookingData['scheduleTime'],
+            duration,
+            bookingId
+          );
+          
+          if (!booked) {
+            throw new Error('Failed to book worker time slot - worker may have a conflicting booking');
+          }
+        }
+      }
+
+      // Update booking status
       await updateDoc(bookingRef, {
         status: 'accepted',
         workerId: workerId,
@@ -660,6 +714,8 @@ export class BookingService {
         currentJobId: bookingId,
         updatedAt: Timestamp.now(),
       });
+
+      console.log(`Booking ${bookingId} accepted by worker ${workerId} and time slot booked`);
     } catch (error) {
       console.error('Error accepting booking:', error);
       throw error;

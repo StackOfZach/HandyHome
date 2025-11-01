@@ -185,7 +185,11 @@
     <div *ngIf="!isLoading && filteredBookings.length > 0" class="space-y-3">
       <div
         *ngFor="let booking of filteredBookings; trackBy: trackByBookingId"
-        class="bg-white rounded-2xl shadow-lg p-5 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card hover:shadow-xl hover:scale-[1.01] transition-all duration-300 cursor-pointer"
+        class="bg-white rounded-2xl shadow-lg p-5 backdrop-blur-sm border border-white/20 relative overflow-hidden enhanced-card transition-all duration-300"
+        [ngClass]="{
+          'hover:shadow-xl hover:scale-[1.01] cursor-pointer': booking.status !== 'rejected' && booking.status !== 'declined',
+          'opacity-75 cursor-not-allowed': booking.status === 'rejected' || booking.status === 'declined'
+        }"
         (click)="viewBookingDetails(booking)"
       >
         <!-- Decorative gradient overlay -->
@@ -216,7 +220,8 @@
                  'bg-gradient-to-r from-handy-yellow-500 to-handy-yellow-600 text-white': booking.status === 'pending',
                  'bg-gradient-to-r from-emerald-500 to-green-600 text-white': booking.status === 'accepted',
                  'bg-gradient-to-r from-handy-blue-500 to-handy-blue-600 text-white': booking.status === 'completed',
-                 'bg-gradient-to-r from-red-500 to-red-600 text-white': booking.status === 'cancelled'
+                 'bg-gradient-to-r from-red-500 to-red-600 text-white': booking.status === 'cancelled',
+                 'bg-gradient-to-r from-orange-500 to-red-500 text-white': booking.status === 'rejected' || booking.status === 'declined'
                }"
           >
             <div class="flex items-center space-x-1">
@@ -305,12 +310,26 @@
           <span class="text-gray-500 text-xs font-medium">
             {{ getFormattedDate(booking.createdAt, 'short') }}
           </span>
-          <div class="flex items-center space-x-2 text-handy-blue-600">
+          <!-- Hide view details button for rejected/declined bookings -->
+          <div 
+            *ngIf="booking.status !== 'rejected' && booking.status !== 'declined'" 
+            class="flex items-center space-x-2 text-handy-blue-600"
+          >
             <span class="font-bold text-xs">
               {{ booking.status === 'pending' || booking.status === 'accepted' ?
               'View Progress' : 'View Details' }}
             </span>
             <ion-icon name="chevron-forward" class="text-sm"></ion-icon>
+          </div>
+          <!-- Show rejection message for rejected/declined bookings -->
+          <div 
+            *ngIf="booking.status === 'rejected' || booking.status === 'declined'" 
+            class="flex items-center space-x-2 text-red-500"
+          >
+            <span class="font-medium text-xs">
+              {{ booking.status === 'rejected' ? 'Worker Rejected' : 'Worker Declined' }}
+            </span>
+            <ion-icon name="close-circle" class="text-sm"></ion-icon>
           </div>
         </div>
       </div>

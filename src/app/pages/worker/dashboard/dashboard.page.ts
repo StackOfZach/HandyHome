@@ -18,6 +18,7 @@ import {
   LocationTrackingStatus,
   LocationData,
 } from '../../../services/location-tracking.service';
+import { WorkerAvailabilityService } from '../../../services/worker-availability.service';
 import {
   AlertController,
   ToastController,
@@ -95,6 +96,10 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   workerProfile: WorkerProfile | null = null;
   isAvailable: boolean = true;
 
+  // Worker availability management
+  isOnline: boolean = true;
+  isAvailableForQuickBookings: boolean = true;
+
   // Notification data
   notifications: (WorkerNotification & { bookingType?: string })[] = [];
   unreadCount: number = 0;
@@ -152,7 +157,8 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     private locationTrackingService: LocationTrackingService,
     private alertController: AlertController,
     private toastController: ToastController,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private workerAvailabilityService: WorkerAvailabilityService
   ) {}
 
   async ngOnInit() {
@@ -163,6 +169,7 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
         if (profile) {
           // Ensure workerProfile is loaded before setting listeners dependent on it
           await this.loadWorkerData();
+          await this.loadWorkerAvailabilityStatus();
           this.setupNotificationListeners();
           this.setupJobListeners();
           this.setupLocationTracking();
@@ -310,7 +317,13 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.dashboardService
         .loadActiveQuickBookings(this.userProfile.uid)
-        .subscribe((quickBookings) => {
+        .subscribe(async (quickBookings) => {
+          // Only show notifications if worker is online and available for quick bookings
+          if (!this.isOnline || !this.isAvailableForQuickBookings) {
+            console.log('Worker is offline or unavailable for quick bookings');
+            return;
+          }
+
           // Check for new quick bookings that need worker assignment
           const availableQuickBookings = quickBookings.filter(
             (booking) => booking.status === 'pending'
@@ -318,7 +331,14 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
           if (availableQuickBookings.length > 0) {
             const latestBooking = availableQuickBookings[0];
-            this.showQuickBookingNotification(latestBooking);
+            
+            // Check if worker has availability for today (quick bookings are usually immediate)
+            const hasAvailability = await this.checkTodayAvailability();
+            if (hasAvailability) {
+              this.showQuickBookingNotification(latestBooking);
+            } else {
+              console.log('Worker has conflicting bookings, not showing quick booking notification');
+            }
           }
         })
     );
@@ -1225,16 +1245,14 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   }
 
   async toggleAvailability() {
-    this.isAvailable = !this.isAvailable;
-
-    const message = this.isAvailable
-      ? 'You are now available for jobs'
-      : 'You are now offline';
-
-    this.showToast(message, this.isAvailable ? 'success' : 'medium');
+    // Use the new online/offline system
+    await this.toggleOnlineStatus();
+    
+    // Keep the old isAvailable property in sync for backward compatibility
+    this.isAvailable = this.isOnline;
 
     // Handle location tracking based on availability
-    if (this.isAvailable) {
+    if (this.isOnline) {
       // Start location tracking when going online
       await this.startLocationTracking();
     } else {
@@ -1252,8 +1270,6 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
         }
       }
     }
-
-    // TODO: Update availability status in Firestore
   }
 
   getInitials(name: string): string {
@@ -1382,6 +1398,29 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
   navigateToJobHistory() {
     this.router.navigate(['/pages/worker/job-history']);
+  }
+
+  navigateToBookingHistory() {
+    console.log('🔍 Navigating to Booking History...');
+    console.log('- Current user:', this.userProfile?.uid);
+    console.log('- User role:', this.userProfile?.role);
+
+    if (!this.userProfile?.uid) {
+      console.warn('⚠️ No user profile found, cannot navigate');
+      this.showToast('Please log in to view booking history', 'danger');
+      return;
+    }
+
+    console.log('✅ Navigating to /pages/worker/booking-history');
+    this.router
+      .navigate(['/pages/worker/booking-history'])
+      .then((success) => {
+        console.log('Navigation result:', success);
+      })
+      .catch((error) => {
+        console.error('Navigation error:', error);
+        this.showToast('Navigation failed. Please try again.', 'danger');
+      });
   }
 
   navigateToQuickBookingHistory() {
@@ -1664,5 +1703,117 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     }
 
     return 'Not scheduled';
+  }
+
+  /**
+   * Toggle worker online/offline status
+   */
+  async toggleOnlineStatus() {
+    if (!this.userProfile?.uid) return;
+
+    try {
+      this.isOnline = !this.isOnline;
+      await this.workerAvailabilityService.setWorkerOnlineStatus(
+        this.userProfile.uid,
+        this.isOnline,
+        this.isAvailableForQuickBookings
+      );
+
+      const message = this.isOnline ? 'You are now online and available for bookings' : 'You are now offline and unavailable for bookings';
+      const toast = await this.toastController.create({
+        message,
+        duration: 2000,
+        position: 'bottom',
+        color: this.isOnline ? 'success' : 'warning'
+      });
+      toast.present();
+
+      // If going offline, stop quick booking monitoring
+      if (!this.isOnline) {
+        this.isAvailableForQuickBookings = false;
+        this.quickBookingNotification = null;
+        this.showQuickNotification = false;
+      }
+    } catch (error) {
+      console.error('Error updating online status:', error);
+      this.isOnline = !this.isOnline; // Revert on error
+    }
+  }
+
+  /**
+   * Toggle availability for quick bookings (only when online)
+   */
+  async toggleQuickBookingAvailability() {
+    if (!this.userProfile?.uid || !this.isOnline) return;
+
+    try {
+      this.isAvailableForQuickBookings = !this.isAvailableForQuickBookings;
+      await this.workerAvailabilityService.setWorkerOnlineStatus(
+        this.userProfile.uid,
+        this.isOnline,
+        this.isAvailableForQuickBookings
+      );
+
+      const message = this.isAvailableForQuickBookings 
+        ? 'You will now receive quick booking notifications' 
+        : 'Quick booking notifications disabled';
+      
+      const toast = await this.toastController.create({
+        message,
+        duration: 2000,
+        position: 'bottom',
+        color: 'primary'
+      });
+      toast.present();
+
+      // If disabling quick bookings, hide any current notification
+      if (!this.isAvailableForQuickBookings) {
+        this.quickBookingNotification = null;
+        this.showQuickNotification = false;
+      }
+    } catch (error) {
+      console.error('Error updating quick booking availability:', error);
+      this.isAvailableForQuickBookings = !this.isAvailableForQuickBookings; // Revert on error
+    }
+  }
+
+  /**
+   * Load worker's current availability status
+   */
+  async loadWorkerAvailabilityStatus() {
+    if (!this.userProfile?.uid) return;
+
+    try {
+      const status = await this.workerAvailabilityService.getWorkerOnlineStatus(this.userProfile.uid);
+      if (status) {
+        this.isOnline = status.isOnline;
+        this.isAvailableForQuickBookings = status.isAvailableForQuickBookings;
+      }
+    } catch (error) {
+      console.error('Error loading worker availability status:', error);
+    }
+  }
+
+  /**
+   * Check if worker has any conflicting bookings for today
+   */
+  async checkTodayAvailability(): Promise<boolean> {
+    if (!this.userProfile?.uid) return false;
+
+    const today = this.workerAvailabilityService.formatDateToString(new Date());
+    const currentTime = new Date().toTimeString().slice(0, 5); // Get HH:mm format
+
+    try {
+      const availabilityCheck = await this.workerAvailabilityService.isWorkerAvailable(
+        this.userProfile.uid,
+        today,
+        currentTime,
+        1
+      );
+      return !availabilityCheck.hasConflict;
+    } catch (error) {
+      console.error('Error checking today\'s availability:', error);
+      return false;
+    }
   }
 }

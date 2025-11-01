@@ -612,35 +612,64 @@
               <p class="text-gray-600 text-sm">Let the client know you're here</p>
             </div>
             
-            <!-- Professional Slide-to-Confirm Component -->
+            <!-- iPhone-style Slide-to-Confirm Component -->
             <div class="relative">
               <!-- Track -->
-              <div class="h-16 bg-gradient-to-r from-orange-100 to-red-100 rounded-full border-2 border-orange-200 relative overflow-hidden shadow-inner">
-                <!-- Background text -->
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <span class="text-orange-600 font-bold text-lg tracking-wider">TAP TO CONFIRM ARRIVAL</span>
+              <div 
+                #arrivalSliderTrack
+                class="h-16 bg-gradient-to-r from-orange-100 to-red-100 rounded-full border-2 border-orange-200 relative overflow-hidden shadow-inner cursor-pointer select-none"
+                (mousedown)="startArrivalSlide($event)"
+                (touchstart)="startArrivalSlide($event)"
+              >
+                <!-- Background text that fades as slider moves -->
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span 
+                    class="text-orange-600 font-bold text-base tracking-wider transition-opacity duration-300"
+                    [style.opacity]="arrivalSlideProgress < 0.3 ? 1 : (1 - (arrivalSlideProgress - 0.3) / 0.7)"
+                  >
+                    SLIDE TO CONFIRM ARRIVAL
+                  </span>
                 </div>
+                
+                <!-- Progress background that fills as user slides -->
+                <div 
+                  class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-orange-400 to-red-400 rounded-full transition-all duration-200 ease-out"
+                  [style.width.%]="arrivalSlideProgress * 100"
+                ></div>
                 
                 <!-- Sliding button -->
-                <div class="absolute left-2 top-2 bottom-2">
-                  <button 
-                    class="h-12 w-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full shadow-lg flex items-center justify-center text-white font-bold transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95"
-                    (click)="confirmArrival()"
+                <div 
+                  class="absolute top-2 bottom-2 transition-all duration-200 ease-out z-10"
+                  [style.left.px]="arrivalSliderPosition"
+                >
+                  <div 
+                    class="h-12 w-12 bg-white rounded-full shadow-xl flex items-center justify-center cursor-grab active:cursor-grabbing border-2 border-orange-300 transition-all duration-200"
+                    [class.scale-110]="arrivalSlideProgress > 0.8"
                   >
-                    <ion-icon name="chevron-forward" class="text-xl"></ion-icon>
-                  </button>
+                    <ion-icon 
+                      name="chevron-forward" 
+                      class="text-xl transition-colors duration-200"
+                      [class.text-orange-500]="arrivalSlideProgress < 0.5"
+                      [class.text-green-500]="arrivalSlideProgress >= 0.5"
+                    ></ion-icon>
+                  </div>
                 </div>
                 
-                <!-- Arrow indicators -->
-                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 flex space-x-1">
-                  <div class="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-                  <div class="w-2 h-2 bg-orange-400 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
-                  <div class="w-2 h-2 bg-orange-400 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                <!-- Success checkmark when slider is at the end -->
+                <div 
+                  *ngIf="arrivalSlideProgress > 0.85"
+                  class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white animate-bounce"
+                >
+                  <ion-icon name="checkmark-circle" class="text-2xl"></ion-icon>
                 </div>
               </div>
               
               <!-- Helper text -->
-              <p class="text-center text-xs text-gray-500 mt-2">Tap the button to confirm your arrival</p>
+              <p class="text-center text-xs text-gray-500 mt-2">
+                <span *ngIf="arrivalSlideProgress < 0.1">Slide right to confirm your arrival</span>
+                <span *ngIf="arrivalSlideProgress >= 0.1 && arrivalSlideProgress < 0.85">Keep sliding...</span>
+                <span *ngIf="arrivalSlideProgress >= 0.85" class="text-green-600 font-bold">Release to confirm!</span>
+              </p>
             </div>
           </div>
         </div>
@@ -681,35 +710,64 @@
               <p class="text-gray-600 text-sm">This will prompt you to take a completion photo</p>
             </div>
             
-            <!-- Professional Slide-to-Complete Component -->
+            <!-- iPhone-style Slide-to-Complete Component -->
             <div class="relative">
               <!-- Track -->
-              <div class="h-16 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full border-2 border-purple-200 relative overflow-hidden shadow-inner">
-                <!-- Background text -->
-                <div class="absolute inset-0 flex items-center justify-center">
-                  <span class="text-purple-600 font-bold text-lg tracking-wider">TAP TO COMPLETE JOB</span>
+              <div 
+                #completeSliderTrack
+                class="h-16 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full border-2 border-purple-200 relative overflow-hidden shadow-inner cursor-pointer select-none"
+                (mousedown)="startCompleteSlide($event)"
+                (touchstart)="startCompleteSlide($event)"
+              >
+                <!-- Background text that fades as slider moves -->
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span 
+                    class="text-purple-600 font-bold text-base tracking-wider transition-opacity duration-300"
+                    [style.opacity]="completeSlideProgress < 0.3 ? 1 : (1 - (completeSlideProgress - 0.3) / 0.7)"
+                  >
+                    SLIDE TO COMPLETE JOB
+                  </span>
                 </div>
+                
+                <!-- Progress background that fills as user slides -->
+                <div 
+                  class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full transition-all duration-200 ease-out"
+                  [style.width.%]="completeSlideProgress * 100"
+                ></div>
                 
                 <!-- Sliding button -->
-                <div class="absolute left-2 top-2 bottom-2">
-                  <button 
-                    class="h-12 w-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full shadow-lg flex items-center justify-center text-white font-bold transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95"
-                    (click)="completeJob()"
+                <div 
+                  class="absolute top-2 bottom-2 transition-all duration-200 ease-out z-10"
+                  [style.left.px]="completeSliderPosition"
+                >
+                  <div 
+                    class="h-12 w-12 bg-white rounded-full shadow-xl flex items-center justify-center cursor-grab active:cursor-grabbing border-2 border-purple-300 transition-all duration-200"
+                    [class.scale-110]="completeSlideProgress > 0.8"
                   >
-                    <ion-icon name="checkmark" class="text-xl"></ion-icon>
-                  </button>
+                    <ion-icon 
+                      name="checkmark" 
+                      class="text-xl transition-colors duration-200"
+                      [class.text-purple-500]="completeSlideProgress < 0.5"
+                      [class.text-green-500]="completeSlideProgress >= 0.5"
+                    ></ion-icon>
+                  </div>
                 </div>
                 
-                <!-- Arrow indicators -->
-                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 flex space-x-1">
-                  <div class="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                  <div class="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
-                  <div class="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                <!-- Success checkmark when slider is at the end -->
+                <div 
+                  *ngIf="completeSlideProgress > 0.85"
+                  class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white animate-bounce"
+                >
+                  <ion-icon name="checkmark-done-circle" class="text-2xl"></ion-icon>
                 </div>
               </div>
               
               <!-- Helper text -->
-              <p class="text-center text-xs text-gray-500 mt-2">Tap the button to mark job as complete</p>
+              <p class="text-center text-xs text-gray-500 mt-2">
+                <span *ngIf="completeSlideProgress < 0.1">Slide right to complete the job</span>
+                <span *ngIf="completeSlideProgress >= 0.1 && completeSlideProgress < 0.85">Keep sliding...</span>
+                <span *ngIf="completeSlideProgress >= 0.85" class="text-green-600 font-bold">Release to complete!</span>
+              </p>
             </div>
           </div>
         </div>

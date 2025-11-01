@@ -21,7 +21,7 @@ interface BookingHistoryItem {
   priceRange: number;
   minBudget?: number;
   maxBudget?: number;
-  status: 'draft' | 'pending' | 'accepted' | 'completed' | 'cancelled';
+  status: 'draft' | 'pending' | 'accepted' | 'completed' | 'cancelled' | 'rejected' | 'declined';
   createdAt: any;
   updatedAt: any;
   calculatedPayment?: {
@@ -56,6 +56,8 @@ export class BookingHistoryPage implements OnInit {
     { value: 'accepted', label: 'Active' },
     { value: 'completed', label: 'Completed' },
     { value: 'cancelled', label: 'Cancelled' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'declined', label: 'Declined' },
   ];
 
   constructor(
@@ -149,6 +151,11 @@ export class BookingHistoryPage implements OnInit {
   }
 
   viewBookingDetails(booking: BookingHistoryItem) {
+    // Don't allow viewing details for rejected/declined bookings
+    if (booking.status === 'rejected' || booking.status === 'declined') {
+      return; // Do nothing - no navigation or details view
+    }
+
     if (booking.status === 'pending' || booking.status === 'accepted') {
       // Navigate to booking progress page for active bookings
       this.router.navigate(['/client/booking-progress', booking.id]);
@@ -175,6 +182,9 @@ export class BookingHistoryPage implements OnInit {
         return 'primary';
       case 'cancelled':
         return 'danger';
+      case 'rejected':
+      case 'declined':
+        return 'danger';
       default:
         return 'medium';
     }
@@ -192,6 +202,9 @@ export class BookingHistoryPage implements OnInit {
         return 'flaticon-completed';
       case 'cancelled':
         return 'flaticon-close-circle';
+      case 'rejected':
+      case 'declined':
+        return 'close-circle-outline';
       default:
         return 'flaticon-help-circle';
     }

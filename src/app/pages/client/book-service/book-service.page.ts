@@ -50,13 +50,18 @@ export class BookServicePage implements OnInit {
   maxDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1 year from now
 
   // Location properties
-  locationType: 'current' | 'custom' | 'saved' | '' = '';
+  locationType: 'current' | 'custom' | 'saved' | 'map' | '' = '';
   currentLocationAddress = '';
   customAddress = '';
   city = '';
   zipCode = '';
   locationError = '';
   currentCoordinates: { lat: number; lng: number } | null = null;
+
+  // Map picker properties
+  mapPickedLocation: { lat: number; lng: number } | null = null;
+  mapSelectedAddress = '';
+  loadingMapAddress = false;
 
   // Saved locations properties
   savedLocations: UserLocation[] = [];
@@ -154,7 +159,7 @@ export class BookServicePage implements OnInit {
   }
 
   // Location Methods
-  selectLocationType(type: 'current' | 'custom' | 'saved') {
+  selectLocationType(type: 'current' | 'custom' | 'saved' | 'map') {
     this.locationType = type;
     this.locationError = '';
 
@@ -163,18 +168,33 @@ export class BookServicePage implements OnInit {
       this.city = '';
       this.zipCode = '';
       this.selectedSavedLocationId = '';
+      this.mapPickedLocation = null;
+      this.mapSelectedAddress = '';
       this.getCurrentLocation();
     } else if (type === 'custom') {
       this.currentLocationAddress = '';
       this.currentCoordinates = null;
       this.selectedSavedLocationId = '';
+      this.mapPickedLocation = null;
+      this.mapSelectedAddress = '';
     } else if (type === 'saved') {
       this.customAddress = '';
       this.city = '';
       this.zipCode = '';
       this.currentLocationAddress = '';
       this.currentCoordinates = null;
+      this.mapPickedLocation = null;
+      this.mapSelectedAddress = '';
       this.loadSavedLocations();
+    } else if (type === 'map') {
+      this.customAddress = '';
+      this.city = '';
+      this.zipCode = '';
+      this.currentLocationAddress = '';
+      this.currentCoordinates = null;
+      this.selectedSavedLocationId = '';
+      // Initialize map with current location if available
+      this.initializeMapLocation();
     }
   }
 
@@ -234,8 +254,73 @@ export class BookServicePage implements OnInit {
       return !!this.customAddress.trim();
     } else if (this.locationType === 'saved') {
       return !!this.selectedSavedLocationId;
+    } else if (this.locationType === 'map') {
+      return !!this.mapPickedLocation;
     }
     return false;
+  }
+
+  // Map-related methods
+  async initializeMapLocation() {
+    // Try to get current location for map initialization
+    try {
+      const coordinates = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,
+      });
+
+      this.mapPickedLocation = {
+        lat: coordinates.coords.latitude,
+        lng: coordinates.coords.longitude,
+      };
+
+      // Get address for the initial location
+      await this.getAddressFromCoordinates(this.mapPickedLocation);
+    } catch (error) {
+      console.warn('Could not get current location for map:', error);
+      // Use default location (Manila, Philippines)
+      this.mapPickedLocation = { lat: 14.5995, lng: 120.9842 };
+      await this.getAddressFromCoordinates(this.mapPickedLocation);
+    }
+  }
+
+  async onMapLocationSelected(location: { lat: number; lng: number }) {
+    this.mapPickedLocation = location;
+    console.log('Map location selected:', location);
+    
+    // Get address from coordinates using Nominatim
+    await this.getAddressFromCoordinates(location);
+  }
+
+  async getAddressFromCoordinates(location: { lat: number; lng: number }) {
+    try {
+      this.loadingMapAddress = true;
+      
+      // Use Nominatim for reverse geocoding
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}&zoom=16&addressdetails=1`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        this.mapSelectedAddress = data.display_name || `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
+        console.log('Address retrieved:', this.mapSelectedAddress);
+      } else {
+        this.mapSelectedAddress = `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
+      }
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+      this.mapSelectedAddress = `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
+    } finally {
+      this.loadingMapAddress = false;
+    }
+  }
+
+  refreshMapLocation() {
+    if (this.mapPickedLocation) {
+      this.getAddressFromCoordinates(this.mapPickedLocation);
+    }
   }
 
   async loadSavedLocations() {
@@ -389,6 +474,12 @@ export class BookServicePage implements OnInit {
             savedLocationId: selectedLocation.id,
           };
         }
+      } else if (this.locationType === 'map' && this.mapPickedLocation) {
+        locationData = {
+          locationType: 'map',
+          coordinates: this.mapPickedLocation,
+          address: this.mapSelectedAddress,
+        };
       }
 
       // Extract date and time from selectedDateTime
