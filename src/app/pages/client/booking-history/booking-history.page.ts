@@ -156,13 +156,9 @@ export class BookingHistoryPage implements OnInit {
       return; // Do nothing - no navigation or details view
     }
 
-    if (booking.status === 'pending' || booking.status === 'accepted') {
-      // Navigate to booking progress page for active bookings
-      this.router.navigate(['/client/booking-progress', booking.id]);
-    } else {
-      // For completed/cancelled bookings, you could navigate to a different details page
-      console.log('View details for booking:', booking.id);
-    }
+    // Navigate to booking progress page for all bookings (pending, accepted, completed, cancelled)
+    console.log('Navigating to booking progress for booking:', booking.id, 'Status:', booking.status);
+    this.router.navigate(['/client/booking-progress', booking.id]);
   }
 
   async refreshBookings(event: any) {
