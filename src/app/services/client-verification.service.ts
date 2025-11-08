@@ -236,4 +236,65 @@ export class ClientVerificationService {
       throw error;
     }
   }
+
+  /**
+   * Update profile image for existing verification
+   */
+  async updateProfileImage(userId: string, profileImageBase64: string): Promise<void> {
+    try {
+      const q = query(
+        collection(this.firestore, 'client-verifications'),
+        where('userId', '==', userId)
+      );
+
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        await updateDoc(doc.ref, {
+          profileImageBase64,
+          updatedAt: new Date()
+        });
+      }
+    } catch (error) {
+      console.error('Error updating profile image:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create minimal verification record for profile image only
+   */
+  async createMinimalVerificationForProfileImage(
+    userId: string,
+    profileImageBase64: string
+  ): Promise<void> {
+    try {
+      // Get user data first
+      const userRef = doc(this.firestore, 'users', userId);
+      const userDoc = await getDoc(userRef);
+      const userData = userDoc.exists() ? userDoc.data() : {};
+
+      const verificationDoc = {
+        userId,
+        userEmail: userData['email'] || '',
+        userName: userData['fullName'] || '',
+        idType: '',
+        idNumber: '',
+        address: '',
+        birthDate: '',
+        idImageBase64: '',
+        profileImageBase64,
+        status: 'pending' as const,
+        submittedAt: new Date(),
+      };
+
+      await addDoc(
+        collection(this.firestore, 'client-verifications'),
+        verificationDoc
+      );
+    } catch (error) {
+      console.error('Error creating minimal verification:', error);
+      throw error;
+    }
+  }
 }

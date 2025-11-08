@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -26,6 +26,7 @@ import {
 } from '@angular/fire/firestore';
 import { Auth, sendPasswordResetEmail } from '@angular/fire/auth';
 import { ClientVerificationService } from '../../services/client-verification.service';
+import { ImageService } from '../../services/image.service';
 import { MapPickerComponent } from '../../components/map-picker/map-picker.component';
 
 export interface Address {
@@ -72,6 +73,8 @@ export interface ExtendedUserProfile extends UserProfile {
 })
 export class ProfilePage implements OnInit {
   @ViewChild('addressModal', { static: false }) addressModal!: IonModal;
+  @ViewChild('imageUploadModal', { static: false }) imageUploadModal!: IonModal;
+  @ViewChild('fileInput', { static: false }) fileInput!: ElementRef;
 
   userProfile: ExtendedUserProfile | null = null;
   currentUser: any = null;
@@ -94,10 +97,11 @@ export class ProfilePage implements OnInit {
   isAddingAddress = false;
   profileImageBase64: string | null = null;
   
-  // Map-related properties
-  selectedLocation: { lat: number; lng: number } | null = null;
-  isLoadingAddress = false;
-  addressFromCoordinates = '';
+  // Image upload properties
+  isImageUploadModalOpen = false;
+  isUploadingImage = false;
+  selectedImagePreview: string | null = null;
+  selectedImageInfo: any = null;
 
   // Form data
   profileForm = {
@@ -114,8 +118,6 @@ export class ProfilePage implements OnInit {
     phoneNumber: '',
     fullAddress: '',
     isDefault: false,
-    latitude: undefined,
-    longitude: undefined,
     createdAt: new Date(),
   };
 
@@ -149,7 +151,8 @@ export class ProfilePage implements OnInit {
     private auth: Auth,
     private alertController: AlertController,
     private toastController: ToastController,
-    private clientVerificationService: ClientVerificationService
+    private clientVerificationService: ClientVerificationService,
+    private imageService: ImageService
   ) {}
 
   ngOnInit() {
@@ -326,23 +329,13 @@ export class ProfilePage implements OnInit {
       phoneNumber: this.userProfile?.phone || '',
       fullAddress: '',
       isDefault: this.addresses.length === 0,
-      latitude: undefined,
-      longitude: undefined,
       createdAt: new Date(),
     };
-    this.selectedLocation = null;
-    this.addressFromCoordinates = '';
     this.addressModal.present();
   }
 
   async saveAddress() {
     if (!this.currentUser?.uid) return;
-
-    // Validate required fields
-    if (!this.newAddress.contactPerson || !this.newAddress.phoneNumber || !this.newAddress.fullAddress) {
-      this.showToast('Please fill in all required fields', 'warning');
-      return;
-    }
 
     try {
       const userRef = doc(this.firestore, 'users', this.currentUser.uid);
@@ -361,23 +354,22 @@ export class ProfilePage implements OnInit {
         }
 
         // Create new location object matching UserLocation interface
-        const newLocation: any = {
+        const newLocation = {
           id: `location_${Date.now()}`,
           contactPerson: this.newAddress.contactPerson,
           phoneNumber: this.newAddress.phoneNumber,
           fullAddress: this.newAddress.fullAddress,
+          coordinates:
+            this.newAddress.latitude && this.newAddress.longitude
+              ? {
+                  latitude: this.newAddress.latitude,
+                  longitude: this.newAddress.longitude,
+                }
+              : undefined,
           isDefault: this.newAddress.isDefault,
           createdAt: new Date(),
           label: this.newAddress.label, // Add label for easier identification
         };
-
-        // Only add coordinates if they exist (avoid undefined values)
-        if (this.selectedLocation) {
-          newLocation.coordinates = {
-            latitude: this.selectedLocation.lat,
-            longitude: this.selectedLocation.lng,
-          };
-        }
 
         // Add new location to the array
         savedLocations.push(newLocation);
@@ -389,7 +381,6 @@ export class ProfilePage implements OnInit {
 
         await this.loadAddresses();
         this.addressModal.dismiss();
-        this.isAddingAddress = false;
         this.showToast('Address added successfully!', 'success');
       }
     } catch (error) {
@@ -580,51 +571,240 @@ export class ProfilePage implements OnInit {
     return `HH${this.userProfile.uid.substring(0, 8).toUpperCase()}`;
   }
 
-  // Map location selection handler
-  async onLocationSelected(location: { lat: number; lng: number }) {
-    this.selectedLocation = location;
-    this.isLoadingAddress = true;
-    
+  // ===== IMAGE UPLOAD METHODS =====
+
+  /**
+   * Open image upload options modal
+   */
+  openImageUploadOptions() {
+    this.isImageUploadModalOpen = true;
+    this.selectedImagePreview = null;
+    this.selectedImageInfo = null;
+  }
+
+  /**
+   * Close image upload modal
+   */
+  closeImageUploadModal() {
+    this.isImageUploadModalOpen = false;
+    this.selectedImagePreview = null;
+    this.selectedImageInfo = null;
+  }
+
+  /**
+   * Capture image from camera
+   */
+  async captureImageFromCamera() {
     try {
-      // Convert coordinates to address using Nominatim
-      const address = await this.reverseGeocode(location.lat, location.lng);
-      this.addressFromCoordinates = address;
-      
-      // Auto-fill the full address field if it's empty
-      if (!this.newAddress.fullAddress.trim()) {
-        this.newAddress.fullAddress = address;
-      }
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'user'; // Use front camera for selfies
+
+      input.onchange = async (event: any) => {
+        const file = event.target.files[0];
+        if (file) {
+          await this.processSelectedImage(file);
+        }
+      };
+
+      input.click();
     } catch (error) {
-      console.error('Error getting address from coordinates:', error);
-      this.addressFromCoordinates = `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
-    } finally {
-      this.isLoadingAddress = false;
+      console.error('Error capturing image from camera:', error);
+      this.showToast('Failed to access camera. Please try again.', 'danger');
     }
   }
 
-  // Reverse geocoding using Nominatim API
-  async reverseGeocode(lat: number, lng: number): Promise<string> {
+  /**
+   * Select image from gallery
+   */
+  selectImageFromGallery() {
+    this.fileInput.nativeElement.click();
+  }
+
+  /**
+   * Handle file selection from input
+   */
+  async onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      await this.processSelectedImage(file);
+    }
+    // Reset the input
+    event.target.value = '';
+  }
+
+  /**
+   * Process selected image file
+   */
+  private async processSelectedImage(file: File) {
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`
+      // Validate file
+      const validation = this.imageService.validateImageFile(file);
+      if (!validation.valid) {
+        this.showToast(validation.error!, 'danger');
+        return;
+      }
+
+      this.isUploadingImage = true;
+
+      // Compress and optimize the image
+      const compressedBase64 = await this.imageService.compressImage(
+        file,
+        800, // max width
+        800, // max height  
+        0.8  // quality
       );
 
-      if (response.ok) {
-        const data = await response.json();
-        return data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      // Get image size info
+      this.selectedImageInfo = this.imageService.getImageSizeInfo(compressedBase64);
+
+      // Check if image is too large for Firestore (1MB limit)
+      if (this.selectedImageInfo.estimatedFirestoreSize > 800000) {
+        // Try with more compression
+        const moreCompressed = await this.imageService.compressImage(
+          file,
+          600,
+          600,
+          0.6
+        );
+        this.selectedImageInfo = this.imageService.getImageSizeInfo(moreCompressed);
+        this.selectedImagePreview = moreCompressed;
       } else {
-        return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        this.selectedImagePreview = compressedBase64;
       }
+
+      this.isUploadingImage = false;
+      this.showToast('Image processed successfully', 'success');
     } catch (error) {
-      console.error('Reverse geocoding error:', error);
-      return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      console.error('Error processing image:', error);
+      this.isUploadingImage = false;
+      this.showToast('Failed to process image. Please try again.', 'danger');
     }
   }
 
-  // Use address from coordinates
-  useAddressFromCoordinates() {
-    if (this.addressFromCoordinates) {
-      this.newAddress.fullAddress = this.addressFromCoordinates;
+  /**
+   * Save profile image to Firestore
+   */
+  async saveProfileImage() {
+    if (!this.selectedImagePreview || !this.currentUser?.uid) return;
+
+    try {
+      this.isUploadingImage = true;
+
+      // Update client verification with new profile image
+      const verificationData = {
+        userId: this.currentUser.uid,
+        userEmail: this.currentUser.email,
+        userName: this.userProfile?.fullName || 'Unknown',
+        profileImageBase64: this.selectedImagePreview,
+        updatedAt: new Date()
+      };
+
+      // Check if user has existing verification
+      const existingVerification = await this.clientVerificationService.getVerificationByUserId(this.currentUser.uid);
+
+      if (existingVerification) {
+        // Update existing verification with new profile image
+        await this.clientVerificationService.updateProfileImage(this.currentUser.uid, this.selectedImagePreview);
+      } else {
+        // Create new verification record (this might need minimum required fields)
+        await this.clientVerificationService.createMinimalVerificationForProfileImage(
+          this.currentUser.uid,
+          this.selectedImagePreview
+        );
+      }
+
+      // Update local state
+      this.profileImageBase64 = this.selectedImagePreview;
+      if (this.userProfile) {
+        this.userProfile.profileImageBase64 = this.selectedImagePreview;
+      }
+
+      // Close modal and reset state
+      this.closeImageUploadModal();
+      this.isUploadingImage = false;
+
+      this.showToast('Profile picture updated successfully!', 'success');
+    } catch (error) {
+      console.error('Error saving profile image:', error);
+      this.isUploadingImage = false;
+      this.showToast('Failed to save profile picture. Please try again.', 'danger');
     }
+  }
+
+  /**
+   * Remove profile image
+   */
+  async removeProfileImage() {
+    try {
+      const alert = await this.alertController.create({
+        header: 'Remove Profile Picture',
+        message: 'Are you sure you want to remove your profile picture?',
+        buttons: [
+          {
+            text: 'Cancel',
+            role: 'cancel',
+          },
+          {
+            text: 'Remove',
+            role: 'destructive',
+            handler: async () => {
+              await this.performRemoveProfileImage();
+            },
+          },
+        ],
+      });
+
+      await alert.present();
+    } catch (error) {
+      console.error('Error removing profile image:', error);
+      this.showToast('Failed to remove profile picture', 'danger');
+    }
+  }
+
+  /**
+   * Perform profile image removal
+   */
+  private async performRemoveProfileImage() {
+    try {
+      if (!this.currentUser?.uid) return;
+
+      this.isUploadingImage = true;
+
+      // Update client verification to remove profile image
+      await this.clientVerificationService.updateProfileImage(this.currentUser.uid, '');
+
+      // Update local state
+      this.profileImageBase64 = null;
+      if (this.userProfile) {
+        this.userProfile.profileImageBase64 = '';
+      }
+
+      this.closeImageUploadModal();
+      this.isUploadingImage = false;
+
+      this.showToast('Profile picture removed successfully', 'success');
+    } catch (error) {
+      console.error('Error removing profile image:', error);
+      this.isUploadingImage = false;
+      this.showToast('Failed to remove profile picture', 'danger');
+    }
+  }
+
+  /**
+   * Handle image load success
+   */
+  onImageLoad() {
+    // Image loaded successfully
+    console.log('Profile image loaded successfully');
+  }
+
+  /**
+   * Handle image load error
+   */
+  onImageError() {
+    console.error('Failed to load profile image');
+    // Could show a fallback or retry mechanism here
   }
 }

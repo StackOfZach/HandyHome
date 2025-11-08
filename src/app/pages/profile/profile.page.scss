@@ -3,6 +3,137 @@ ion-content {
   --background: transparent;
 }
 
+// Profile Picture Animations and Effects
+.profile-picture-container {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    transform: translateY(-2px);
+    filter: drop-shadow(0 10px 20px rgba(59, 130, 246, 0.15));
+  }
+}
+
+.profile-picture {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #3b82f6, #eab308, #3b82f6);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &.verified::before {
+    opacity: 1;
+    animation: borderGlow 2s ease-in-out infinite;
+  }
+}
+
+@keyframes borderGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+.camera-button {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+
+  &:hover {
+    transform: scale(1.1) rotate(-5deg);
+    box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4);
+  }
+
+  &:active {
+    transform: scale(1.05) rotate(-3deg);
+  }
+}
+
+// Image Upload Modal Styling
+.image-upload-modal {
+  .modal-wrapper {
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .upload-option-button {
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    &:hover::before {
+      left: 100%;
+    }
+  }
+
+  .preview-container {
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: inherit;
+      background: linear-gradient(45deg, transparent 49%, rgba(255, 255, 255, 0.1) 50%, transparent 51%);
+      pointer-events: none;
+    }
+  }
+}
+
+// Loading Animation
+.image-loading {
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: inherit;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+// Floating Action Effects
+.floating-effect {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
 // Custom styling for handy colors
 .bg-handy-blue-50 {
   background-color: #eff6ff;
@@ -18,6 +149,10 @@ ion-content {
 
 .bg-handy-yellow-50 {
   background-color: #fefce8;
+}
+
+.bg-handy-yellow-400 {
+  background-color: #facc15;
 }
 
 .bg-handy-yellow-500 {
