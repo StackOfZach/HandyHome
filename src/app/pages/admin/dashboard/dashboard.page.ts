@@ -677,19 +677,47 @@ export class AdminDashboardPage implements OnInit {
   }
 
   async suspendWorker(worker: WorkerProfile) {
+    // Ask for number of days to suspend
     const alert = await this.alertController.create({
       header: 'Suspend Worker',
-      message: `Are you sure you want to suspend ${worker.fullName}? They will not be able to accept new bookings.`,
-      buttons: [
+      message: `Suspend ${worker.fullName} - enter number of days:`,
+      inputs: [
         {
-          text: 'Cancel',
-          role: 'cancel',
+          name: 'days',
+          type: 'number',
+          placeholder: 'Number of days',
+          min: 1,
         },
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
         {
           text: 'Suspend',
-          cssClass: 'alert-button-confirm',
-          handler: () => {
-            this.processWorkerStatusChange(worker, 'suspended');
+          handler: async (data: any) => {
+            const days = parseInt(data.days, 10) || 0;
+            if (days <= 0) {
+              this.showErrorToast('Please enter a valid number of days');
+              return false;
+            }
+            try {
+              this.processingWorker = worker.uid;
+              await this.workerService.suspendWorker(worker.uid, days);
+              // Remove from verified list for now
+              this.verifiedWorkers = this.verifiedWorkers.filter(
+                (w) => w.uid !== worker.uid
+              );
+              this.filterVerifiedWorkers();
+              this.loadAnalytics();
+              this.showSuccessToast(
+                `${worker.fullName} suspended for ${days} day(s)`
+              );
+            } catch (err) {
+              console.error('Suspend worker failed', err);
+              this.showErrorToast('Failed to suspend worker');
+            } finally {
+              this.processingWorker = null;
+            }
+            return true;
           },
         },
       ],
@@ -700,17 +728,46 @@ export class AdminDashboardPage implements OnInit {
   async banWorker(worker: WorkerProfile) {
     const alert = await this.alertController.create({
       header: 'Ban Worker',
-      message: `Are you sure you want to permanently ban ${worker.fullName}? This action cannot be undone.`,
+      message: `Ban or unban ${worker.fullName}? Toggle ban to prevent login access.`,
       buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel',
-        },
+        { text: 'Cancel', role: 'cancel' },
         {
           text: 'Ban',
           cssClass: 'alert-button-destructive',
-          handler: () => {
-            this.processWorkerStatusChange(worker, 'banned');
+          handler: async () => {
+            try {
+              this.processingWorker = worker.uid;
+              await this.workerService.setWorkerBan(worker.uid, true);
+              // Remove from verified list
+              this.verifiedWorkers = this.verifiedWorkers.filter(
+                (w) => w.uid !== worker.uid
+              );
+              this.filterVerifiedWorkers();
+              this.loadAnalytics();
+              this.showSuccessToast(`${worker.fullName} has been banned`);
+            } catch (err) {
+              console.error('Ban worker failed', err);
+              this.showErrorToast('Failed to ban worker');
+            } finally {
+              this.processingWorker = null;
+            }
+          },
+        },
+        {
+          text: 'Unban',
+          handler: async () => {
+            try {
+              this.processingWorker = worker.uid;
+              await this.workerService.setWorkerBan(worker.uid, false);
+              // Optionally reload verified workers
+              await this.loadVerifiedWorkers();
+              this.showSuccessToast(`${worker.fullName} has been unbanned`);
+            } catch (err) {
+              console.error('Unban worker failed', err);
+              this.showErrorToast('Failed to unban worker');
+            } finally {
+              this.processingWorker = null;
+            }
           },
         },
       ],
@@ -741,6 +798,112 @@ export class AdminDashboardPage implements OnInit {
     } finally {
       this.processingWorker = null;
     }
+  }
+
+  // ===== Client Admin Actions: suspend/ban =====
+
+  async suspendClient(client: UserProfile) {
+    const alert = await this.alertController.create({
+      header: 'Suspend Client',
+      message: `Suspend ${client.fullName} - enter number of days:`,
+      inputs: [
+        {
+          name: 'days',
+          type: 'number',
+          placeholder: 'Number of days',
+          min: 1,
+        },
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Suspend',
+          handler: async (data: any) => {
+            const days = parseInt(data.days, 10) || 0;
+            if (days <= 0) {
+              this.showErrorToast('Please enter a valid number of days');
+              return false;
+            }
+            try {
+              // compute suspendedUntil
+              const suspendedUntil = new Date();
+              suspendedUntil.setDate(suspendedUntil.getDate() + days);
+
+              // Update users collection
+              const userDocRef = doc(this.firestore, 'users', client.uid);
+              await updateDoc(userDocRef, {
+                suspendedUntil: suspendedUntil,
+                updatedAt: new Date(),
+              });
+
+              // Update local clients list
+              this.filteredClients = this.filteredClients.filter(
+                (c) => c.uid !== client.uid
+              );
+              this.showSuccessToast(
+                `${client.fullName} suspended for ${days} day(s)`
+              );
+            } catch (err) {
+              console.error('Suspend client failed', err);
+              this.showErrorToast('Failed to suspend client');
+            }
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  async banClient(client: UserProfile) {
+    const alert = await this.alertController.create({
+      header: 'Ban Client',
+      message: `Ban or unban ${client.fullName}? Banned users cannot log in.`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Ban',
+          cssClass: 'alert-button-destructive',
+          handler: async () => {
+            try {
+              const userDocRef = doc(this.firestore, 'users', client.uid);
+              await updateDoc(userDocRef, {
+                isBanned: true,
+                bannedAt: new Date(),
+                updatedAt: new Date(),
+              });
+              this.filteredClients = this.filteredClients.filter(
+                (c) => c.uid !== client.uid
+              );
+              this.showSuccessToast(`${client.fullName} has been banned`);
+            } catch (err) {
+              console.error('Ban client failed', err);
+              this.showErrorToast('Failed to ban client');
+            }
+          },
+        },
+        {
+          text: 'Unban',
+          handler: async () => {
+            try {
+              const userDocRef = doc(this.firestore, 'users', client.uid);
+              await updateDoc(userDocRef, {
+                isBanned: false,
+                bannedAt: null,
+                updatedAt: new Date(),
+              });
+              await this.loadClients();
+              this.showSuccessToast(`${client.fullName} has been unbanned`);
+            } catch (err) {
+              console.error('Unban client failed', err);
+              this.showErrorToast('Failed to unban client');
+            }
+          },
+        },
+      ],
+    });
+
+    await alert.present();
   }
 
   async openPhotoModal(photoData: string, title: string) {
@@ -1921,11 +2084,45 @@ export class AdminDashboardPage implements OnInit {
       const querySnapshot = await getDocs(q);
       this.regularBookings = [];
 
-      querySnapshot.forEach((doc) => {
+      // Process bookings and fetch user details
+      const bookingPromises = querySnapshot.docs.map(async (doc) => {
         const data = doc.data();
-        this.regularBookings.push({
+
+        // Fetch client and worker names
+        let clientName = data['clientName'] || 'Unknown Client'; // Use existing clientName if available
+        let workerName = data['workerName'] || 'Not Assigned'; // Use existing workerName if available
+
+        // If clientName is not available but clientId is, fetch it
+        if (
+          data['clientId'] &&
+          (!data['clientName'] || data['clientName'] === 'Unknown Client')
+        ) {
+          const clientProfile = await this.authService.getUserProfile(
+            data['clientId']
+          );
+          clientName =
+            clientProfile?.fullName ||
+            `Client ID: ${data['clientId'].substring(0, 8)}...`;
+        }
+
+        // If workerName is not available but workerId is, fetch it
+        if (
+          data['workerId'] &&
+          (!data['workerName'] || data['workerName'] === 'Not Assigned')
+        ) {
+          const workerProfile = await this.authService.getUserProfile(
+            data['workerId']
+          );
+          workerName =
+            workerProfile?.fullName ||
+            `Worker ID: ${data['workerId'].substring(0, 8)}...`;
+        }
+
+        return {
           id: doc.id,
           ...data,
+          clientName, // Ensure client name is populated
+          workerName, // Ensure worker name is populated
           createdAt: data['createdAt']?.toDate
             ? data['createdAt'].toDate()
             : new Date(),
@@ -1937,11 +2134,14 @@ export class AdminDashboardPage implements OnInit {
             ? data['completedAt'].toDate()
             : undefined,
           type: 'regular',
-        });
+        };
       });
 
+      // Wait for all bookings to be processed
+      this.regularBookings = await Promise.all(bookingPromises);
+
       this.filteredRegularBookings = [...this.regularBookings];
-      console.log('Loaded regular bookings:', this.regularBookings);
+      console.log('Loaded regular bookings with names:', this.regularBookings);
     } catch (error) {
       console.error('Error loading regular bookings:', error);
       this.showToast('Error loading regular bookings', 'danger');
@@ -1962,11 +2162,37 @@ export class AdminDashboardPage implements OnInit {
       const querySnapshot = await getDocs(q);
       this.quickBookings = [];
 
-      querySnapshot.forEach((doc) => {
+      // Process bookings and fetch user details
+      const bookingPromises = querySnapshot.docs.map(async (doc) => {
         const data = doc.data();
-        this.quickBookings.push({
+
+        // Fetch client and worker names
+        let clientName = 'Unknown Client';
+        let workerName = 'Not Assigned';
+
+        if (data['clientId']) {
+          const clientProfile = await this.authService.getUserProfile(
+            data['clientId']
+          );
+          clientName =
+            clientProfile?.fullName ||
+            `Client ID: ${data['clientId'].substring(0, 8)}...`;
+        }
+
+        if (data['assignedWorker']) {
+          const workerProfile = await this.authService.getUserProfile(
+            data['assignedWorker']
+          );
+          workerName =
+            workerProfile?.fullName ||
+            `Worker ID: ${data['assignedWorker'].substring(0, 8)}...`;
+        }
+
+        return {
           id: doc.id,
           ...data,
+          clientName, // Add client name
+          workerName, // Add worker name
           createdAt: data['createdAt']?.toDate
             ? data['createdAt'].toDate()
             : new Date(),
@@ -1980,11 +2206,14 @@ export class AdminDashboardPage implements OnInit {
             ? data['completedAt'].toDate()
             : undefined,
           type: 'quick',
-        });
+        };
       });
 
+      // Wait for all bookings to be processed
+      this.quickBookings = await Promise.all(bookingPromises);
+
       this.filteredQuickBookings = [...this.quickBookings];
-      console.log('Loaded quick bookings:', this.quickBookings);
+      console.log('Loaded quick bookings with names:', this.quickBookings);
     } catch (error) {
       console.error('Error loading quick bookings:', error);
       this.showToast('Error loading quick bookings', 'danger');
@@ -2035,10 +2264,12 @@ export class AdminDashboardPage implements OnInit {
       const searchTerm = this.bookingSearchTerm.toLowerCase();
       filtered = filtered.filter(
         (booking) =>
-          booking.clientId?.toLowerCase().includes(searchTerm) ||
+          booking.clientName?.toLowerCase().includes(searchTerm) ||
+          booking.workerName?.toLowerCase().includes(searchTerm) ||
           booking.categoryName?.toLowerCase().includes(searchTerm) ||
           booking.subService?.toLowerCase().includes(searchTerm) ||
-          booking.location?.address?.toLowerCase().includes(searchTerm)
+          booking.location?.address?.toLowerCase().includes(searchTerm) ||
+          booking.id?.toLowerCase().includes(searchTerm)
       );
     }
 

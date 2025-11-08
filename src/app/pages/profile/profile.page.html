@@ -47,7 +47,7 @@
             <ion-icon name="person" class="text-3xl text-white/80"></ion-icon>
           </div>
         </div>
-        
+
         <!-- Camera Button -->
         <button
           (click)="openImageUploadOptions()"
@@ -55,8 +55,8 @@
           [attr.aria-label]="profileImageBase64 ? 'Change profile picture' : 'Add profile picture'"
           [disabled]="isUploadingImage"
         >
-          <ion-icon 
-            [name]="profileImageBase64 ? 'camera' : 'add'" 
+          <ion-icon
+            [name]="profileImageBase64 ? 'camera' : 'add'"
             class="text-sm text-white drop-shadow-sm"
           ></ion-icon>
         </button>
@@ -66,21 +66,26 @@
           *ngIf="isUploadingImage"
           class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center"
         >
-          <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          <div
+            class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"
+          ></div>
         </div>
       </div>
-      
+
       <div class="flex-1">
         <h2 class="text-white text-xl font-bold drop-shadow-sm">
           {{ userProfile?.fullName || 'Guest User' }}
         </h2>
         <p class="text-white/80 text-sm">ID: {{ getHandyHomeId() }}</p>
         <p class="text-white/80 text-sm">{{ userProfile?.email }}</p>
-        <div 
-          *ngIf="profileImageBase64" 
+        <div
+          *ngIf="profileImageBase64"
           class="flex items-center mt-1 text-white/60 text-xs floating-effect"
         >
-          <ion-icon name="checkmark-circle" class="mr-1 text-handy-yellow-400"></ion-icon>
+          <ion-icon
+            name="checkmark-circle"
+            class="mr-1 text-handy-yellow-400"
+          ></ion-icon>
           Profile verified
         </div>
       </div>
@@ -398,6 +403,7 @@
         </button>
 
         <button
+          (click)="openTermsPrivacyModal('privacy')"
           class="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-handy-blue-300 hover:bg-handy-blue-50 transition-all duration-200"
         >
           <div class="flex items-center">
@@ -414,6 +420,7 @@
         </button>
 
         <button
+          (click)="openTermsPrivacyModal('terms')"
           class="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-handy-blue-300 hover:bg-handy-blue-50 transition-all duration-200"
         >
           <div class="flex items-center">
@@ -536,11 +543,19 @@
 </ion-modal>
 
 <!-- Image Upload Modal -->
-<ion-modal #imageUploadModal [isOpen]="isImageUploadModalOpen" (didDismiss)="isImageUploadModalOpen = false">
+<ion-modal
+  #imageUploadModal
+  [isOpen]="isImageUploadModalOpen"
+  (didDismiss)="isImageUploadModalOpen = false"
+>
   <ng-template>
     <ion-header>
-      <ion-toolbar class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600">
-        <ion-title class="text-white font-bold">Update Profile Picture</ion-title>
+      <ion-toolbar
+        class="bg-gradient-to-r from-handy-blue-500 to-handy-blue-600"
+      >
+        <ion-title class="text-white font-bold"
+          >Update Profile Picture</ion-title
+        >
         <ion-buttons slot="end">
           <ion-button (click)="closeImageUploadModal()">
             <ion-icon name="close" class="text-white"></ion-icon>
@@ -553,7 +568,9 @@
       <div class="max-w-md mx-auto space-y-6">
         <!-- Current Photo Preview -->
         <div class="text-center preview-container">
-          <div class="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-handy-blue-100 shadow-lg">
+          <div
+            class="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-handy-blue-100 shadow-lg"
+          >
             <img
               *ngIf="selectedImagePreview || profileImageBase64"
               [src]="selectedImagePreview || profileImageBase64"
@@ -564,18 +581,24 @@
               *ngIf="!selectedImagePreview && !profileImageBase64"
               class="w-full h-full bg-gradient-to-br from-handy-blue-100 to-handy-blue-200 flex items-center justify-center"
             >
-              <ion-icon name="person" class="text-4xl text-handy-blue-400"></ion-icon>
+              <ion-icon
+                name="person"
+                class="text-4xl text-handy-blue-400"
+              ></ion-icon>
             </div>
           </div>
           <p class="mt-3 text-sm text-gray-600">
-            {{ selectedImagePreview ? 'New photo selected' : (profileImageBase64 ? 'Current photo' : 'No photo selected') }}
+            {{ selectedImagePreview ? 'New photo selected' : (profileImageBase64
+            ? 'Current photo' : 'No photo selected') }}
           </p>
         </div>
 
         <!-- Upload Options -->
         <div class="space-y-4">
-          <h3 class="text-lg font-semibold text-handy-navy-800 text-center">Choose photo source</h3>
-          
+          <h3 class="text-lg font-semibold text-handy-navy-800 text-center">
+            Choose photo source
+          </h3>
+
           <!-- Camera Option -->
           <button
             (click)="captureImageFromCamera()"
@@ -609,9 +632,15 @@
         </div>
 
         <!-- Image Info -->
-        <div *ngIf="selectedImageInfo" class="bg-handy-blue-50 rounded-xl p-4 border border-handy-blue-100">
+        <div
+          *ngIf="selectedImageInfo"
+          class="bg-handy-blue-50 rounded-xl p-4 border border-handy-blue-100"
+        >
           <h4 class="font-semibold text-handy-navy-800 mb-2 flex items-center">
-            <ion-icon name="information-circle" class="mr-2 text-handy-blue-500"></ion-icon>
+            <ion-icon
+              name="information-circle"
+              class="mr-2 text-handy-blue-500"
+            ></ion-icon>
             Image Information
           </h4>
           <div class="space-y-1 text-sm text-handy-navy-600">
@@ -635,7 +664,10 @@
             class="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-3 px-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2"
             [disabled]="isUploadingImage"
           >
-            <div *ngIf="isUploadingImage" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <div
+              *ngIf="isUploadingImage"
+              class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+            ></div>
             <span>{{ isUploadingImage ? 'Saving...' : 'Save Photo' }}</span>
           </button>
         </div>
@@ -650,5 +682,12 @@
   type="file"
   accept="image/*"
   (change)="onFileSelected($event)"
-  style="display: none;"
+  style="display: none"
 />
+
+<!-- Terms & Privacy Modal -->
+<app-terms-privacy-modal
+  *ngIf="isTermsPrivacyModalOpen"
+  [viewOnlyMode]="true"
+  (close)="closeTermsPrivacyModal()"
+></app-terms-privacy-modal>

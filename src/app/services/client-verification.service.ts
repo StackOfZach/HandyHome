@@ -240,7 +240,10 @@ export class ClientVerificationService {
   /**
    * Update profile image for existing verification
    */
-  async updateProfileImage(userId: string, profileImageBase64: string): Promise<void> {
+  async updateProfileImage(
+    userId: string,
+    profileImageBase64: string
+  ): Promise<void> {
     try {
       const q = query(
         collection(this.firestore, 'client-verifications'),
@@ -252,7 +255,7 @@ export class ClientVerificationService {
         const doc = querySnapshot.docs[0];
         await updateDoc(doc.ref, {
           profileImageBase64,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         });
       }
     } catch (error) {

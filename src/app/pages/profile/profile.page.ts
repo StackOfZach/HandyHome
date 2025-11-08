@@ -28,6 +28,7 @@ import { Auth, sendPasswordResetEmail } from '@angular/fire/auth';
 import { ClientVerificationService } from '../../services/client-verification.service';
 import { ImageService } from '../../services/image.service';
 import { MapPickerComponent } from '../../components/map-picker/map-picker.component';
+import { TermsPrivacyModalComponent } from '../../components/terms-privacy-modal/terms-privacy-modal.component';
 
 export interface Address {
   id?: string;
@@ -69,7 +70,13 @@ export interface ExtendedUserProfile extends UserProfile {
   templateUrl: './profile.page.html',
   styleUrls: ['./profile.page.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule, MapPickerComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonicModule,
+    MapPickerComponent,
+    TermsPrivacyModalComponent,
+  ],
 })
 export class ProfilePage implements OnInit {
   @ViewChild('addressModal', { static: false }) addressModal!: IonModal;
@@ -96,12 +103,15 @@ export class ProfilePage implements OnInit {
   isEditingProfile = false;
   isAddingAddress = false;
   profileImageBase64: string | null = null;
-  
+
   // Image upload properties
   isImageUploadModalOpen = false;
   isUploadingImage = false;
   selectedImagePreview: string | null = null;
   selectedImageInfo: any = null;
+
+  // Terms & Privacy modal
+  isTermsPrivacyModalOpen = false;
 
   // Form data
   profileForm = {
@@ -592,6 +602,22 @@ export class ProfilePage implements OnInit {
   }
 
   /**
+   * Open terms & privacy modal for viewing
+   */
+  openTermsPrivacyModal(tab: 'terms' | 'privacy' = 'terms') {
+    this.isTermsPrivacyModalOpen = true;
+    // Note: To set the initial tab, we would need a ViewChild reference
+    // For now, the modal opens with the default 'terms' tab
+  }
+
+  /**
+   * Close terms & privacy modal
+   */
+  closeTermsPrivacyModal() {
+    this.isTermsPrivacyModalOpen = false;
+  }
+
+  /**
    * Capture image from camera
    */
   async captureImageFromCamera() {
@@ -652,12 +678,13 @@ export class ProfilePage implements OnInit {
       const compressedBase64 = await this.imageService.compressImage(
         file,
         800, // max width
-        800, // max height  
-        0.8  // quality
+        800, // max height
+        0.8 // quality
       );
 
       // Get image size info
-      this.selectedImageInfo = this.imageService.getImageSizeInfo(compressedBase64);
+      this.selectedImageInfo =
+        this.imageService.getImageSizeInfo(compressedBase64);
 
       // Check if image is too large for Firestore (1MB limit)
       if (this.selectedImageInfo.estimatedFirestoreSize > 800000) {
@@ -668,7 +695,8 @@ export class ProfilePage implements OnInit {
           600,
           0.6
         );
-        this.selectedImageInfo = this.imageService.getImageSizeInfo(moreCompressed);
+        this.selectedImageInfo =
+          this.imageService.getImageSizeInfo(moreCompressed);
         this.selectedImagePreview = moreCompressed;
       } else {
         this.selectedImagePreview = compressedBase64;
@@ -698,15 +726,21 @@ export class ProfilePage implements OnInit {
         userEmail: this.currentUser.email,
         userName: this.userProfile?.fullName || 'Unknown',
         profileImageBase64: this.selectedImagePreview,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Check if user has existing verification
-      const existingVerification = await this.clientVerificationService.getVerificationByUserId(this.currentUser.uid);
+      const existingVerification =
+        await this.clientVerificationService.getVerificationByUserId(
+          this.currentUser.uid
+        );
 
       if (existingVerification) {
         // Update existing verification with new profile image
-        await this.clientVerificationService.updateProfileImage(this.currentUser.uid, this.selectedImagePreview);
+        await this.clientVerificationService.updateProfileImage(
+          this.currentUser.uid,
+          this.selectedImagePreview
+        );
       } else {
         // Create new verification record (this might need minimum required fields)
         await this.clientVerificationService.createMinimalVerificationForProfileImage(
@@ -729,7 +763,10 @@ export class ProfilePage implements OnInit {
     } catch (error) {
       console.error('Error saving profile image:', error);
       this.isUploadingImage = false;
-      this.showToast('Failed to save profile picture. Please try again.', 'danger');
+      this.showToast(
+        'Failed to save profile picture. Please try again.',
+        'danger'
+      );
     }
   }
 
@@ -773,7 +810,10 @@ export class ProfilePage implements OnInit {
       this.isUploadingImage = true;
 
       // Update client verification to remove profile image
-      await this.clientVerificationService.updateProfileImage(this.currentUser.uid, '');
+      await this.clientVerificationService.updateProfileImage(
+        this.currentUser.uid,
+        ''
+      );
 
       // Update local state
       this.profileImageBase64 = null;

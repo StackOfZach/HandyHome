@@ -541,14 +541,21 @@
         </div>
       </div>
 
-      <!-- Update Profile Button -->
-      <div class="flex justify-center">
+      <!-- Action Buttons Row -->
+      <div class="flex justify-center space-x-4">
         <button
           (click)="updateProfile()"
           class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center space-x-2 shadow-lg"
         >
           <ion-icon name="create-outline" class="text-lg"></ion-icon>
           <span>Update Profile</span>
+        </button>
+        <button
+          (click)="openTermsPrivacyModal()"
+          class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center space-x-2 shadow-lg"
+        >
+          <ion-icon name="document-text-outline" class="text-lg"></ion-icon>
+          <span>Terms & Privacy</span>
         </button>
       </div>
 
@@ -610,7 +617,10 @@
             <div
               class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3"
             >
-              <ion-icon name="document-text-outline" class="text-2xl"></ion-icon>
+              <ion-icon
+                name="document-text-outline"
+                class="text-2xl"
+              ></ion-icon>
             </div>
             <span class="font-semibold text-sm">Booking History</span>
             <span class="text-xs text-teal-100 mt-1"
@@ -622,7 +632,10 @@
     </div>
 
     <!-- Available Quick Bookings Section -->
-    <div class="mb-6" *ngIf="isAvailableForQuickBookings && availableBookings.length > 0">
+    <div
+      class="mb-6"
+      *ngIf="isAvailableForQuickBookings && availableBookings.length > 0"
+    >
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-xl font-bold text-gray-800 flex items-center">
           <ion-icon name="flash" class="text-orange-600 mr-2"></ion-icon>
@@ -879,3 +892,10 @@
     </div> -->
   </div>
 </ion-content>
+
+<!-- Terms & Privacy Modal -->
+<app-terms-privacy-modal
+  *ngIf="isTermsPrivacyModalOpen"
+  [viewOnlyMode]="true"
+  (close)="closeTermsPrivacyModal()"
+></app-terms-privacy-modal>

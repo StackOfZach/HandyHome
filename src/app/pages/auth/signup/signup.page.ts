@@ -1,14 +1,24 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
+import { IonicModule } from '@ionic/angular';
 import { AuthService } from '../../../services/auth.service';
 import { LoadingController, AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
+import { TermsPrivacyModalComponent } from '../../../components/terms-privacy-modal/terms-privacy-modal.component';
 
 @Component({
   selector: 'app-signup',
   templateUrl: './signup.page.html',
   styleUrls: ['./signup.page.scss'],
-  standalone: false,
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    IonicModule,
+    TermsPrivacyModalComponent,
+  ],
 })
 export class SignupPage implements OnInit {
   signupForm: FormGroup;
@@ -61,7 +71,9 @@ export class SignupPage implements OnInit {
       if (user) {
         const profile = this.authService.getCurrentUserProfile();
         if (profile) {
-          console.log('SignupPage: User authenticated during session, redirecting...');
+          console.log(
+            'SignupPage: User authenticated during session, redirecting...'
+          );
           await this.redirectBasedOnRole(profile.role);
         }
       }
@@ -157,9 +169,11 @@ export class SignupPage implements OnInit {
     await alert.present();
   }
 
-  private async redirectBasedOnRole(role: 'client' | 'worker' | 'admin'): Promise<void> {
+  private async redirectBasedOnRole(
+    role: 'client' | 'worker' | 'admin'
+  ): Promise<void> {
     console.log('SignupPage: Redirecting based on role:', role);
-    
+
     switch (role) {
       case 'client':
         this.router.navigate(['/pages/client/dashboard'], { replaceUrl: true });
@@ -169,7 +183,9 @@ export class SignupPage implements OnInit {
           const user = this.authService.getCurrentUser();
           if (user) {
             // Import WorkerService dynamically to avoid circular dependency
-            const { WorkerService } = await import('../../../services/worker.service');
+            const { WorkerService } = await import(
+              '../../../services/worker.service'
+            );
             const workerService = new (WorkerService as any)(
               (this.authService as any).firestore
             );
@@ -179,16 +195,24 @@ export class SignupPage implements OnInit {
             );
 
             if (!hasCompleted) {
-              this.router.navigate(['/pages/worker/interview'], { replaceUrl: true });
+              this.router.navigate(['/pages/worker/interview'], {
+                replaceUrl: true,
+              });
             } else {
-              this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+              this.router.navigate(['/pages/worker/dashboard'], {
+                replaceUrl: true,
+              });
             }
           } else {
-            this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+            this.router.navigate(['/pages/worker/dashboard'], {
+              replaceUrl: true,
+            });
           }
         } catch (error) {
           console.error('SignupPage: Error checking worker status:', error);
-          this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+          this.router.navigate(['/pages/worker/dashboard'], {
+            replaceUrl: true,
+          });
         }
         break;
       case 'admin':

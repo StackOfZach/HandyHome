@@ -99,6 +99,78 @@
   animation: fadeInScale 0.4s ease-out;
 }
 
+/* Global Ionic DateTime Fixes */
+/* Fix for white/invisible month text in calendars */
+ion-datetime {
+  --color: #1e293b !important;
+  --background: transparent;
+}
+
+/* Calendar month/year header text fix */
+ion-datetime::part(month-year-button),
+ion-datetime::part(calendar-month-year) {
+  color: #2563eb !important;
+  background: #eff6ff !important;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 700;
+  border: 2px solid #2563eb;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+}
+
+/* Calendar navigation arrows */
+ion-datetime::part(chevron-button) {
+  color: #2563eb !important;
+  background: #eff6ff;
+  border-radius: 50%;
+  margin: 0 4px;
+}
+
+/* Calendar day text */
+ion-datetime::part(calendar-day) {
+  color: #1e293b !important;
+  font-weight: 500;
+}
+
+/* Today indicator */
+ion-datetime::part(calendar-day-today) {
+  color: #2563eb !important;
+  background: #dbeafe !important;
+  font-weight: 700;
+  border: 2px solid #2563eb;
+}
+
+/* Active/selected day */
+ion-datetime::part(calendar-day-active) {
+  color: white !important;
+  background: #2563eb !important;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+/* Time picker text */
+ion-datetime::part(time-button) {
+  color: white !important;
+  background: #2563eb !important;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+/* Calendar header background */
+ion-datetime::part(header) {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  color: white !important;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+/* Wheel picker items (for time/date selection) */
+ion-datetime::part(wheel-item) {
+  color: #1e293b !important;
+  font-weight: 600;
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }

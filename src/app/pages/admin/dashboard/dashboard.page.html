@@ -3350,9 +3350,9 @@
                         </div>
                         <div>
                           <div class="font-medium">
-                            {{ booking.clientId?.substring(0, 8) }}...
+                            {{ booking.clientName }}
                           </div>
-                          <div class="text-gray-500 text-xs">Client ID</div>
+                          <div class="text-gray-500 text-xs">Client</div>
                         </div>
                       </div>
                     </td>
@@ -3368,14 +3368,11 @@
                         </div>
                         <div>
                           <div class="font-medium">
-                            {{ booking.assignedWorker ? 'Assigned' : 'Not
-                            Assigned' }}
+                            {{ booking.workerName }}
                           </div>
-                          <div
-                            class="text-gray-500 text-xs"
-                            *ngIf="booking.assignedWorker"
-                          >
-                            {{ booking.assignedWorker.substring(0, 8) }}...
+                          <div class="text-gray-500 text-xs">
+                            {{ booking.assignedWorker ? 'Worker' : 'Not
+                            Assigned' }}
                           </div>
                         </div>
                       </div>
@@ -3688,19 +3685,33 @@
                       >
                         <ion-icon name="eye" class="text-lg"></ion-icon>
                       </button>
-                      <button
+                      <!-- <button
                         (click)="sendMessageToClient(client)"
                         class="bg-green-100 hover:bg-green-200 text-green-600 p-2 rounded-lg transition-colors"
                         title="Send Message"
                       >
                         <ion-icon name="chatbubble" class="text-lg"></ion-icon>
-                      </button>
+                      </button> -->
                       <button
                         (click)="deleteClient(client)"
                         class="bg-red-100 hover:bg-red-200 text-red-600 p-2 rounded-lg transition-colors"
                         title="Delete Client"
                       >
                         <ion-icon name="trash" class="text-lg"></ion-icon>
+                      </button>
+                      <button
+                        (click)="suspendClient(client)"
+                        class="bg-yellow-100 hover:bg-yellow-200 text-yellow-600 p-2 rounded-lg transition-colors"
+                        title="Suspend Client"
+                      >
+                        <ion-icon name="pause" class="text-lg"></ion-icon>
+                      </button>
+                      <button
+                        (click)="banClient(client)"
+                        class="bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-lg transition-colors"
+                        title="Ban Client"
+                      >
+                        <ion-icon name="ban" class="text-lg"></ion-icon>
                       </button>
                     </div>
                   </td>

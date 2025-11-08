@@ -34,11 +34,16 @@ export class UpdateProfilePage implements OnInit {
   userProfile: UserProfile | null = null;
   workerProfile: WorkerProfile | null = null;
   serviceCategories: ServiceCategory[] = [];
+  allowedServiceCategories: ServiceCategory[] = []; // Filtered to only main three scopes
   selectedPhoto: string | null = null;
   isLoading = false;
 
+  // Define the three main service scopes
+  readonly MAIN_SERVICE_SCOPES = ['Cleaning', 'Plumbing', 'Electrical'];
+
   // Time availability for each day
-  timeAvailability: { [key: string]: { startTime: string; endTime: string } } = {};
+  timeAvailability: { [key: string]: { startTime: string; endTime: string } } =
+    {};
 
   // Available days list
   availableDays = [
@@ -104,6 +109,20 @@ export class UpdateProfilePage implements OnInit {
     try {
       this.serviceCategories =
         await this.dashboardService.getServiceCategories();
+
+      // Filter to only allow the three main service scopes
+      this.allowedServiceCategories = this.serviceCategories.filter(
+        (category) =>
+          this.MAIN_SERVICE_SCOPES.some(
+            (scope) => category.name.toLowerCase() === scope.toLowerCase()
+          )
+      );
+
+      console.log('Loaded service categories:', this.serviceCategories.length);
+      console.log(
+        'Allowed service categories:',
+        this.allowedServiceCategories.length
+      );
     } catch (error) {
       console.error('Error loading service categories:', error);
     }
@@ -136,23 +155,36 @@ export class UpdateProfilePage implements OnInit {
       'serviceWithPricing'
     ) as FormArray;
     serviceWithPricingArray.clear();
+
+    let filteredOutCategories: string[] = [];
     if ((this.workerProfile as any).serviceWithPricing) {
       (this.workerProfile as any).serviceWithPricing.forEach(
         (svc: ServiceWithPricing) => {
+          // Only include services within the allowed scopes
+          if (!this.isAllowedCategory(svc.categoryName)) {
+            console.warn(
+              `Skipping disallowed category during form population: ${svc.categoryName}`
+            );
+            filteredOutCategories.push(svc.categoryName);
+            return;
+          }
+
           const subServicesControls: any[] = [];
-          
+
           // Find the corresponding service category to get unit information
-          const category = this.serviceCategories.find(c => c.name === svc.categoryName);
-          
+          const category = this.allowedServiceCategories.find(
+            (c) => c.name === svc.categoryName
+          );
+
           svc.subServices.forEach((s: SubServicePrice, subIndex: number) => {
             // Get the unit for this sub-service from the category
             const unit = category?.servicesPricing?.[subIndex] || 'per_hour';
-            
+
             subServicesControls.push(
               this.formBuilder.group({
                 subServiceName: [s.subServiceName, Validators.required],
                 price: [s.price || 0, [Validators.required, Validators.min(0)]],
-                unit: [unit] // Add unit information (read-only for workers)
+                unit: [unit], // Add unit information (read-only for workers)
               })
             );
           });
@@ -165,6 +197,18 @@ export class UpdateProfilePage implements OnInit {
           );
         }
       );
+    }
+
+    // Show warning if categories were filtered out
+    if (filteredOutCategories.length > 0) {
+      setTimeout(() => {
+        this.showToast(
+          `Some service categories (${filteredOutCategories.join(
+            ', '
+          )}) were removed as they are not within the main service scopes.`,
+          'warning'
+        );
+      }, 1000);
     }
 
     // Populate available days
@@ -232,24 +276,35 @@ export class UpdateProfilePage implements OnInit {
 
   // When a category is selected, populate its sub-services into the form
   onCategorySelected(index: number, categoryName: string) {
+    // Check if the selected category is within the allowed scopes
+    if (!this.isAllowedCategory(categoryName)) {
+      this.showToast(
+        `Only ${this.MAIN_SERVICE_SCOPES.join(
+          ', '
+        )} services are allowed for pricing.`,
+        'warning'
+      );
+      return;
+    }
+
     const grp = this.serviceWithPricingArray.at(index) as FormGroup;
     grp.patchValue({ categoryName });
 
     // Clear existing sub-services and create new ones
     const subServicesControls: any[] = [];
-    const category = this.serviceCategories.find(
+    const category = this.allowedServiceCategories.find(
       (c) => c.name === categoryName
     );
     if (category && category.services && category.services.length) {
       category.services.forEach((sub, subIndex) => {
         // Get the unit for this sub-service from the category
         const unit = category.servicesPricing?.[subIndex] || 'per_hour';
-        
+
         subServicesControls.push(
           this.formBuilder.group({
             subServiceName: [sub, Validators.required],
             price: [0, [Validators.required, Validators.min(0)]],
-            unit: [unit] // Add unit information (read-only for workers)
+            unit: [unit], // Add unit information (read-only for workers)
           })
         );
       });
@@ -257,6 +312,15 @@ export class UpdateProfilePage implements OnInit {
 
     // Replace the entire subServices FormArray
     grp.setControl('subServices', this.formBuilder.array(subServicesControls));
+  }
+
+  /**
+   * Check if a category is within the allowed service scopes
+   */
+  isAllowedCategory(categoryName: string): boolean {
+    return this.MAIN_SERVICE_SCOPES.some(
+      (scope) => scope.toLowerCase() === categoryName.toLowerCase()
+    );
   }
 
   removeSubService(catIndex: number, subIndex: number) {
@@ -314,7 +378,7 @@ export class UpdateProfilePage implements OnInit {
       if (!this.timeAvailability[dayValue]) {
         this.timeAvailability[dayValue] = {
           startTime: '08:00',
-          endTime: '17:00'
+          endTime: '17:00',
         };
       }
     } else {
@@ -327,9 +391,9 @@ export class UpdateProfilePage implements OnInit {
    * Check if day is selected
    */
   isDaySelected(dayValue: string): boolean {
-    const dayIndex = this.availableDays.findIndex(d => d.value === dayValue);
+    const dayIndex = this.availableDays.findIndex((d) => d.value === dayValue);
     if (dayIndex === -1) return false;
-    
+
     const daysArray = this.profileForm.get('availableDays') as FormArray;
     return daysArray.at(dayIndex)?.value || false;
   }
@@ -340,20 +404,24 @@ export class UpdateProfilePage implements OnInit {
   getSelectedDays(): string[] {
     const selectedDays: string[] = [];
     const daysArray = this.profileForm.get('availableDays') as FormArray;
-    
+
     daysArray.controls.forEach((control, index) => {
       if (control.value) {
         selectedDays.push(this.availableDays[index].value);
       }
     });
-    
+
     return selectedDays;
   }
 
   /**
    * Update time availability for a specific day
    */
-  updateTimeAvailability(day: string, timeType: 'startTime' | 'endTime', value: string) {
+  updateTimeAvailability(
+    day: string,
+    timeType: 'startTime' | 'endTime',
+    value: string
+  ) {
     if (!this.timeAvailability[day]) {
       this.timeAvailability[day] = { startTime: '08:00', endTime: '17:00' };
     }
@@ -364,7 +432,9 @@ export class UpdateProfilePage implements OnInit {
    * Get time availability for a day
    */
   getTimeAvailability(day: string): { startTime: string; endTime: string } {
-    return this.timeAvailability[day] || { startTime: '08:00', endTime: '17:00' };
+    return (
+      this.timeAvailability[day] || { startTime: '08:00', endTime: '17:00' }
+    );
   }
 
   /**
@@ -419,6 +489,29 @@ export class UpdateProfilePage implements OnInit {
           }
         );
 
+        // Validate and filter service pricing to only allowed categories
+        const validatedServiceWithPricing = (formValue.serviceWithPricing || [])
+          .filter((svc: any) => {
+            // Only allow categories within the three main scopes
+            if (!this.isAllowedCategory(svc.categoryName)) {
+              console.warn(
+                `Filtering out disallowed category: ${svc.categoryName}`
+              );
+              return false;
+            }
+            return true;
+          })
+          .map((svc: any) => ({
+            categoryName: svc.categoryName,
+            subServices: (svc.subServices || [])
+              .filter((s: any) => s.subServiceName && s.price >= 0)
+              .map((s: any) => ({
+                subServiceName: s.subServiceName,
+                price: s.price,
+              })),
+          }))
+          .filter((svc: any) => svc.subServices.length > 0);
+
         // Prepare worker profile data
         const workerData: Partial<WorkerProfile & any> = {
           fullAddress: formValue.fullAddress,
@@ -431,18 +524,7 @@ export class UpdateProfilePage implements OnInit {
           emergencyContact: formValue.emergencyContact,
           emergencyPhone: formValue.emergencyPhone,
           bio: formValue.bio,
-          // Convert serviceWithPricing form to storage format
-          serviceWithPricing: (formValue.serviceWithPricing || [])
-            .map((svc: any) => ({
-              categoryName: svc.categoryName,
-              subServices: (svc.subServices || [])
-                .filter((s: any) => s.subServiceName && s.price >= 0)
-                .map((s: any) => ({
-                  subServiceName: s.subServiceName,
-                  price: s.price,
-                })),
-            }))
-            .filter((svc: any) => svc.subServices.length > 0),
+          serviceWithPricing: validatedServiceWithPricing,
           updatedAt: new Date(),
         };
 

@@ -22,7 +22,10 @@ import {
   DashboardService,
   ServiceCategory,
 } from '../../../services/dashboard.service';
-import { WorkerAvailabilityService, BookingConflictCheck } from '../../../services/worker-availability.service';
+import {
+  WorkerAvailabilityService,
+  BookingConflictCheck,
+} from '../../../services/worker-availability.service';
 
 interface ServicePrice {
   name: string;
@@ -162,6 +165,72 @@ export class WorkerResultsPage implements OnInit {
     }
   }
 
+  /**
+   * Calculate average rating for a worker from all their completed bookings
+   */
+  async calculateWorkerAverageRating(
+    workerId: string
+  ): Promise<{ averageRating: number; reviewCount: number }> {
+    try {
+      const ratings: number[] = [];
+
+      // Get ratings from regular bookings collection
+      const bookingsQuery = query(
+        collection(this.firestore, 'bookings'),
+        where('assignedWorker', '==', workerId),
+        where('status', '==', 'completed')
+      );
+      const bookingsSnapshot = await getDocs(bookingsQuery);
+
+      bookingsSnapshot.forEach((doc) => {
+        const booking = doc.data();
+        if (
+          booking['rating'] &&
+          typeof booking['rating'] === 'number' &&
+          booking['rating'] > 0
+        ) {
+          ratings.push(booking['rating']);
+        }
+      });
+
+      // Get ratings from quick bookings collection
+      const quickBookingsQuery = query(
+        collection(this.firestore, 'quickBookings'),
+        where('assignedWorker', '==', workerId),
+        where('status', '==', 'completed')
+      );
+      const quickBookingsSnapshot = await getDocs(quickBookingsQuery);
+
+      quickBookingsSnapshot.forEach((doc) => {
+        const booking = doc.data();
+        if (
+          booking['rating'] &&
+          typeof booking['rating'] === 'number' &&
+          booking['rating'] > 0
+        ) {
+          ratings.push(booking['rating']);
+        }
+      });
+
+      console.log(`Worker ${workerId} ratings found:`, ratings);
+
+      // Calculate average
+      if (ratings.length === 0) {
+        return { averageRating: 0, reviewCount: 0 };
+      }
+
+      const averageRating =
+        ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+      return {
+        averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
+        reviewCount: ratings.length,
+      };
+    } catch (error) {
+      console.error(`Error calculating rating for worker ${workerId}:`, error);
+      return { averageRating: 0, reviewCount: 0 };
+    }
+  }
+
   async loadWorkers() {
     try {
       this.isLoading = true;
@@ -210,20 +279,31 @@ export class WorkerResultsPage implements OnInit {
           // NEW: Check actual booking conflicts (ignore online status for scheduled bookings)
           let bookingAvailable = true;
           if (this.booking.scheduleDate && this.booking.scheduleTime) {
-            const dateString = this.workerAvailabilityService.parseScheduleDate(this.booking.scheduleDate);
-            console.log('🗓️ Parsed date string:', dateString, 'from:', this.booking.scheduleDate);
+            const dateString = this.workerAvailabilityService.parseScheduleDate(
+              this.booking.scheduleDate
+            );
+            console.log(
+              '🗓️ Parsed date string:',
+              dateString,
+              'from:',
+              this.booking.scheduleDate
+            );
             if (dateString) {
-              const conflictCheck = await this.workerAvailabilityService.hasBookingConflicts(
-                doc.id,
-                dateString,
-                this.booking.scheduleTime,
-                1 // Assume 1 hour duration for now, could be made dynamic
-              );
+              const conflictCheck =
+                await this.workerAvailabilityService.hasBookingConflicts(
+                  doc.id,
+                  dateString,
+                  this.booking.scheduleTime,
+                  1 // Assume 1 hour duration for now, could be made dynamic
+                );
               bookingAvailable = !conflictCheck.hasConflict;
               console.log('🔍 Conflict check result:', conflictCheck);
             }
           } else {
-            console.log('⚠️ No schedule date/time found:', { scheduleDate: this.booking.scheduleDate, scheduleTime: this.booking.scheduleTime });
+            console.log('⚠️ No schedule date/time found:', {
+              scheduleDate: this.booking.scheduleDate,
+              scheduleTime: this.booking.scheduleTime,
+            });
           }
 
           const workerName =
@@ -243,7 +323,7 @@ export class WorkerResultsPage implements OnInit {
           console.log('🗓️ Booking available (no conflicts):', bookingAvailable);
           console.log('💰 Price match:', priceMatch);
           console.log('📍 Location match:', locationMatch);
-          
+
           // Debug: Show which specific checks are failing
           if (!serviceMatch) console.log('❌ Service match failed');
           if (!isAvailable) console.log('❌ Day available failed');
@@ -266,13 +346,18 @@ export class WorkerResultsPage implements OnInit {
           const fullMatch =
             serviceMatch &&
             // isAvailable &&  // Temporarily disable day availability check
-            // timeAvailable && // Temporarily disable time availability check  
+            // timeAvailable && // Temporarily disable time availability check
             bookingAvailable &&
             priceMatch;
-            // locationMatch;   // Temporarily disable location match
-          console.log(`🎯 FULL MATCH (relaxed criteria for debugging): ${fullMatch}`);
+          // locationMatch;   // Temporarily disable location match
+          console.log(
+            `🎯 FULL MATCH (relaxed criteria for debugging): ${fullMatch}`
+          );
 
           if (fullMatch) {
+            // Calculate actual rating from bookings
+            const ratingData = await this.calculateWorkerAverageRating(doc.id);
+
             const worker: WorkerProfile = {
               uid: doc.id,
               fullName:
@@ -280,8 +365,8 @@ export class WorkerResultsPage implements OnInit {
                 workerData['fullName'] ||
                 'Unknown Worker',
               photoUrl: this.getWorkerPhotoUrl(workerData, userData),
-              rating: workerData['rating'] || 0,
-              reviewCount: workerData['reviewCount'] || 0,
+              rating: ratingData.averageRating,
+              reviewCount: ratingData.reviewCount,
               skills: workerData['skills'] || [],
               services: this.extractServicesFromPrices(
                 workerData['servicePrices'] || []
@@ -600,11 +685,13 @@ export class WorkerResultsPage implements OnInit {
     });
 
     if (!matchingService) {
-      console.log('🔍 No service-specific pricing found, checking if ANY pricing fits budget...');
-      
+      console.log(
+        '🔍 No service-specific pricing found, checking if ANY pricing fits budget...'
+      );
+
       // Final fallback: Check if worker has ANY pricing that fits the budget
       const allPrices: number[] = [];
-      
+
       // Collect all prices from serviceWithPricing
       if (serviceWithPricing.length > 0) {
         serviceWithPricing.forEach((category: any) => {
@@ -617,7 +704,7 @@ export class WorkerResultsPage implements OnInit {
           }
         });
       }
-      
+
       // Collect all prices from legacy servicePrices
       if (servicePrices.length > 0) {
         servicePrices.forEach((service: any) => {
@@ -629,16 +716,16 @@ export class WorkerResultsPage implements OnInit {
           }
         });
       }
-      
+
       if (allPrices.length > 0) {
-        const hasAffordablePrice = allPrices.some(price => 
-          price >= userMinBudget && price <= userMaxBudget
+        const hasAffordablePrice = allPrices.some(
+          (price) => price >= userMinBudget && price <= userMaxBudget
         );
         console.log(`💰 Worker's all prices: [${allPrices.join(', ')}]`);
         console.log(`💰 Any price in budget: ${hasAffordablePrice}`);
         return hasAffordablePrice;
       }
-      
+
       console.log('❌ No pricing data found at all - EXCLUDING worker');
       return false; // If no pricing data at all, exclude worker
     }
@@ -1334,11 +1421,29 @@ export class WorkerResultsPage implements OnInit {
       `📍 After distance filter: ${beforeDistanceFilter} → ${this.filteredWorkers.length}`
     );
 
-    // Filter by rating
+    // Filter by rating - handle "New Worker" case
     console.log(`⭐ Rating filter: min ${this.filters.minRating}`);
     const beforeRatingFilter = this.filteredWorkers.length;
     this.filteredWorkers = this.filteredWorkers.filter((worker) => {
       const rating = worker.rating;
+
+      // If minRating is 0, show all workers (including new workers)
+      if (this.filters.minRating === 0) {
+        console.log(
+          `   ${worker.fullName}: All ratings accepted (including new workers)`
+        );
+        return true;
+      }
+
+      // If worker has 0 rating (new worker), exclude them from higher rating filters
+      if (rating === 0) {
+        console.log(
+          `   ${worker.fullName}: New worker (0 rating) excluded from ${this.filters.minRating}+ filter`
+        );
+        return false;
+      }
+
+      // Normal rating filtering for workers with ratings
       const passes = rating >= this.filters.minRating;
       console.log(
         `   ${worker.fullName}: ${rating} >= ${this.filters.minRating} = ${passes}`
@@ -1420,15 +1525,18 @@ export class WorkerResultsPage implements OnInit {
       // First, double-check worker availability and reserve the time slot
       if (this.booking) {
         // Verify worker is still available before proceeding
-        const conflictCheck = await this.workerAvailabilityService.hasBookingConflicts(
-          worker.uid,
-          this.booking.scheduleDate.toDate().toISOString().split('T')[0], // Convert to YYYY-MM-DD format
-          this.booking.scheduleTime || '09:00',
-          this.booking.estimatedDuration || 2
-        );
+        const conflictCheck =
+          await this.workerAvailabilityService.hasBookingConflicts(
+            worker.uid,
+            this.booking.scheduleDate.toDate().toISOString().split('T')[0], // Convert to YYYY-MM-DD format
+            this.booking.scheduleTime || '09:00',
+            this.booking.estimatedDuration || 2
+          );
 
         if (conflictCheck.hasConflict) {
-          throw new Error('Worker is no longer available at this time slot - conflicting bookings detected');
+          throw new Error(
+            'Worker is no longer available at this time slot - conflicting bookings detected'
+          );
         }
         console.log('� Reserving worker time slot...');
         await this.workerAvailabilityService.bookWorkerTimeSlot(
@@ -1510,12 +1618,13 @@ export class WorkerResultsPage implements OnInit {
       // If error occurred during time slot booking, show specific message
       if (error instanceof Error && error.message.includes('time slot')) {
         const toast = await this.toastController.create({
-          message: 'Worker is no longer available at this time. Please try another worker.',
+          message:
+            'Worker is no longer available at this time. Please try another worker.',
           duration: 4000,
           color: 'warning',
         });
         toast.present();
-        
+
         // Refresh the worker list to show updated availability
         await this.loadWorkers();
       } else {

@@ -863,7 +863,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
           serviceName: mainService,
           subServiceName: specificService || mainService,
           price: 500, // Mock price
-          unit: this.formatUnit(unit),
+          unit: unit,
         };
       }
 
@@ -990,7 +990,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
           serviceName: matchedCategory.categoryName,
           subServiceName: foundPricing.subServiceName,
           price: foundPricing.price,
-          unit: this.formatUnit(unit || 'per_hour'),
+          unit: unit || '/hr',
         };
 
         console.log('Found pricing:', this.workerPricing);
@@ -1005,13 +1005,65 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     subServiceName: string
   ): Promise<string> {
     try {
+      console.log(`🔍 Looking for unit: ${serviceName} -> ${subServiceName}`);
+
+      // Find the service category that matches the service name
       const serviceCategory = this.serviceCategories.find(
         (cat) =>
           cat.name.toLowerCase() === serviceName.toLowerCase() ||
-          cat.services.some(
+          cat.services?.some(
             (service) => service.toLowerCase() === serviceName.toLowerCase()
           )
       );
+
+      if (
+        serviceCategory &&
+        serviceCategory.services &&
+        serviceCategory.servicesPricing
+      ) {
+        // Find the index of the sub-service in the services array
+        const subServiceIndex = serviceCategory.services.findIndex(
+          (service) => service.toLowerCase() === subServiceName.toLowerCase()
+        );
+
+        if (
+          subServiceIndex !== -1 &&
+          serviceCategory.servicesPricing[subServiceIndex]
+        ) {
+          const unit = serviceCategory.servicesPricing[subServiceIndex];
+          console.log(
+            `✅ Found unit from servicesPricing: ${subServiceName} -> ${unit}`
+          );
+          return unit === 'per_hour'
+            ? '/hr'
+            : unit === 'per_day'
+            ? '/day'
+            : '/hr';
+        }
+
+        // Also try to find by main service name if sub-service not found
+        const serviceIndex = serviceCategory.services.findIndex(
+          (service) => service.toLowerCase() === serviceName.toLowerCase()
+        );
+
+        if (
+          serviceIndex !== -1 &&
+          serviceCategory.servicesPricing[serviceIndex]
+        ) {
+          const unit = serviceCategory.servicesPricing[serviceIndex];
+          console.log(
+            `✅ Found unit from servicesPricing by service: ${serviceName} -> ${unit}`
+          );
+          return unit === 'per_hour'
+            ? '/hr'
+            : unit === 'per_day'
+            ? '/day'
+            : '/hr';
+        }
+      }
+
+      // Fallback to the old method if no servicesPricing found
+      console.log(`⚠️ No servicesPricing found, falling back to old method`);
 
       if (
         serviceCategory &&
@@ -1026,14 +1078,24 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
           subServiceIndex >= 0 &&
           serviceCategory.servicesQuickBookingUnit[subServiceIndex]
         ) {
-          return serviceCategory.servicesQuickBookingUnit[subServiceIndex];
+          const unit =
+            serviceCategory.servicesQuickBookingUnit[subServiceIndex];
+          console.log(
+            `✅ Found unit from old method: ${serviceName} -> ${unit}`
+          );
+          return unit === 'per_hour'
+            ? '/hr'
+            : unit === 'per_day'
+            ? '/day'
+            : '/hr';
         }
       }
 
-      return 'per_hour';
+      console.log(`❌ No unit found for: ${serviceName} -> ${subServiceName}`);
+      return '/hr'; // Default fallback
     } catch (error) {
-      console.error('Error getting service unit:', error);
-      return 'per_hour';
+      console.error(`❌ Error getting service unit:`, error);
+      return '/hr'; // Default fallback
     }
   }
 
@@ -1453,51 +1515,58 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     event.preventDefault();
     this.isDraggingArrival = true;
     this.isDraggingComplete = false;
-    
-    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+
+    const clientX =
+      'touches' in event ? event.touches[0].clientX : event.clientX;
     this.startX = clientX;
     this.startSliderPosition = this.arrivalSliderPosition;
-    
+
     // Get slider track width
     const trackElement = event.target as HTMLElement;
     const sliderTrack = trackElement.closest('.h-16') as HTMLElement;
     if (sliderTrack) {
       this.sliderWidth = sliderTrack.offsetWidth - 64; // Subtract button width (48px) + padding (16px)
     }
-    
+
     // Add event listeners
     document.addEventListener('mousemove', this.onArrivalSlideMove);
     document.addEventListener('mouseup', this.onArrivalSlideEnd);
-    document.addEventListener('touchmove', this.onArrivalSlideMove, { passive: false });
+    document.addEventListener('touchmove', this.onArrivalSlideMove, {
+      passive: false,
+    });
     document.addEventListener('touchend', this.onArrivalSlideEnd);
   }
 
   onArrivalSlideMove = (event: MouseEvent | TouchEvent) => {
     if (!this.isDraggingArrival) return;
-    
+
     event.preventDefault();
-    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+    const clientX =
+      'touches' in event ? event.touches[0].clientX : event.clientX;
     const deltaX = clientX - this.startX;
     let newPosition = this.startSliderPosition + deltaX;
-    
+
     // Constrain position
     newPosition = Math.max(8, Math.min(this.sliderWidth, newPosition));
-    
+
     this.arrivalSliderPosition = newPosition;
-    this.arrivalSlideProgress = Math.max(0, Math.min(1, (newPosition - 8) / (this.sliderWidth - 8)));
-  }
+    this.arrivalSlideProgress = Math.max(
+      0,
+      Math.min(1, (newPosition - 8) / (this.sliderWidth - 8))
+    );
+  };
 
   onArrivalSlideEnd = () => {
     if (!this.isDraggingArrival) return;
-    
+
     this.isDraggingArrival = false;
-    
+
     // Remove event listeners
     document.removeEventListener('mousemove', this.onArrivalSlideMove);
     document.removeEventListener('mouseup', this.onArrivalSlideEnd);
     document.removeEventListener('touchmove', this.onArrivalSlideMove);
     document.removeEventListener('touchend', this.onArrivalSlideEnd);
-    
+
     // Check if slider was completed (85% or more)
     if (this.arrivalSlideProgress >= 0.85) {
       this.confirmArrival();
@@ -1505,7 +1574,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       // Reset slider if not completed
       this.resetArrivalSlider();
     }
-  }
+  };
 
   resetArrivalSlider() {
     this.arrivalSliderPosition = 8;
@@ -1516,51 +1585,58 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
     event.preventDefault();
     this.isDraggingComplete = true;
     this.isDraggingArrival = false;
-    
-    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+
+    const clientX =
+      'touches' in event ? event.touches[0].clientX : event.clientX;
     this.startX = clientX;
     this.startSliderPosition = this.completeSliderPosition;
-    
+
     // Get slider track width
     const trackElement = event.target as HTMLElement;
     const sliderTrack = trackElement.closest('.h-16') as HTMLElement;
     if (sliderTrack) {
       this.sliderWidth = sliderTrack.offsetWidth - 64; // Subtract button width (48px) + padding (16px)
     }
-    
+
     // Add event listeners
     document.addEventListener('mousemove', this.onCompleteSlideMove);
     document.addEventListener('mouseup', this.onCompleteSlideEnd);
-    document.addEventListener('touchmove', this.onCompleteSlideMove, { passive: false });
+    document.addEventListener('touchmove', this.onCompleteSlideMove, {
+      passive: false,
+    });
     document.addEventListener('touchend', this.onCompleteSlideEnd);
   }
 
   onCompleteSlideMove = (event: MouseEvent | TouchEvent) => {
     if (!this.isDraggingComplete) return;
-    
+
     event.preventDefault();
-    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
+    const clientX =
+      'touches' in event ? event.touches[0].clientX : event.clientX;
     const deltaX = clientX - this.startX;
     let newPosition = this.startSliderPosition + deltaX;
-    
+
     // Constrain position
     newPosition = Math.max(8, Math.min(this.sliderWidth, newPosition));
-    
+
     this.completeSliderPosition = newPosition;
-    this.completeSlideProgress = Math.max(0, Math.min(1, (newPosition - 8) / (this.sliderWidth - 8)));
-  }
+    this.completeSlideProgress = Math.max(
+      0,
+      Math.min(1, (newPosition - 8) / (this.sliderWidth - 8))
+    );
+  };
 
   onCompleteSlideEnd = () => {
     if (!this.isDraggingComplete) return;
-    
+
     this.isDraggingComplete = false;
-    
+
     // Remove event listeners
     document.removeEventListener('mousemove', this.onCompleteSlideMove);
     document.removeEventListener('mouseup', this.onCompleteSlideEnd);
     document.removeEventListener('touchmove', this.onCompleteSlideMove);
     document.removeEventListener('touchend', this.onCompleteSlideEnd);
-    
+
     // Check if slider was completed (85% or more)
     if (this.completeSlideProgress >= 0.85) {
       this.completeJob();
@@ -1568,7 +1644,7 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
       // Reset slider if not completed
       this.resetCompleteSlider();
     }
-  }
+  };
 
   resetCompleteSlider() {
     this.completeSliderPosition = 8;

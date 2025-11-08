@@ -1,5 +1,143 @@
 /* Enhanced Modern Book Service Page Styles */
 
+/* Time Restriction Notice Animations */
+.animate-fade-scale {
+  animation: fadeInScale 0.5s ease-out;
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Float animation for icons */
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Enhanced Card Styles */
+.enhanced-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.enhanced-card::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(59, 130, 246, 0.05),
+    transparent
+  );
+  transform: rotate(45deg);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Time Restriction Specific Styles */
+.time-restriction-notice {
+  border: 2px solid #f59e0b;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1);
+
+  .restriction-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+  }
+}
+
+/* Global calendar text fix */
+ion-datetime {
+  --ion-text-color: #1e293b !important;
+  --ion-background-color: white !important;
+}
+
+/* Specific datetime calendar text styling */
+ion-datetime::part(calendar) {
+  --ion-text-color: #1e293b !important;
+}
+
+/* Fix for month/year picker text */
+ion-datetime .picker-column .picker-opts {
+  color: #1e293b !important;
+}
+
+ion-datetime .calendar-month-year {
+  color: white !important;
+  background: #1e40af !important;
+}
+
+/* Force calendar text visibility - highest priority */
+.book-service-calendar {
+  ion-datetime {
+    --color: #1e293b !important;
+
+    &::part(month-year-button) {
+      color: white !important;
+      background: #1e40af !important;
+      padding: 8px 16px !important;
+      border-radius: 8px !important;
+      font-weight: 700 !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    &::part(calendar-month-year) {
+      color: white !important;
+      background: #1e40af !important;
+      font-weight: 700 !important;
+    }
+
+    &::part(calendar-day) {
+      color: #1e293b !important;
+      font-weight: 500 !important;
+
+      &.calendar-day-today {
+        color: white !important;
+        background: #1e40af !important;
+      }
+
+      &.calendar-day-active {
+        color: white !important;
+        background: #f59e0b !important;
+      }
+    }
+
+    &::part(header) {
+      background: linear-gradient(135deg, #1e40af, #1e3a8a) !important;
+      color: white !important;
+    }
+  }
+}
+
 /* Custom DateTime Styling */
 .custom-datetime {
   --background: transparent;
@@ -10,11 +148,22 @@
   border-radius: 16px;
   font-family: "Poppins", sans-serif;
   font-weight: 500;
+
+  /* Additional CSS variables for better contrast */
+  --ion-color-primary: #1e40af;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-secondary: #1e3a8a;
+  --ion-color-secondary-contrast: #ffffff;
 }
 
 .custom-datetime::part(native) {
-  color: #1e293b;
+  color: #1e293b !important;
   font-weight: 600;
+}
+
+/* Ensure calendar wrapper has proper styling */
+.custom-datetime ion-picker-column-internal {
+  --color: #1e293b !important;
 }
 
 .custom-datetime::part(calendar) {
@@ -81,7 +230,7 @@
 }
 
 .custom-datetime::part(header) {
-  background: linear-gradient(135deg, #1e9eff, #f59e0b);
+  background: linear-gradient(135deg, #1e40af, #1e3a8a);
   color: white;
   font-weight: 700;
   border-radius: 16px 16px 0 0;
@@ -89,9 +238,28 @@
 }
 
 .custom-datetime::part(month-year-button) {
-  color: white;
+  color: white !important;
   font-weight: 700;
   font-size: 1.2rem;
+  background: transparent;
+  border: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.custom-datetime::part(calendar-month-year) {
+  color: white !important;
+  font-weight: 700;
+  font-size: 1.2rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Fix for navigation arrows in calendar header */
+.custom-datetime::part(calendar-month-year-toggle) {
+  color: white !important;
+}
+
+.custom-datetime::part(chevron-button) {
+  color: white !important;
 }
 
 /* Enhanced Card Hover Effects */

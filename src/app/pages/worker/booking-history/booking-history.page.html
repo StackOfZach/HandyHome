@@ -177,7 +177,7 @@
           </div>
 
           <!-- Pricing and Earnings -->
-          <div class="flex items-center justify-between">
+          <!-- <div class="flex items-center justify-between">
             <div class="flex items-center">
               <ion-icon
                 name="cash-outline"
@@ -196,7 +196,7 @@
                     {{ formatCurrency(booking.workerEarning || booking.total || 0) }}
                   </span>
                 </p>
-                <!-- Show price breakdown for completed bookings (hide for rejected/declined) -->
+              
                 <div *ngIf="booking.finalPricing && (booking.status === 'completed' || booking.status === 'payment-confirmed')" class="text-xs text-gray-500 mt-1">
                   <div>Base: {{ formatCurrency(booking.finalPricing.basePrice) }}</div>
                   <div *ngIf="booking.finalPricing.transportFee">Transport: {{ formatCurrency(booking.finalPricing.transportFee) }}</div>
@@ -223,7 +223,7 @@
                 </p>
               </div>
             </div>
-          </div>
+          </div> -->
 
           <!-- Rating (if available) -->
           <div *ngIf="booking.rating && booking.rating > 0" class="flex items-center">

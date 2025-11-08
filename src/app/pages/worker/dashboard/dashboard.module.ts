@@ -5,6 +5,7 @@ import { IonicModule } from '@ionic/angular';
 import { WorkerDashboardPageRoutingModule } from './dashboard-routing.module';
 import { WorkerDashboardPage } from './dashboard.page';
 import { JobDetailsModalComponent } from '../../../components/job-details-modal/job-details-modal.component';
+import { TermsPrivacyModalComponent } from '../../../components/terms-privacy-modal/terms-privacy-modal.component';
 
 @NgModule({
   imports: [
@@ -12,6 +13,7 @@ import { JobDetailsModalComponent } from '../../../components/job-details-modal/
     FormsModule,
     IonicModule,
     WorkerDashboardPageRoutingModule,
+    TermsPrivacyModalComponent, // Import the standalone component
   ],
   declarations: [WorkerDashboardPage, JobDetailsModalComponent],
 })

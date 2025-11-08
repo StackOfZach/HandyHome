@@ -102,6 +102,40 @@ export class AuthService {
               this.userProfileSubject.next(profile);
 
               if (profile) {
+                // Enforce ban/suspension stored in users doc
+                try {
+                  const now = new Date();
+                  const isBanned = (profile as any).isBanned === true;
+                  const suspendedUntilRaw = (profile as any).suspendedUntil;
+                  const suspendedUntil = suspendedUntilRaw
+                    ? suspendedUntilRaw instanceof Date
+                      ? suspendedUntilRaw
+                      : new Date(suspendedUntilRaw)
+                    : null;
+
+                  if (isBanned) {
+                    console.warn('User is banned, signing out');
+                    await signOut(this.auth);
+                    this.currentUserSubject.next(null);
+                    this.userProfileSubject.next(null);
+                    return;
+                  }
+
+                  if (suspendedUntil && suspendedUntil > now) {
+                    console.warn('User is suspended until', suspendedUntil);
+                    await signOut(this.auth);
+                    this.currentUserSubject.next(null);
+                    this.userProfileSubject.next(null);
+                    return;
+                  }
+                } catch (banCheckError) {
+                  console.error(
+                    'Error checking ban/suspension status:',
+                    banCheckError
+                  );
+                  // proceed cautiously; allow login if check fails
+                }
+
                 // Save user session and update navigation state
                 this.saveUserSession(user, profile);
                 this.navigationState.setUserRole(profile.role);
@@ -213,6 +247,30 @@ export class AuthService {
       // Get user profile
       const profile = await this.getUserProfile(user.uid);
       if (profile) {
+        // Check ban/suspension status first
+        const now = new Date();
+        const isBanned = (profile as any).isBanned === true;
+        const suspendedUntilRaw = (profile as any).suspendedUntil;
+        const suspendedUntil = suspendedUntilRaw
+          ? suspendedUntilRaw instanceof Date
+            ? suspendedUntilRaw
+            : new Date(suspendedUntilRaw)
+          : null;
+
+        if (isBanned) {
+          await signOut(this.auth);
+          throw new Error(
+            'Your account has been banned. Please contact support.'
+          );
+        }
+
+        if (suspendedUntil && suspendedUntil > now) {
+          await signOut(this.auth);
+          throw new Error(
+            `Your account is suspended until ${suspendedUntil.toLocaleString()}.`
+          );
+        }
+
         // Check verification status for clients
         if (profile.role === 'client') {
           if (profile.verificationStatus === 'not_submitted') {
@@ -313,7 +371,16 @@ export class AuthService {
         const profile = {
           ...data,
           createdAt: data['createdAt']?.toDate() || new Date(),
-        } as UserProfile;
+          // Include admin fields for ban/suspension status
+          isBanned: data['isBanned'] || false,
+          bannedAt: data['bannedAt']
+            ? data['bannedAt'].toDate?.() || new Date(data['bannedAt'])
+            : null,
+          suspendedUntil: data['suspendedUntil']
+            ? data['suspendedUntil'].toDate?.() ||
+              new Date(data['suspendedUntil'])
+            : null,
+        } as any as UserProfile;
 
         // Cache the profile
         this.cacheUserProfile(profile);

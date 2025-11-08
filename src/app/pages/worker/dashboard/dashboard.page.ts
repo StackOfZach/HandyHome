@@ -106,6 +106,9 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   showNotifications: boolean = false; // Keep for backward compatibility
   showNotificationModal: boolean = false;
 
+  // Terms & Privacy modal
+  isTermsPrivacyModalOpen: boolean = false;
+
   // Quick booking notification system
   quickBookingNotification: QuickBookingNotification | null = null;
   showQuickNotification: boolean = false;
@@ -331,13 +334,15 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
           if (availableQuickBookings.length > 0) {
             const latestBooking = availableQuickBookings[0];
-            
+
             // Check if worker has availability for today (quick bookings are usually immediate)
             const hasAvailability = await this.checkTodayAvailability();
             if (hasAvailability) {
               this.showQuickBookingNotification(latestBooking);
             } else {
-              console.log('Worker has conflicting bookings, not showing quick booking notification');
+              console.log(
+                'Worker has conflicting bookings, not showing quick booking notification'
+              );
             }
           }
         })
@@ -1247,7 +1252,7 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
   async toggleAvailability() {
     // Use the new online/offline system
     await this.toggleOnlineStatus();
-    
+
     // Keep the old isAvailable property in sync for backward compatibility
     this.isAvailable = this.isOnline;
 
@@ -1466,7 +1471,12 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
   // Load available bookings from quickbookings collection
   async loadAvailableBookings() {
-    if (!this.userProfile?.uid || !this.workerProfile || !this.isAvailableForQuickBookings) return;
+    if (
+      !this.userProfile?.uid ||
+      !this.workerProfile ||
+      !this.isAvailableForQuickBookings
+    )
+      return;
 
     try {
       const quickBookingsRef = collection(this.firestore, 'quickbookings');
@@ -1665,6 +1675,16 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     this.router.navigate(['/pages/worker/update-profile']);
   }
 
+  // Open terms & privacy modal for viewing
+  openTermsPrivacyModal() {
+    this.isTermsPrivacyModalOpen = true;
+  }
+
+  // Close terms & privacy modal
+  closeTermsPrivacyModal() {
+    this.isTermsPrivacyModalOpen = false;
+  }
+
   // Helper methods for notification booking data
   hasBookingData(notification: WorkerNotification): boolean {
     // Check if notification has any additional booking data
@@ -1719,12 +1739,14 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
         this.isAvailableForQuickBookings
       );
 
-      const message = this.isOnline ? 'You are now online and available for bookings' : 'You are now offline and unavailable for bookings';
+      const message = this.isOnline
+        ? 'You are now online and available for bookings'
+        : 'You are now offline and unavailable for bookings';
       const toast = await this.toastController.create({
         message,
         duration: 2000,
         position: 'bottom',
-        color: this.isOnline ? 'success' : 'warning'
+        color: this.isOnline ? 'success' : 'warning',
       });
       toast.present();
 
@@ -1754,15 +1776,15 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
         this.isAvailableForQuickBookings
       );
 
-      const message = this.isAvailableForQuickBookings 
-        ? 'You will now receive quick booking notifications' 
+      const message = this.isAvailableForQuickBookings
+        ? 'You will now receive quick booking notifications'
         : 'Quick booking notifications disabled';
-      
+
       const toast = await this.toastController.create({
         message,
         duration: 2000,
         position: 'bottom',
-        color: 'primary'
+        color: 'primary',
       });
       toast.present();
 
@@ -1788,7 +1810,9 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     if (!this.userProfile?.uid) return;
 
     try {
-      const status = await this.workerAvailabilityService.getWorkerOnlineStatus(this.userProfile.uid);
+      const status = await this.workerAvailabilityService.getWorkerOnlineStatus(
+        this.userProfile.uid
+      );
       if (status) {
         this.isOnline = status.isOnline;
         this.isAvailableForQuickBookings = status.isAvailableForQuickBookings;
@@ -1808,15 +1832,16 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     const currentTime = new Date().toTimeString().slice(0, 5); // Get HH:mm format
 
     try {
-      const availabilityCheck = await this.workerAvailabilityService.isWorkerAvailable(
-        this.userProfile.uid,
-        today,
-        currentTime,
-        1
-      );
+      const availabilityCheck =
+        await this.workerAvailabilityService.isWorkerAvailable(
+          this.userProfile.uid,
+          today,
+          currentTime,
+          1
+        );
       return !availabilityCheck.hasConflict;
     } catch (error) {
-      console.error('Error checking today\'s availability:', error);
+      console.error("Error checking today's availability:", error);
       return false;
     }
   }

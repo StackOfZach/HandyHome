@@ -160,18 +160,47 @@
           </div>
           When do you need it?
         </label>
+
+        <!-- Time Restriction Notice -->
         <div
-          class="border-2 border-gray-200 rounded-2xl p-6 bg-gradient-to-br from-handy-blue-50/50 to-handy-yellow-50/50 hover:shadow-lg transition-all duration-300 backdrop-blur-sm"
+          *ngIf="showTimeRestriction"
+          class="mb-4 p-4 time-restriction-notice rounded-xl shadow-sm animate-fade-scale"
+        >
+          <div class="flex items-center">
+            <div
+              class="w-8 h-8 restriction-icon rounded-full flex items-center justify-center mr-3"
+            >
+              <ion-icon name="time" class="text-white text-sm"></ion-icon>
+            </div>
+            <div>
+              <h4 class="font-semibold text-handy-navy-800 text-sm">
+                Service Hours Restriction
+              </h4>
+              <p class="text-handy-navy-600 text-xs mt-1">
+                {{ getTimeRestrictionMessage() }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="border-2 border-gray-200 rounded-2xl p-6 bg-gradient-to-br from-handy-blue-50/50 to-handy-yellow-50/50 hover:shadow-lg transition-all duration-300 backdrop-blur-sm book-service-calendar"
           [class.border-red-400]="!selectedDateTime && showValidation"
           [class.bg-red-50]="!selectedDateTime && showValidation"
         >
           <ion-datetime
             presentation="date-time"
             [(ngModel)]="selectedDateTime"
+            (ngModelChange)="onDateTimeChange()"
             [min]="minDate"
             [max]="maxDate"
             class="custom-datetime w-full"
-            style="--color: #1e293b; --background: transparent"
+            style="
+              --color: #1e293b;
+              --background: transparent;
+              --ion-text-color: #1e293b;
+            "
+            color="primary"
           ></ion-datetime>
         </div>
         <div
@@ -187,7 +216,6 @@
           </p>
         </div>
       </div>
-
       <!-- Service Location -->
       <div class="mb-8">
         <label
@@ -328,20 +356,29 @@
             class="mt-4 space-y-4 animate-fade-in"
           >
             <!-- Map Container -->
-            <div class="relative bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-200">
+            <div
+              class="relative bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-200"
+            >
               <div class="h-80 w-full">
                 <app-map-picker
                   [initialLocation]="mapPickedLocation"
                   (locationSelected)="onMapLocationSelected($event)"
                 ></app-map-picker>
               </div>
-              
+
               <!-- Map Instructions -->
               <div class="absolute top-4 left-4 right-4">
-                <div class="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20">
+                <div
+                  class="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20"
+                >
                   <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-handy-blue-500 rounded-full flex items-center justify-center">
-                      <ion-icon name="information" class="text-white text-sm"></ion-icon>
+                    <div
+                      class="w-8 h-8 bg-handy-blue-500 rounded-full flex items-center justify-center"
+                    >
+                      <ion-icon
+                        name="information"
+                        class="text-white text-sm"
+                      ></ion-icon>
                     </div>
                     <p class="text-sm text-gray-700 font-medium">
                       Tap on the map or drag the marker to select your location
@@ -352,19 +389,32 @@
             </div>
 
             <!-- Selected Location Display -->
-            <div *ngIf="mapSelectedAddress" class="bg-handy-blue-50 rounded-2xl p-4 border border-handy-blue-200">
+            <div
+              *ngIf="mapSelectedAddress"
+              class="bg-handy-blue-50 rounded-2xl p-4 border border-handy-blue-200"
+            >
               <div class="flex items-start space-x-3">
-                <div class="w-10 h-10 bg-handy-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <ion-icon name="location" class="text-white text-lg"></ion-icon>
+                <div
+                  class="w-10 h-10 bg-handy-blue-500 rounded-xl flex items-center justify-center flex-shrink-0"
+                >
+                  <ion-icon
+                    name="location"
+                    class="text-white text-lg"
+                  ></ion-icon>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <h4 class="font-bold text-handy-navy-800 text-sm mb-1">Selected Location:</h4>
-                  <p class="text-gray-600 text-sm leading-relaxed">{{ mapSelectedAddress }}</p>
+                  <h4 class="font-bold text-handy-navy-800 text-sm mb-1">
+                    Selected Location:
+                  </h4>
+                  <p class="text-gray-600 text-sm leading-relaxed">
+                    {{ mapSelectedAddress }}
+                  </p>
                   <p class="text-gray-500 text-xs mt-2">
-                    Coordinates: {{ mapPickedLocation?.lat | number:'1.6-6' }}, {{ mapPickedLocation?.lng | number:'1.6-6' }}
+                    Coordinates: {{ mapPickedLocation?.lat | number:'1.6-6' }},
+                    {{ mapPickedLocation?.lng | number:'1.6-6' }}
                   </p>
                 </div>
-                <button 
+                <button
                   (click)="refreshMapLocation()"
                   class="p-2 text-handy-blue-500 hover:bg-handy-blue-100 rounded-lg transition-colors"
                 >
@@ -374,10 +424,18 @@
             </div>
 
             <!-- Loading State for Address -->
-            <div *ngIf="loadingMapAddress" class="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+            <div
+              *ngIf="loadingMapAddress"
+              class="bg-gray-50 rounded-2xl p-4 border border-gray-200"
+            >
               <div class="flex items-center space-x-3">
-                <ion-spinner name="crescent" class="text-handy-blue-500"></ion-spinner>
-                <p class="text-gray-600 text-sm">Getting address for selected location...</p>
+                <ion-spinner
+                  name="crescent"
+                  class="text-handy-blue-500"
+                ></ion-spinner>
+                <p class="text-gray-600 text-sm">
+                  Getting address for selected location...
+                </p>
               </div>
             </div>
           </div>
@@ -619,7 +677,7 @@
       </div>
 
       <!-- Additional Details -->
-      <div class="mb-8">
+      <!-- <div class="mb-8">
         <label
           class="block text-handy-navy-800 font-bold mb-4 flex items-center text-lg"
         >
@@ -649,7 +707,7 @@
             ></ion-icon>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Action Button -->
       <button

@@ -8,7 +8,7 @@ export class ImageService {
    * Compress and resize an image file to base64 with size optimization
    * @param file - The image file to process
    * @param maxWidth - Maximum width for the resized image
-   * @param maxHeight - Maximum height for the resized image  
+   * @param maxHeight - Maximum height for the resized image
    * @param quality - Compression quality (0.1 to 1.0)
    * @returns Promise<string> - Base64 encoded image
    */
@@ -37,7 +37,7 @@ export class ImageService {
 
         // Draw and compress
         ctx?.drawImage(img, 0, 0, width, height);
-        
+
         // Convert to base64 with compression
         const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
         resolve(compressedBase64);
@@ -88,7 +88,7 @@ export class ImageService {
 
         // Draw and compress
         ctx?.drawImage(img, 0, 0, width, height);
-        
+
         // Convert to base64 with compression
         const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
         resolve(compressedBase64);
@@ -142,7 +142,12 @@ export class ImageService {
   validateImageFile(
     file: File,
     maxSizeMB: number = 10,
-    allowedTypes: string[] = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    allowedTypes: string[] = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+    ]
   ): { valid: boolean; error?: string } {
     // Check file type
     if (!allowedTypes.includes(file.type)) {
@@ -176,7 +181,7 @@ export class ImageService {
     const sizeInBytes = base64String.length * 0.75;
     const sizeKB = sizeInBytes / 1024;
     const sizeMB = sizeKB / 1024;
-    
+
     // Firestore has a 1MB document size limit
     const estimatedFirestoreSize = base64String.length;
 

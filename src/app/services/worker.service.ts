@@ -341,4 +341,55 @@ export class WorkerService {
       throw error;
     }
   }
+
+  /**
+   * Suspend a worker for a given number of days. This writes suspension info to the users collection
+   */
+  async suspendWorker(uid: string, days: number): Promise<void> {
+    try {
+      const suspendedUntil = new Date();
+      suspendedUntil.setDate(suspendedUntil.getDate() + days);
+
+      // Update users collection so auth checks can block login
+      const userDocRef = doc(this.firestore, 'users', uid);
+      await updateDoc(userDocRef, {
+        suspendedUntil: suspendedUntil,
+        updatedAt: new Date(),
+      });
+
+      // Also mark worker status in workers collection for admin visibility
+      const workerDocRef = doc(this.firestore, 'workers', uid);
+      await updateDoc(workerDocRef, {
+        status: 'suspended',
+        suspendedUntil: suspendedUntil,
+        updatedAt: new Date(),
+      });
+    } catch (error) {
+      console.error('Error suspending worker:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set or clear ban status for worker (and update users collection)
+   */
+  async setWorkerBan(uid: string, isBanned: boolean): Promise<void> {
+    try {
+      const userDocRef = doc(this.firestore, 'users', uid);
+      await updateDoc(userDocRef, {
+        isBanned: isBanned,
+        bannedAt: isBanned ? new Date() : null,
+        updatedAt: new Date(),
+      });
+
+      const workerDocRef = doc(this.firestore, 'workers', uid);
+      await updateDoc(workerDocRef, {
+        status: isBanned ? 'banned' : 'verified',
+        updatedAt: new Date(),
+      });
+    } catch (error) {
+      console.error('Error updating worker ban status:', error);
+      throw error;
+    }
+  }
 }

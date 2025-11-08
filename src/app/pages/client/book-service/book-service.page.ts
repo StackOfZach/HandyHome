@@ -1,6 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { LoadingController, ToastController } from '@ionic/angular';
+import {
+  LoadingController,
+  ToastController,
+  AlertController,
+} from '@ionic/angular';
 import {
   Firestore,
   collection,
@@ -49,6 +53,12 @@ export class BookServicePage implements OnInit {
   minDate = new Date().toISOString();
   maxDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1 year from now
 
+  // Time restrictions for specific services
+  timeRestrictedServices = ['cleaning', 'laundry'];
+  restrictedTimeStart = '08:00';
+  restrictedTimeEnd = '17:00';
+  showTimeRestriction = false;
+
   // Location properties
   locationType: 'current' | 'custom' | 'saved' | 'map' | '' = '';
   currentLocationAddress = '';
@@ -72,6 +82,7 @@ export class BookServicePage implements OnInit {
     private router: Router,
     private loadingController: LoadingController,
     private toastController: ToastController,
+    private alertController: AlertController,
     private firestore: Firestore,
     private authService: AuthService,
     private dashboardService: DashboardService
@@ -91,10 +102,19 @@ export class BookServicePage implements OnInit {
 
   async loadServiceCategories() {
     try {
-      this.serviceCategories =
-        await this.dashboardService.getServiceCategories();
+      // Fetch from DashboardService with proper filtering
+      const allCategories = await this.dashboardService.getServiceCategories();
+
+      // Filter only active categories and their active sub-services
+      this.serviceCategories = allCategories
+        .filter((category) => category.isActive)
+        .map((category) => ({
+          ...category,
+          services: category.services || [], // Ensure services array exists
+        }));
     } catch (error) {
       console.error('Error loading service categories:', error);
+      this.serviceCategories = [];
     }
   }
 
@@ -144,7 +164,9 @@ export class BookServicePage implements OnInit {
   onServiceChange() {
     // Reset sub-service selection when main service changes
     this.selectedSubService = '';
+    this.showTimeRestriction = false;
     this.updateAvailableSubServices();
+    this.checkTimeRestriction();
   }
 
   updateAvailableSubServices() {
@@ -152,6 +174,78 @@ export class BookServicePage implements OnInit {
       (category) => category.name === this.selectedService
     );
     this.availableSubServices = selectedCategory?.services || [];
+  }
+
+  // Time validation methods
+  onDateTimeChange() {
+    if (this.selectedDateTime && this.selectedService) {
+      this.validateAndHandleTimeRestriction();
+    }
+  }
+
+  checkTimeRestriction() {
+    const serviceName = this.selectedService.toLowerCase();
+    this.showTimeRestriction =
+      this.timeRestrictedServices.includes(serviceName);
+  }
+
+  validateBookingTime(service: string, dateTime: string): boolean {
+    const serviceName = service.toLowerCase();
+    if (!this.timeRestrictedServices.includes(serviceName)) {
+      return true; // No restrictions for other services
+    }
+
+    const bookingDate = new Date(dateTime);
+    const timeString = bookingDate.toTimeString().slice(0, 5);
+
+    return (
+      timeString >= this.restrictedTimeStart &&
+      timeString <= this.restrictedTimeEnd
+    );
+  }
+
+  async validateAndHandleTimeRestriction() {
+    if (
+      !this.validateBookingTime(this.selectedService, this.selectedDateTime)
+    ) {
+      await this.presentTimeRestrictionAlert();
+    }
+  }
+
+  async presentTimeRestrictionAlert() {
+    const selectedDate = new Date(this.selectedDateTime);
+    const nextDay = new Date(selectedDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    nextDay.setHours(8, 0, 0, 0); // Set to 8:00 AM next day
+
+    const alert = await this.alertController.create({
+      header: 'Time Restriction Notice',
+      message: `${this.selectedService} services are only available from ${
+        this.restrictedTimeStart
+      } to ${
+        this.restrictedTimeEnd
+      }. Would you like to book for ${nextDay.toLocaleDateString()} at 8:00 AM instead?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          handler: () => {
+            this.selectedDateTime = '';
+          },
+        },
+        {
+          text: 'Book Next Day',
+          handler: () => {
+            this.selectedDateTime = nextDay.toISOString();
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  getTimeRestrictionMessage(): string {
+    return `⏰ ${this.selectedService} services are available from ${this.restrictedTimeStart} to ${this.restrictedTimeEnd} only.`;
   }
 
   goBack() {
@@ -288,7 +382,7 @@ export class BookServicePage implements OnInit {
   async onMapLocationSelected(location: { lat: number; lng: number }) {
     this.mapPickedLocation = location;
     console.log('Map location selected:', location);
-    
+
     // Get address from coordinates using Nominatim
     await this.getAddressFromCoordinates(location);
   }
@@ -296,7 +390,7 @@ export class BookServicePage implements OnInit {
   async getAddressFromCoordinates(location: { lat: number; lng: number }) {
     try {
       this.loadingMapAddress = true;
-      
+
       // Use Nominatim for reverse geocoding
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}&zoom=16&addressdetails=1`
@@ -304,14 +398,20 @@ export class BookServicePage implements OnInit {
 
       if (response.ok) {
         const data = await response.json();
-        this.mapSelectedAddress = data.display_name || `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
+        this.mapSelectedAddress =
+          data.display_name ||
+          `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
         console.log('Address retrieved:', this.mapSelectedAddress);
       } else {
-        this.mapSelectedAddress = `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
+        this.mapSelectedAddress = `${location.lat.toFixed(
+          6
+        )}, ${location.lng.toFixed(6)}`;
       }
     } catch (error) {
       console.error('Reverse geocoding error:', error);
-      this.mapSelectedAddress = `${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`;
+      this.mapSelectedAddress = `${location.lat.toFixed(
+        6
+      )}, ${location.lng.toFixed(6)}`;
     } finally {
       this.loadingMapAddress = false;
     }
@@ -386,6 +486,19 @@ export class BookServicePage implements OnInit {
       return;
     }
 
+    // Validate time restriction for cleaning and laundry services
+    if (
+      !this.validateBookingTime(this.selectedService, this.selectedDateTime)
+    ) {
+      const toast = await this.toastController.create({
+        message: `${this.selectedService} services are only available from ${this.restrictedTimeStart} to ${this.restrictedTimeEnd}. Please select a different time or use the suggested next-day option.`,
+        duration: 5000,
+        color: 'warning',
+      });
+      toast.present();
+      return;
+    }
+
     // Validate that the selected date/time is not in the past
     const selectedDate = new Date(this.selectedDateTime);
     const now = new Date();
@@ -401,16 +514,21 @@ export class BookServicePage implements OnInit {
     }
 
     // Check if the selected time is within reasonable hours (6 AM to 10 PM)
-    const selectedHour = selectedDate.getHours();
-    if (selectedHour < 6 || selectedHour > 22) {
-      const toast = await this.toastController.create({
-        message:
-          'Please select a time between 6:00 AM and 10:00 PM for better worker availability',
-        duration: 4000,
-        color: 'warning',
-      });
-      toast.present();
-      return;
+    // Skip this check for time-restricted services as they have their own validation
+    if (
+      !this.timeRestrictedServices.includes(this.selectedService.toLowerCase())
+    ) {
+      const selectedHour = selectedDate.getHours();
+      if (selectedHour < 6 || selectedHour > 22) {
+        const toast = await this.toastController.create({
+          message:
+            'Please select a time between 6:00 AM and 10:00 PM for better worker availability',
+          duration: 4000,
+          color: 'warning',
+        });
+        toast.present();
+        return;
+      }
     }
 
     if (this.minBudget >= this.maxBudget) {
