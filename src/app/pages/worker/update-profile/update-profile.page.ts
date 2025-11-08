@@ -39,7 +39,7 @@ export class UpdateProfilePage implements OnInit {
   isLoading = false;
 
   // Define the three main service scopes
-  readonly MAIN_SERVICE_SCOPES = ['Cleaning', 'Plumbing', 'Electrical'];
+  readonly MAIN_SERVICE_SCOPES = ['Cleaning', 'Plumbing', 'Electrical', 'Appliances'];
 
   // Time availability for each day
   timeAvailability: { [key: string]: { startTime: string; endTime: string } } =
@@ -92,14 +92,24 @@ export class UpdateProfilePage implements OnInit {
   async loadUserData() {
     this.authService.userProfile$.subscribe(async (profile) => {
       if (profile) {
+        console.log('👤 User profile loaded:', profile.uid);
         this.userProfile = profile;
+        
+        // Fetch worker profile
+        console.log('⏳ Fetching worker profile...');
         this.workerProfile = await this.workerService.getWorkerProfile(
           profile.uid
         );
+        console.log('👷 Worker profile loaded:', this.workerProfile);
+        
         // Make sure service categories are loaded before populating form
         if (this.serviceCategories.length === 0) {
+          console.log('⏳ Loading service categories...');
           await this.loadServiceCategories();
         }
+        
+        // Call populateForm
+        console.log('📋 Calling populateForm...');
         this.populateForm();
       }
     });
@@ -129,7 +139,16 @@ export class UpdateProfilePage implements OnInit {
   }
 
   populateForm() {
-    if (!this.workerProfile || !this.userProfile) return;
+    console.log('🔄 PopulateForm called');
+    console.log('🔍 Worker profile exists:', !!this.workerProfile);
+    console.log('🔍 User profile exists:', !!this.userProfile);
+    
+    if (!this.workerProfile || !this.userProfile) {
+      console.log('❌ Missing profiles, aborting populate form');
+      return;
+    }
+
+    console.log('✅ Both profiles available, populating form...');
 
     this.profileForm.patchValue({
       fullName: this.userProfile.fullName || '',
@@ -141,7 +160,7 @@ export class UpdateProfilePage implements OnInit {
       bio: (this.workerProfile as any).bio || '',
     });
 
-    // Populate skills
+    // Populate skills (read-only - cannot add/remove)
     if (this.workerProfile.skills) {
       const skillsArray = this.profileForm.get('skills') as FormArray;
       skillsArray.clear();
@@ -150,44 +169,64 @@ export class UpdateProfilePage implements OnInit {
       });
     }
 
-    // Populate service prices
+    // Populate service prices from database serviceWithPricing field
     const serviceWithPricingArray = this.profileForm.get(
       'serviceWithPricing'
     ) as FormArray;
+    console.log('📊 Service pricing section started');
+    console.log('📊 serviceWithPricingArray before clear:', serviceWithPricingArray.length);
+    
     serviceWithPricingArray.clear();
+    
+    console.log('📊 serviceWithPricingArray after clear:', serviceWithPricingArray.length);
 
     let filteredOutCategories: string[] = [];
-    if ((this.workerProfile as any).serviceWithPricing) {
-      (this.workerProfile as any).serviceWithPricing.forEach(
-        (svc: ServiceWithPricing) => {
+    
+    // Fetch pricing from the worker's serviceWithPricing field in the database
+    console.log('🔍 Full worker profile data:', this.workerProfile);
+    console.log('🔍 ServiceWithPricing field:', this.workerProfile.serviceWithPricing);
+    
+    if (this.workerProfile.serviceWithPricing && Array.isArray(this.workerProfile.serviceWithPricing)) {
+      console.log('✅ Loading pricing from database serviceWithPricing field:', this.workerProfile.serviceWithPricing);
+      
+      this.workerProfile.serviceWithPricing.forEach(
+        (svc: any) => {
+          console.log('📋 Processing service category:', svc.categoryName);
+          console.log('📋 Sub-services:', svc.subServices);
+          
           // Only include services within the allowed scopes
           if (!this.isAllowedCategory(svc.categoryName)) {
             console.warn(
-              `Skipping disallowed category during form population: ${svc.categoryName}`
+              `🚫 Skipping disallowed category during form population: ${svc.categoryName}`
             );
+            console.warn('🔍 Allowed categories are:', this.MAIN_SERVICE_SCOPES);
             filteredOutCategories.push(svc.categoryName);
             return;
           }
+          
+          console.log('✅ Category allowed, processing:', svc.categoryName);
 
           const subServicesControls: any[] = [];
 
           // Find the corresponding service category to get unit information
           const category = this.allowedServiceCategories.find(
-            (c) => c.name === svc.categoryName
+            (c) => c.name.toLowerCase() === svc.categoryName.toLowerCase()
           );
 
-          svc.subServices.forEach((s: SubServicePrice, subIndex: number) => {
-            // Get the unit for this sub-service from the category
-            const unit = category?.servicesPricing?.[subIndex] || 'per_hour';
+          if (svc.subServices && Array.isArray(svc.subServices)) {
+            svc.subServices.forEach((subService: any, subIndex: number) => {
+              // Get the unit for this sub-service from the category
+              const unit = category?.servicesPricing?.[subIndex] || 'per_hour';
 
-            subServicesControls.push(
-              this.formBuilder.group({
-                subServiceName: [s.subServiceName, Validators.required],
-                price: [s.price || 0, [Validators.required, Validators.min(0)]],
-                unit: [unit], // Add unit information (read-only for workers)
-              })
-            );
-          });
+              subServicesControls.push(
+                this.formBuilder.group({
+                  subServiceName: [subService.subServiceName, Validators.required],
+                  price: [subService.price || 0, [Validators.required, Validators.min(0)]],
+                  unit: [unit], // Add unit information (read-only for workers)
+                })
+              );
+            });
+          }
 
           serviceWithPricingArray.push(
             this.formBuilder.group({
@@ -197,6 +236,41 @@ export class UpdateProfilePage implements OnInit {
           );
         }
       );
+    } else {
+      console.log('⚠️ No serviceWithPricing found in worker profile, initializing empty pricing');
+      // If no pricing exists, initialize with worker's existing services but zero prices
+      if (this.workerProfile.skills) {
+        this.workerProfile.skills.forEach(skillName => {
+          // Find matching category for this skill
+          const matchingCategory = this.allowedServiceCategories.find(
+            category => category.name.toLowerCase() === skillName.toLowerCase() ||
+            category.services?.some(service => service.toLowerCase() === skillName.toLowerCase())
+          );
+
+          if (matchingCategory) {
+            const subServicesControls: any[] = [];
+            
+            matchingCategory.services?.forEach((subService, subIndex) => {
+              const unit = matchingCategory.servicesPricing?.[subIndex] || 'per_hour';
+              subServicesControls.push(
+                this.formBuilder.group({
+                  subServiceName: [subService, Validators.required],
+                  price: [0, [Validators.required, Validators.min(0)]], // Initialize with 0
+                  unit: [unit],
+                })
+              );
+            });
+
+            serviceWithPricingArray.push(
+              this.formBuilder.group({
+                categoryName: [matchingCategory.name, Validators.required],
+                subServices: this.formBuilder.array(subServicesControls),
+              })
+            );
+          }
+        });
+      }
+      console.log('📊 serviceWithPricing processing completed. Array length:', serviceWithPricingArray.length);
     }
 
     // Show warning if categories were filtered out
@@ -237,6 +311,12 @@ export class UpdateProfilePage implements OnInit {
     if (this.workerProfile.timeAvailability) {
       this.timeAvailability = { ...this.workerProfile.timeAvailability };
     }
+    
+    // Final debugging - check the FormArray state
+    const finalServiceArray = this.profileForm.get('serviceWithPricing') as FormArray;
+    console.log('🔚 PopulateForm completed');
+    console.log('🔚 Final serviceWithPricingArray length:', finalServiceArray.length);
+    console.log('🔚 Final serviceWithPricingArray value:', finalServiceArray.value);
   }
 
   get skillsArray(): FormArray {
@@ -251,27 +331,30 @@ export class UpdateProfilePage implements OnInit {
     return this.profileForm.get('availableDays') as FormArray;
   }
 
+  // Skills management - DISABLED (workers cannot add/remove skills)
   addSkill() {
-    if (this.skillsArray.length < 3) {
-      this.skillsArray.push(this.formBuilder.control('', Validators.required));
-    }
+    // Disabled - workers cannot add skills through this interface
+    this.showToast('Skills cannot be modified. Contact admin to update your services.', 'warning');
+    return;
   }
 
   removeSkill(index: number) {
-    this.skillsArray.removeAt(index);
+    // Disabled - workers cannot remove skills through this interface  
+    this.showToast('Skills cannot be modified. Contact admin to update your services.', 'warning');
+    return;
   }
 
+  // Service pricing management - DISABLED (workers cannot add/remove service categories)
   addServiceWithPricing() {
-    this.serviceWithPricingArray.push(
-      this.formBuilder.group({
-        categoryName: ['', Validators.required],
-        subServices: this.formBuilder.array([]),
-      })
-    );
+    // Disabled - workers cannot add service categories through this interface
+    this.showToast('Service categories cannot be added. Contact admin to update your services.', 'warning');
+    return;
   }
 
   removeServiceWithPricing(index: number) {
-    this.serviceWithPricingArray.removeAt(index);
+    // Disabled - workers cannot remove service categories through this interface
+    this.showToast('Service categories cannot be removed. Contact admin to update your services.', 'warning');
+    return;
   }
 
   // When a category is selected, populate its sub-services into the form
@@ -560,6 +643,33 @@ export class UpdateProfilePage implements OnInit {
         'Please fill in all required fields correctly.',
         'warning'
       );
+    }
+  }
+
+  // Helper methods for category styling
+  getCategoryColor(categoryName: string): string {
+    switch (categoryName?.toLowerCase()) {
+      case 'cleaning':
+        return 'bg-blue-500';
+      case 'plumbing':
+        return 'bg-green-500';
+      case 'electrical':
+        return 'bg-yellow-500';
+      default:
+        return 'bg-gray-500';
+    }
+  }
+
+  getCategoryIcon(categoryName: string): string {
+    switch (categoryName?.toLowerCase()) {
+      case 'cleaning':
+        return 'sparkles-outline';
+      case 'plumbing':
+        return 'water-outline';
+      case 'electrical':
+        return 'flash-outline';
+      default:
+        return 'construct-outline';
     }
   }
 

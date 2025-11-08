@@ -30,6 +30,7 @@ export interface WorkerProfile {
   };
   skills?: string[];
   servicePrices?: ServicePrice[]; // New field for service pricing
+  serviceWithPricing?: any[]; // Field for detailed service pricing from database
   workRadius?: number;
   availableDays?: string[];
   timeAvailability?: { [key: string]: { startTime: string; endTime: string } };
