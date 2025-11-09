@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- GCash QR Code Placeholder -->
+  <rect width="200" height="200" fill="white" stroke="#ccc" stroke-width="2"/>
+  
+  <!-- QR Code Pattern Simulation -->
+  <!-- Top Left Corner -->
+  <rect x="10" y="10" width="60" height="60" fill="black"/>
+  <rect x="20" y="20" width="40" height="40" fill="white"/>
+  <rect x="30" y="30" width="20" height="20" fill="black"/>
+  
+  <!-- Top Right Corner -->
+  <rect x="130" y="10" width="60" height="60" fill="black"/>
+  <rect x="140" y="20" width="40" height="40" fill="white"/>
+  <rect x="150" y="30" width="20" height="20" fill="black"/>
+  
+  <!-- Bottom Left Corner -->
+  <rect x="10" y="130" width="60" height="60" fill="black"/>
+  <rect x="20" y="140" width="40" height="40" fill="white"/>
+  <rect x="30" y="150" width="20" height="20" fill="black"/>
+  
+  <!-- Random pattern blocks to simulate QR code -->
+  <rect x="80" y="20" width="10" height="10" fill="black"/>
+  <rect x="100" y="20" width="10" height="10" fill="black"/>
+  <rect x="80" y="40" width="10" height="10" fill="black"/>
+  <rect x="110" y="40" width="10" height="10" fill="black"/>
+  <rect x="90" y="50" width="10" height="10" fill="black"/>
+  <rect x="80" y="60" width="10" height="10" fill="black"/>
+  <rect x="110" y="60" width="10" height="10" fill="black"/>
+  
+  <rect x="20" y="80" width="10" height="10" fill="black"/>
+  <rect x="40" y="80" width="10" height="10" fill="black"/>
+  <rect x="60" y="80" width="10" height="10" fill="black"/>
+  <rect x="80" y="80" width="10" height="10" fill="black"/>
+  <rect x="100" y="80" width="10" height="10" fill="black"/>
+  <rect x="120" y="80" width="10" height="10" fill="black"/>
+  <rect x="140" y="80" width="10" height="10" fill="black"/>
+  <rect x="160" y="80" width="10" height="10" fill="black"/>
+  <rect x="180" y="80" width="10" height="10" fill="black"/>
+  
+  <rect x="30" y="100" width="10" height="10" fill="black"/>
+  <rect x="50" y="100" width="10" height="10" fill="black"/>
+  <rect x="70" y="100" width="10" height="10" fill="black"/>
+  <rect x="90" y="100" width="10" height="10" fill="black"/>
+  <rect x="110" y="100" width="10" height="10" fill="black"/>
+  <rect x="130" y="100" width="10" height="10" fill="black"/>
+  <rect x="150" y="100" width="10" height="10" fill="black"/>
+  <rect x="170" y="100" width="10" height="10" fill="black"/>
+  
+  <rect x="80" y="110" width="10" height="10" fill="black"/>
+  <rect x="100" y="110" width="10" height="10" fill="black"/>
+  <rect x="120" y="110" width="10" height="10" fill="black"/>
+  <rect x="140" y="110" width="10" height="10" fill="black"/>
+  <rect x="160" y="110" width="10" height="10" fill="black"/>
+  <rect x="180" y="110" width="10" height="10" fill="black"/>
+  
+  <rect x="80" y="130" width="10" height="10" fill="black"/>
+  <rect x="100" y="130" width="10" height="10" fill="black"/>
+  <rect x="120" y="130" width="10" height="10" fill="black"/>
+  <rect x="140" y="130" width="10" height="10" fill="black"/>
+  <rect x="160" y="130" width="10" height="10" fill="black"/>
+  <rect x="180" y="130" width="10" height="10" fill="black"/>
+  
+  <rect x="80" y="150" width="10" height="10" fill="black"/>
+  <rect x="100" y="150" width="10" height="10" fill="black"/>
+  <rect x="120" y="150" width="10" height="10" fill="black"/>
+  <rect x="140" y="150" width="10" height="10" fill="black"/>
+  <rect x="160" y="150" width="10" height="10" fill="black"/>
+  <rect x="180" y="150" width="10" height="10" fill="black"/>
+  
+  <rect x="80" y="170" width="10" height="10" fill="black"/>
+  <rect x="100" y="170" width="10" height="10" fill="black"/>
+  <rect x="120" y="170" width="10" height="10" fill="black"/>
+  <rect x="140" y="170" width="10" height="10" fill="black"/>
+  <rect x="160" y="170" width="10" height="10" fill="black"/>
+  <rect x="180" y="170" width="10" height="10" fill="black"/>
+  
+  <!-- GCash Label -->
+  <text x="100" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#666">GCash QR Code</text>
+</svg>

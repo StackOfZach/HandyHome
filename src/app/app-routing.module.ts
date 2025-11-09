@@ -44,7 +44,7 @@ const routes: Routes = [
       import(
         './pages/auth/client-verification/client-verification.module'
       ).then((m) => m.ClientVerificationPageModule),
-    canActivate: [AuthenticatedGuard],
+    // No guard - accessible after signup before login
   },
   // Client Dashboard - Protected Route
   {
@@ -372,11 +372,19 @@ const routes: Routes = [
   {
     path: 'pages/worker/booking-history',
     loadChildren: () =>
-      import(
-        './pages/worker/booking-history/booking-history.module'
-      ).then((m) => m.BookingHistoryPageModule),
+      import('./pages/worker/booking-history/booking-history.module').then(
+        (m) => m.BookingHistoryPageModule
+      ),
     canActivate: [AuthGuard],
     data: { role: 'worker' },
+  },
+  {
+    path: 'pages/worker/liabilities',
+    loadChildren: () =>
+      import('./pages/worker/liabilities/liabilities.module').then(
+        (m) => m.LiabilitiesPageModule
+      ),
+    canActivate: [AuthGuard],
   },
   // Wildcard route - redirect to login (MUST BE LAST)
   {

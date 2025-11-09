@@ -594,7 +594,7 @@
         </div>
 
         <!-- Additional Quick Actions Row -->
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4 mb-4">
           <button
             (click)="navigateToQuickBookingHistory()"
             class="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center text-center"
@@ -627,6 +627,26 @@
               >View all completed bookings</span
             >
           </button>
+        </div>
+
+        <!-- Third Quick Actions Row -->
+        <div class="grid grid-cols-2 gap-4">
+          <button
+            (click)="navigateToLiabilities()"
+            class="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white p-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 flex flex-col items-center justify-center text-center"
+          >
+            <div
+              class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3"
+            >
+              <ion-icon name="card-outline" class="text-2xl"></ion-icon>
+            </div>
+            <span class="font-semibold text-sm">Liabilities</span>
+            <span class="text-xs text-orange-100 mt-1">Pay service fees</span>
+          </button>
+
+          <div class="opacity-50">
+            <!-- Placeholder for future action -->
+          </div>
         </div>
       </div>
     </div>

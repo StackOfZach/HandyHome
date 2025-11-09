@@ -165,7 +165,36 @@ export class AuthGuard implements CanActivate {
   ): Promise<void> {
     switch (role) {
       case 'client':
-        this.router.navigate(['/pages/client/dashboard']);
+        // Check if client is verified - unverified clients should not be logged in
+        try {
+          const user = this.authService.getCurrentUser();
+          if (user) {
+            const { ClientVerificationService } = await import(
+              '../services/client-verification.service'
+            );
+            const clientVerificationService =
+              new (ClientVerificationService as any)();
+
+            const isVerified = await clientVerificationService.isClientVerified(
+              user.uid
+            );
+            if (isVerified) {
+              this.router.navigate(['/pages/client/dashboard']);
+            } else {
+              // Unverified clients should not be logged in
+              await this.authService.logout();
+              this.router.navigate(['/pages/auth/login']);
+            }
+          } else {
+            this.router.navigate(['/pages/auth/login']);
+          }
+        } catch (error) {
+          console.error(
+            'AuthGuard: Error checking client verification:',
+            error
+          );
+          this.router.navigate(['/pages/auth/login']);
+        }
         break;
       case 'worker':
         try {

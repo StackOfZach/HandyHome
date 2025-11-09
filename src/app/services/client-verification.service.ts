@@ -238,6 +238,19 @@ export class ClientVerificationService {
   }
 
   /**
+   * Check if a client is verified (has approved verification)
+   */
+  async isClientVerified(userId: string): Promise<boolean> {
+    try {
+      const verification = await this.getVerificationByUserId(userId);
+      return verification?.status === 'approved';
+    } catch (error) {
+      console.error('Error checking client verification status:', error);
+      return false; // Default to not verified if error occurs
+    }
+  }
+
+  /**
    * Update profile image for existing verification
    */
   async updateProfileImage(

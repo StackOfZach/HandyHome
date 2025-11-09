@@ -297,13 +297,19 @@
         *ngIf="skillsArray.length === 0"
         class="text-center text-gray-500 py-4"
       >
-        <p class="text-sm">No skills assigned yet. Contact admin to add services.</p>
+        <p class="text-sm">
+          No skills assigned yet. Contact admin to add services.
+        </p>
       </div>
 
       <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
         <p class="text-sm text-amber-700 flex items-center">
-          <ion-icon name="information-circle" class="mr-2 text-amber-600"></ion-icon>
-          Skills and services are managed by administrators. Contact support to request changes.
+          <ion-icon
+            name="information-circle"
+            class="mr-2 text-amber-600"
+          ></ion-icon>
+          Skills and services are managed by administrators. Contact support to
+          request changes.
         </p>
       </div>
     </div>
@@ -316,7 +322,8 @@
           Service Pricing (Edit Prices Only)
         </h2>
         <p class="text-sm text-gray-600 mt-1">
-          Update your pricing for existing services (categories cannot be added/removed)
+          Update your pricing for existing services (categories cannot be
+          added/removed)
         </p>
         <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p class="text-sm text-blue-700 flex items-center">
@@ -325,7 +332,9 @@
               class="mr-2 text-blue-500"
             ></ion-icon>
             You can only edit prices for your assigned services.
-            <strong class="ml-1">Contact admin to add/remove service categories.</strong>
+            <strong class="ml-1"
+              >Contact admin to add/remove service categories.</strong
+            >
           </p>
         </div>
       </div>
@@ -368,9 +377,14 @@
             >
               <div class="flex items-center justify-between">
                 <div class="flex-1">
-                  <label class="text-sm font-medium text-gray-700 flex items-center">
+                  <label
+                    class="text-sm font-medium text-gray-700 flex items-center"
+                  >
                     {{ subCtrl.get('subServiceName')?.value }}
-                    <ion-icon name="lock-closed-outline" class="ml-2 text-gray-400 text-xs"></ion-icon>
+                    <ion-icon
+                      name="lock-closed-outline"
+                      class="ml-2 text-gray-400 text-xs"
+                    ></ion-icon>
                   </label>
                   <div class="text-xs text-gray-500 mt-1">
                     Unit: {{ getDisplayUnit(subCtrl.get('unit')?.value) }}
@@ -415,20 +429,29 @@
         </div>
       </div>
 
-      <div 
+      <div
         *ngIf="serviceWithPricingArray.length === 0"
         class="text-center text-gray-500 py-8"
       >
-        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-          <ion-icon name="cash-outline" class="text-2xl text-gray-400"></ion-icon>
+        <div
+          class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3"
+        >
+          <ion-icon
+            name="cash-outline"
+            class="text-2xl text-gray-400"
+          ></ion-icon>
         </div>
         <p class="text-sm">No service pricing configured yet.</p>
-        <p class="text-xs text-gray-400 mt-1">Contact admin to set up your service categories.</p>
+        <p class="text-xs text-gray-400 mt-1">
+          Contact admin to set up your service categories.
+        </p>
       </div>
 
       <!-- Disabled Add Button with Explanation -->
       <div class="mt-4">
-        <div class="w-full bg-gray-100 text-gray-500 py-3 px-4 rounded-xl text-sm text-center border border-gray-200">
+        <div
+          class="w-full bg-gray-100 text-gray-500 py-3 px-4 rounded-xl text-sm text-center border border-gray-200"
+        >
           <div class="flex items-center justify-center">
             <ion-icon name="lock-closed-outline" class="mr-2"></ion-icon>
             Service categories are managed by administrators

@@ -12,6 +12,11 @@ import {
 } from '../../../services/client-verification.service';
 import { ReportService, WorkerReport } from '../../../services/report.service';
 import {
+  LiabilitiesService,
+  PaymentSubmission,
+  AdminBookingOverview,
+} from '../../../services/liabilities';
+import {
   Firestore,
   collection,
   query,
@@ -133,6 +138,18 @@ export class AdminDashboardPage implements OnInit {
   bookingStatusFilter: string = 'all';
   selectedBooking: any | null = null;
   isBookingModalOpen: boolean = false;
+
+  // Worker Service Fees Properties
+  pendingPaymentSubmissions: any[] = [];
+  bookingsWithPaymentStatus: any[] = [];
+  verifiedPaymentsCount: number = 0;
+  totalPendingAmount: number = 0;
+  isLoadingPaymentSubmissions: boolean = false;
+  isLoadingBookingsOverview: boolean = false;
+  isProcessingPayment: boolean = false;
+  isRemindingWorker: string | null = null;
+  selectedPaymentSubmission: any | null = null;
+  isPaymentProofModalOpen: boolean = false;
 
   // Analytics refresh
   isRefreshingAnalytics: boolean = false;
@@ -428,6 +445,7 @@ export class AdminDashboardPage implements OnInit {
     private workerService: WorkerService,
     private clientVerificationService: ClientVerificationService,
     private reportService: ReportService,
+    private liabilitiesService: LiabilitiesService,
     private firestore: Firestore,
     private alertController: AlertController,
     private toastController: ToastController,
@@ -450,6 +468,8 @@ export class AdminDashboardPage implements OnInit {
       this.loadPendingVerifications(),
       this.loadReports(),
       this.loadBookings(),
+      this.loadPaymentSubmissions(),
+      this.loadBookingsWithPaymentStatus(),
     ]);
 
     // Load analytics last so it can use all the loaded data
@@ -459,6 +479,12 @@ export class AdminDashboardPage implements OnInit {
 
   setActiveSection(section: string) {
     this.activeSection = section;
+
+    // Load specific data when switching to certain sections
+    if (section === 'worker-service-fees') {
+      this.loadPaymentSubmissions();
+      this.loadBookingsWithPaymentStatus();
+    }
   }
 
   getSectionTitle(): string {
@@ -468,6 +494,7 @@ export class AdminDashboardPage implements OnInit {
       clients: 'Client Management',
       'client-verifications': 'Client Verifications',
       bookings: 'Booking Management',
+      'worker-service-fees': 'Worker Service Fees',
       reports: 'Reports & Disputes',
       services: 'Services Management',
     };
@@ -2354,5 +2381,285 @@ export class AdminDashboardPage implements OnInit {
         (b) => b.status === 'completed' || b.status === 'payment-confirmed'
       ).length
     );
+  }
+
+  // Worker Service Fees Methods
+  async loadPaymentSubmissions() {
+    this.isLoadingPaymentSubmissions = true;
+    try {
+      this.liabilitiesService.getAllPaymentSubmissions().subscribe({
+        next: (submissions) => {
+          this.pendingPaymentSubmissions = submissions;
+          console.log(
+            '📊 Admin received payment submissions:',
+            submissions.length
+          );
+          this.calculatePaymentStats();
+          this.isLoadingPaymentSubmissions = false;
+        },
+        error: (error) => {
+          console.error('Error loading payment submissions:', error);
+          this.showToast('Error loading payment submissions', 'danger');
+          this.isLoadingPaymentSubmissions = false;
+        },
+      });
+    } catch (error) {
+      console.error(
+        'Error setting up payment submissions subscription:',
+        error
+      );
+      this.isLoadingPaymentSubmissions = false;
+    }
+  }
+
+  private calculatePaymentStats() {
+    // Calculate stats from pending payment submissions
+    this.totalPendingAmount = this.pendingPaymentSubmissions
+      .filter((p) => p.status === 'pending')
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    // Count verified payments from today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    this.verifiedPaymentsCount = this.pendingPaymentSubmissions.filter(
+      (p) => p.status === 'verified' && p.verifiedAt && p.verifiedAt >= today
+    ).length;
+
+    // Also calculate stats from bookings overview if available
+    if (
+      this.bookingsWithPaymentStatus &&
+      this.bookingsWithPaymentStatus.length > 0
+    ) {
+      // Add unpaid service fees to pending amount
+      const unpaidAmount = this.bookingsWithPaymentStatus
+        .filter((b) => b.paymentStatus === 'unpaid')
+        .reduce((sum, b) => sum + (b.serviceFee || 0), 0);
+
+      // Add pending payment submissions from bookings overview
+      const pendingFromBookings = this.bookingsWithPaymentStatus
+        .filter((b) => b.paymentStatus === 'pending')
+        .reduce((sum, b) => sum + (b.serviceFee || 0), 0);
+
+      // Update total pending to include both unpaid and pending amounts
+      this.totalPendingAmount = unpaidAmount + pendingFromBookings;
+    }
+  }
+
+  async refreshPaymentSubmissions() {
+    await this.loadPaymentSubmissions();
+  }
+
+  async refreshWorkerServiceFees() {
+    await Promise.all([
+      this.loadPaymentSubmissions(),
+      this.loadBookingsWithPaymentStatus(),
+    ]);
+  }
+
+  async loadBookingsWithPaymentStatus() {
+    this.isLoadingBookingsOverview = true;
+    try {
+      this.bookingsWithPaymentStatus =
+        await this.liabilitiesService.getAllBookingsWithPaymentStatus();
+      console.log(
+        '📊 Admin loaded bookings with payment status:',
+        this.bookingsWithPaymentStatus.length
+      );
+      this.calculatePaymentStats();
+    } catch (error) {
+      console.error('Error loading bookings with payment status:', error);
+    } finally {
+      this.isLoadingBookingsOverview = false;
+    }
+  }
+
+  async verifyPaymentSubmission(
+    submission: any,
+    status: 'verified' | 'rejected'
+  ) {
+    if (!this.userProfile?.uid) {
+      this.showToast('Unable to verify payment. Please try again.', 'danger');
+      return;
+    }
+
+    this.isProcessingPayment = true;
+
+    try {
+      await this.liabilitiesService.verifyPaymentSubmission(
+        submission.id,
+        this.userProfile.uid,
+        status,
+        status === 'rejected'
+          ? 'Payment verification failed'
+          : 'Payment verified successfully'
+      );
+
+      const statusText =
+        status === 'verified' ? 'verified and received' : 'rejected';
+      this.showToast(
+        `Payment ${statusText} successfully!`,
+        status === 'verified' ? 'success' : 'warning'
+      );
+
+      // Refresh both the payment submissions and bookings overview
+      await Promise.all([
+        this.loadPaymentSubmissions(),
+        this.loadBookingsWithPaymentStatus()
+      ]);
+    } catch (error) {
+      console.error('Error verifying payment submission:', error);
+      this.showToast('Error verifying payment. Please try again.', 'danger');
+    } finally {
+      this.isProcessingPayment = false;
+    }
+  }
+
+  async remindWorker(submission: any) {
+    this.isRemindingWorker = submission.workerId;
+
+    try {
+      const message = `Reminder: Please submit your service fee payment for ${new Date(
+        submission.date
+      ).toLocaleDateString()}. Amount due: ₱${submission.amount.toLocaleString(
+        'en-US',
+        { minimumFractionDigits: 2 }
+      )}.`;
+
+      await this.liabilitiesService.sendWorkerNotification(
+        submission.workerId,
+        message
+      );
+
+      this.showToast('Reminder sent to worker successfully!', 'success');
+    } catch (error) {
+      console.error('Error sending reminder to worker:', error);
+      this.showToast('Error sending reminder. Please try again.', 'danger');
+    } finally {
+      this.isRemindingWorker = null;
+    }
+  }
+
+  async viewPaymentProof(submission: any) {
+    this.selectedPaymentSubmission = submission;
+    this.isPaymentProofModalOpen = true;
+  }
+
+  closePaymentProofModal() {
+    this.isPaymentProofModalOpen = false;
+    this.selectedPaymentSubmission = null;
+  }
+
+  // Helper methods for template
+  getPendingPaymentsCount(): number {
+    if (
+      this.bookingsWithPaymentStatus &&
+      this.bookingsWithPaymentStatus.length > 0
+    ) {
+      return this.bookingsWithPaymentStatus.filter(
+        (b) => b.paymentStatus === 'pending'
+      ).length;
+    }
+    return (
+      this.pendingPaymentSubmissions?.filter((p) => p.status === 'pending')
+        ?.length || 0
+    );
+  }
+
+  getUnpaidBookingsCount(): number {
+    return (
+      this.bookingsWithPaymentStatus?.filter(
+        (b) => b.paymentStatus === 'unpaid'
+      ).length || 0
+    );
+  }
+
+  getRejectedTodayCount(): number {
+    if (
+      this.bookingsWithPaymentStatus &&
+      this.bookingsWithPaymentStatus.length > 0
+    ) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      return this.bookingsWithPaymentStatus.filter(
+        (b) =>
+          b.paymentStatus === 'rejected' &&
+          b.paymentSubmission?.verifiedAt &&
+          new Date(b.paymentSubmission.verifiedAt).getTime() >= today.getTime()
+      ).length;
+    }
+
+    if (!this.pendingPaymentSubmissions) return 0;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return this.pendingPaymentSubmissions.filter(
+      (p) =>
+        p.status === 'rejected' &&
+        p.verifiedAt &&
+        new Date(p.verifiedAt).getTime() >= today.getTime()
+    ).length;
+  }
+
+  getPaymentStatusIcon(status: string): string {
+    switch (status) {
+      case 'verified':
+        return 'checkmark-circle';
+      case 'pending':
+        return 'hourglass';
+      case 'rejected':
+        return 'close-circle';
+      case 'unpaid':
+        return 'warning';
+      default:
+        return 'help-circle';
+    }
+  }
+
+  getPaymentStatusLabel(status: string): string {
+    switch (status) {
+      case 'verified':
+        return 'Paid';
+      case 'pending':
+        return 'Pending';
+      case 'rejected':
+        return 'Rejected';
+      case 'unpaid':
+        return 'Unpaid';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  async remindWorkerForBooking(booking: any) {
+    this.isRemindingWorker = booking.workerId;
+
+    try {
+      const message = `Reminder: Please submit your service fee payment for ${
+        booking.type
+      } on ${new Date(
+        booking.serviceDate
+      ).toLocaleDateString()}. Amount due: ₱${booking.serviceFee.toLocaleString(
+        'en-US',
+        { minimumFractionDigits: 2 }
+      )}.`;
+
+      await this.liabilitiesService.sendWorkerNotification(
+        booking.workerId,
+        message
+      );
+
+      this.showToast(
+        'Payment reminder sent to worker successfully!',
+        'success'
+      );
+    } catch (error) {
+      console.error('Error sending payment reminder to worker:', error);
+      this.showToast('Error sending reminder. Please try again.', 'danger');
+    } finally {
+      this.isRemindingWorker = null;
+    }
   }
 }

@@ -71,6 +71,22 @@
       </button>
 
       <button
+        (click)="setActiveSection('worker-service-fees')"
+        [class]="'nav-item w-full text-left p-3 rounded-lg transition-colors flex items-center ' + (activeSection === 'worker-service-fees' ? 'bg-red-50 text-red-600 border-l-4 border-red-600' : 'text-gray-600 hover:bg-gray-50')"
+      >
+        <ion-icon name="card" class="mr-3"></ion-icon>
+        <div class="flex-1">
+          Worker Service Fees
+          <div
+            *ngIf="pendingPaymentSubmissions.length > 0"
+            class="inline-flex items-center justify-center w-5 h-5 ml-2 text-xs font-bold text-white bg-orange-500 rounded-full"
+          >
+            {{ pendingPaymentSubmissions.length }}
+          </div>
+        </div>
+      </button>
+
+      <button
         (click)="setActiveSection('reports')"
         [class]="'nav-item w-full text-left p-3 rounded-lg transition-colors flex items-center ' + (activeSection === 'reports' ? 'bg-red-50 text-red-600 border-l-4 border-red-600' : 'text-gray-600 hover:bg-gray-50')"
       >
@@ -1008,6 +1024,452 @@
             </button>
           </div>
         </div>
+      </div>
+
+      <!-- Worker Service Fees Section -->
+      <div
+        *ngIf="activeSection === 'worker-service-fees'"
+        class="animate-fadeIn"
+      >
+        <!-- Header -->
+        <div
+          class="relative bg-gradient-to-br from-orange-50 via-orange-100 to-red-50 rounded-2xl p-8 mb-8 overflow-hidden"
+        >
+          <!-- Background Pattern -->
+          <div class="absolute inset-0 opacity-5">
+            <div
+              class="absolute -right-4 -top-4 w-24 h-24 bg-orange-500 rounded-full"
+            ></div>
+            <div
+              class="absolute -left-8 -bottom-8 w-32 h-32 bg-red-500 rounded-full"
+            ></div>
+            <div
+              class="absolute right-1/3 top-1/2 w-16 h-16 bg-yellow-500 rounded-full"
+            ></div>
+          </div>
+
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                  Worker Service Fees
+                </h1>
+                <p class="text-gray-600">
+                  Manage worker payment submissions and service fee collections
+                </p>
+              </div>
+              <div class="text-right">
+                <div
+                  class="bg-white/80 backdrop-blur-sm rounded-xl p-4 min-w-[200px]"
+                >
+                  <p class="text-sm text-gray-600 mb-1">Pending Payments</p>
+                  <p class="text-2xl font-bold text-orange-600">
+                    ₱{{ totalPendingAmount?.toLocaleString('en-US', {
+                    minimumFractionDigits: 2 }) || '0.00' }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6">
+                <div class="flex items-center">
+                  <div class="p-3 bg-gray-500 rounded-lg mr-4">
+                    <ion-icon
+                      name="warning"
+                      class="text-white text-xl"
+                    ></ion-icon>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600">Unpaid Service Fees</p>
+                    <p class="text-2xl font-bold text-gray-800">
+                      {{ getUnpaidBookingsCount() }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6">
+                <div class="flex items-center">
+                  <div class="p-3 bg-orange-500 rounded-lg mr-4">
+                    <ion-icon
+                      name="hourglass"
+                      class="text-white text-xl"
+                    ></ion-icon>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600">Pending Verification</p>
+                    <p class="text-2xl font-bold text-gray-800">
+                      {{ getPendingPaymentsCount() }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6">
+                <div class="flex items-center">
+                  <div class="p-3 bg-green-500 rounded-lg mr-4">
+                    <ion-icon
+                      name="checkmark-circle"
+                      class="text-white text-xl"
+                    ></ion-icon>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600">Verified Today</p>
+                    <p class="text-2xl font-bold text-gray-800">
+                      {{ verifiedPaymentsCount || 0 }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white/80 backdrop-blur-sm rounded-xl p-6">
+                <div class="flex items-center">
+                  <div class="p-3 bg-red-500 rounded-lg mr-4">
+                    <ion-icon
+                      name="close-circle"
+                      class="text-white text-xl"
+                    ></ion-icon>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600">Rejected Today</p>
+                    <p class="text-2xl font-bold text-gray-800">
+                      {{ getRejectedTodayCount() }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div
+          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
+        >
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-800">
+              Service Fees Overview
+            </h2>
+            <div class="flex items-center space-x-4">
+              <button
+                (click)="refreshWorkerServiceFees()"
+                [disabled]="isLoadingBookingsOverview || isLoadingPaymentSubmissions"
+                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center disabled:opacity-50"
+              >
+                <ion-icon
+                  name="refresh"
+                  class="mr-2"
+                  [class.animate-spin]="isLoadingBookingsOverview"
+                ></ion-icon>
+                {{ isLoadingBookingsOverview ? 'Loading...' : 'Refresh' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Worker Service Fees Overview Table -->
+        <div
+          class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+        >
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Worker
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Type
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Service Date
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Service Fee
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Completed Date
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Payment Status
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <!-- Loading State -->
+                <tr *ngIf="isLoadingBookingsOverview">
+                  <td colspan="7" class="px-6 py-12 text-center">
+                    <div class="flex flex-col items-center">
+                      <ion-spinner name="dots" class="mb-3"></ion-spinner>
+                      <p class="text-gray-500">
+                        Loading worker service fees...
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- No Data State -->
+                <tr
+                  *ngIf="!isLoadingBookingsOverview && bookingsWithPaymentStatus?.length === 0"
+                >
+                  <td colspan="7" class="px-6 py-12 text-center">
+                    <div class="flex flex-col items-center">
+                      <ion-icon
+                        name="document-outline"
+                        class="text-gray-400 text-4xl mb-3"
+                      ></ion-icon>
+                      <p class="text-gray-500 text-lg mb-2">
+                        No service fees found
+                      </p>
+                      <p class="text-gray-400">
+                        No completed bookings or payment-received quickbookings
+                        yet.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Bookings Overview -->
+                <tr
+                  *ngFor="let booking of bookingsWithPaymentStatus"
+                  class="hover:bg-gray-50 transition-colors"
+                >
+                  <td class="px-6 py-4">
+                    <div class="flex items-center">
+                      <img
+                        [src]="booking.workerPhotoURL || 'assets/images/default-avatar.png'"
+                        [alt]="booking.workerName"
+                        class="w-10 h-10 rounded-full object-cover mr-3"
+                      />
+                      <div>
+                        <p class="text-sm font-medium text-gray-900">
+                          {{ booking.workerName }}
+                        </p>
+                        <p class="text-sm text-gray-500">
+                          ID: {{ booking.workerId }}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span
+                      [class]="'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + 
+                      (booking.type === 'booking' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800')"
+                    >
+                      <ion-icon
+                        [name]="booking.type === 'booking' ? 'calendar' : 'flash'"
+                        class="mr-1 text-xs"
+                      ></ion-icon>
+                      {{ booking.type === 'booking' ? 'Booking' : 'Quick
+                      Booking' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="text-sm text-gray-900">
+                      {{ booking.serviceDate | date:'MMM d, y' }}
+                    </p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="text-sm font-medium text-gray-900">
+                      ₱{{ booking.serviceFee?.toLocaleString('en-US', {
+                      minimumFractionDigits: 2 }) }}
+                    </p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="text-sm text-gray-900">
+                      {{ booking.completedDate | date:'MMM d, y' }}
+                    </p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span
+                      [class]="'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + 
+                      (booking.paymentStatus === 'verified' ? 'bg-green-100 text-green-800' :
+                       booking.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                       booking.paymentStatus === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800')"
+                    >
+                      <ion-icon
+                        [name]="getPaymentStatusIcon(booking.paymentStatus)"
+                        class="mr-1 text-xs"
+                      ></ion-icon>
+                      {{ getPaymentStatusLabel(booking.paymentStatus) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center space-x-2">
+                      <!-- View Payment Proof -->
+                      <button
+                        *ngIf="booking.paymentSubmission?.paymentProofUrl"
+                        (click)="viewPaymentProof(booking.paymentSubmission)"
+                        class="text-blue-600 hover:text-blue-800 transition-colors"
+                        title="View Payment Proof"
+                      >
+                        <ion-icon name="eye"></ion-icon>
+                      </button>
+
+                      <!-- Verification Actions for pending payments -->
+                      <ng-container
+                        *ngIf="booking.paymentStatus === 'pending' && booking.paymentSubmission"
+                      >
+                        <button
+                          (click)="verifyPaymentSubmission(booking.paymentSubmission, 'verified')"
+                          [disabled]="isProcessingPayment"
+                          class="text-green-600 hover:text-green-800 transition-colors disabled:opacity-50"
+                          title="Verify Payment"
+                        >
+                          <ion-icon name="checkmark-circle"></ion-icon>
+                        </button>
+                        <button
+                          (click)="verifyPaymentSubmission(booking.paymentSubmission, 'rejected')"
+                          [disabled]="isProcessingPayment"
+                          class="text-red-600 hover:text-red-800 transition-colors disabled:opacity-50"
+                          title="Reject Payment"
+                        >
+                          <ion-icon name="close-circle"></ion-icon>
+                        </button>
+                      </ng-container>
+
+                      <!-- Send Reminder for unpaid fees -->
+                      <button
+                        *ngIf="booking.paymentStatus === 'unpaid'"
+                        (click)="remindWorkerForBooking(booking)"
+                        [disabled]="isRemindingWorker === booking.workerId"
+                        class="text-orange-600 hover:text-orange-800 transition-colors disabled:opacity-50"
+                        title="Send Payment Reminder"
+                      >
+                        <ion-icon
+                          name="notifications"
+                          [class.animate-pulse]="isRemindingWorker === booking.workerId"
+                        ></ion-icon>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Payment Proof Modal -->
+        <ion-modal
+          [isOpen]="isPaymentProofModalOpen"
+          (didDismiss)="closePaymentProofModal()"
+        >
+          <ng-template>
+            <ion-header>
+              <ion-toolbar>
+                <ion-title>Payment Proof</ion-title>
+                <ion-buttons slot="end">
+                  <ion-button (click)="closePaymentProofModal()">
+                    <ion-icon name="close"></ion-icon>
+                  </ion-button>
+                </ion-buttons>
+              </ion-toolbar>
+            </ion-header>
+
+            <ion-content class="ion-padding">
+              <div *ngIf="selectedPaymentSubmission" class="space-y-6">
+                <!-- Payment Details -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h3 class="font-semibold text-gray-800 mb-3">
+                    Payment Details
+                  </h3>
+                  <div class="space-y-2">
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Worker:</span>
+                      <span class="font-medium"
+                        >{{ selectedPaymentSubmission.workerName }}</span
+                      >
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Date:</span>
+                      <span class="font-medium"
+                        >{{ selectedPaymentSubmission.date | date:'MMM d, y'
+                        }}</span
+                      >
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Amount:</span>
+                      <span class="font-medium"
+                        >₱{{
+                        selectedPaymentSubmission.amount?.toLocaleString('en-US',
+                        { minimumFractionDigits: 2 }) }}</span
+                      >
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Reference:</span>
+                      <span class="font-medium font-mono"
+                        >{{ selectedPaymentSubmission.referenceNumber }}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Payment Proof Image -->
+                <div class="text-center">
+                  <h3 class="font-semibold text-gray-800 mb-3">
+                    Payment Proof
+                  </h3>
+                  <div class="relative inline-block">
+                    <img
+                      [src]="selectedPaymentSubmission.paymentProofUrl"
+                      alt="Payment Proof"
+                      class="max-w-full max-h-96 object-contain rounded-lg shadow-md"
+                    />
+                    <button
+                      (click)="openImageInNewTab(selectedPaymentSubmission.paymentProofUrl, 'Payment Proof - ' + selectedPaymentSubmission.workerName)"
+                      class="absolute top-2 right-2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-colors"
+                      title="Open in new tab"
+                    >
+                      <ion-icon name="open"></ion-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Verification Actions -->
+                <div
+                  *ngIf="selectedPaymentSubmission.status === 'pending'"
+                  class="flex space-x-4"
+                >
+                  <button
+                    (click)="verifyPaymentSubmission(selectedPaymentSubmission, 'verified'); closePaymentProofModal()"
+                    [disabled]="isProcessingPayment"
+                    class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <ion-icon name="checkmark-circle" class="mr-2"></ion-icon>
+                    Verify Payment
+                  </button>
+                  <button
+                    (click)="verifyPaymentSubmission(selectedPaymentSubmission, 'rejected'); closePaymentProofModal()"
+                    [disabled]="isProcessingPayment"
+                    class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <ion-icon name="close-circle" class="mr-2"></ion-icon>
+                    Reject Payment
+                  </button>
+                </div>
+              </div>
+            </ion-content>
+          </ng-template>
+        </ion-modal>
       </div>
 
       <!-- Reports & Disputes Section -->

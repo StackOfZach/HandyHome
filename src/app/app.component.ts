@@ -21,14 +21,14 @@ export class AppComponent implements OnInit {
   private splashStartTime = Date.now();
 
   constructor(
-    private authService: AuthService, 
+    private authService: AuthService,
     private router: Router,
     private navigationBlockService: NavigationBlockService
   ) {}
 
   async ngOnInit() {
     console.log('AppComponent: Initializing app...');
-    
+
     try {
       // On Android, proactively request location permission on first launch
       if (Capacitor.getPlatform() === 'android') {
@@ -53,20 +53,39 @@ export class AppComponent implements OnInit {
       console.log('AppComponent: User check result:', {
         hasUser: !!currentUser,
         hasProfile: !!currentProfile,
-        role: currentProfile?.role
+        role: currentProfile?.role,
       });
 
       if (currentUser && currentProfile) {
         this.isAuthenticated = true;
-        // User is authenticated, navigate to appropriate dashboard
-        console.log('AppComponent: User authenticated, navigating to dashboard...');
-        await this.navigateToAppropriatePage(
-          currentProfile.role,
-          currentUser.uid
-        );
+
+        // Check current URL to avoid redirecting users who are already on appropriate pages
+        const currentUrl = this.router.url;
+        console.log('AppComponent: Current URL:', currentUrl);
+
+        // Don't redirect if client is already on verification page
+        if (
+          currentProfile.role === 'client' &&
+          currentUrl.includes('/pages/auth/client-verification')
+        ) {
+          console.log(
+            'AppComponent: Client already on verification page, not redirecting'
+          );
+        } else {
+          // User is authenticated, navigate to appropriate dashboard
+          console.log(
+            'AppComponent: User authenticated, navigating to dashboard...'
+          );
+          await this.navigateToAppropriatePage(
+            currentProfile.role,
+            currentUser.uid
+          );
+        }
       } else {
         // No user, show login page
-        console.log('AppComponent: No authenticated user, navigating to login...');
+        console.log(
+          'AppComponent: No authenticated user, navigating to login...'
+        );
         this.isAuthenticated = false;
         // Use replaceUrl to prevent navigation history issues
         this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
@@ -87,11 +106,11 @@ export class AppComponent implements OnInit {
   private hideSplashAfterMinimumDuration(): void {
     const elapsedTime = Date.now() - this.splashStartTime;
     const remainingTime = Math.max(0, this.splashMinDuration - elapsedTime);
-    
+
     setTimeout(() => {
       console.log('AppComponent: Starting splash screen fade out');
       this.splashFadeOut = true;
-      
+
       // Hide splash screen completely after fade animation
       setTimeout(() => {
         console.log('AppComponent: Hiding splash screen');
@@ -106,10 +125,40 @@ export class AppComponent implements OnInit {
     uid: string
   ): Promise<void> {
     console.log('AppComponent: Navigating to appropriate page for role:', role);
-    
+
     switch (role) {
       case 'client':
-        this.router.navigate(['/pages/client/dashboard'], { replaceUrl: true });
+        // Check if client is verified - unverified clients should not stay logged in
+        try {
+          const { ClientVerificationService } = await import(
+            './services/client-verification.service'
+          );
+          const clientVerificationService =
+            new (ClientVerificationService as any)();
+
+          const isVerified = await clientVerificationService.isClientVerified(
+            uid
+          );
+          if (isVerified) {
+            console.log(
+              'AppComponent: Client is verified, navigating to dashboard'
+            );
+            this.router.navigate(['/pages/client/dashboard'], {
+              replaceUrl: true,
+            });
+          } else {
+            console.log('AppComponent: Client not verified, logging out');
+            // Unverified clients should not be logged in
+            await this.authService.logout();
+            this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
+          }
+        } catch (error) {
+          console.error(
+            'AppComponent: Error checking client verification:',
+            error
+          );
+          this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
+        }
         break;
       case 'worker':
         try {
@@ -120,15 +169,25 @@ export class AppComponent implements OnInit {
           const hasCompleted = await workerService.hasCompletedInterview(uid);
 
           if (!hasCompleted) {
-            console.log('AppComponent: Worker interview not completed, navigating to interview');
-            this.router.navigate(['/pages/worker/interview'], { replaceUrl: true });
+            console.log(
+              'AppComponent: Worker interview not completed, navigating to interview'
+            );
+            this.router.navigate(['/pages/worker/interview'], {
+              replaceUrl: true,
+            });
           } else {
-            console.log('AppComponent: Worker interview completed, navigating to dashboard');
-            this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+            console.log(
+              'AppComponent: Worker interview completed, navigating to dashboard'
+            );
+            this.router.navigate(['/pages/worker/dashboard'], {
+              replaceUrl: true,
+            });
           }
         } catch (error) {
           console.error('AppComponent: Error checking worker status:', error);
-          this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+          this.router.navigate(['/pages/worker/dashboard'], {
+            replaceUrl: true,
+          });
         }
         break;
       case 'admin':

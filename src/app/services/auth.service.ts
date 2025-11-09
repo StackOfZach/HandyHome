@@ -19,6 +19,7 @@ import {
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { NavigationStateService } from './navigation-state.service';
+import { ClientVerificationService } from './client-verification.service';
 
 export interface UserLocation {
   id: string;
@@ -63,6 +64,7 @@ export class AuthService {
   private firestore = inject(Firestore);
   private router = inject(Router);
   private navigationState = inject(NavigationStateService);
+  private clientVerificationService = inject(ClientVerificationService);
 
   private readonly USER_SESSION_KEY = 'handyhome_user_session';
   private readonly SESSION_EXPIRY_HOURS = 24;
@@ -505,8 +507,37 @@ export class AuthService {
 
     switch (role) {
       case 'client':
-        console.log('Navigating to client dashboard');
-        this.router.navigate(['/pages/client/dashboard']);
+        // Check if client is verified before redirecting
+        try {
+          const user = this.getCurrentUser();
+          if (user) {
+            const isVerified =
+              await this.clientVerificationService.isClientVerified(user.uid);
+            if (isVerified) {
+              console.log(
+                'AuthService: Client is verified, navigating to dashboard'
+              );
+              this.router.navigate(['/pages/client/dashboard']);
+            } else {
+              console.log('AuthService: Client not verified, logging out');
+              // Don't redirect to verification, just logout
+              await this.logout();
+              throw new Error('CLIENT_NOT_VERIFIED');
+            }
+          } else {
+            console.log('AuthService: No user found, redirecting to login');
+            this.router.navigate(['/pages/auth/login']);
+          }
+        } catch (error: any) {
+          console.error(
+            'AuthService: Error checking client verification:',
+            error
+          );
+          if (error.message === 'CLIENT_NOT_VERIFIED') {
+            throw error; // Re-throw to be handled by login page
+          }
+          this.router.navigate(['/pages/auth/login']);
+        }
         break;
       case 'worker':
         // Check if worker has completed interview

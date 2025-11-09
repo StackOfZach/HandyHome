@@ -44,7 +44,9 @@ export class LoginPage implements OnInit {
       if (user) {
         const profile = this.authService.getCurrentUserProfile();
         if (profile) {
-          console.log('LoginPage: User authenticated during session, redirecting...');
+          console.log(
+            'LoginPage: User authenticated during session, redirecting...'
+          );
           await this.redirectBasedOnRole(profile.role);
         }
       }
@@ -91,9 +93,12 @@ export class LoginPage implements OnInit {
       case 'auth/too-many-requests':
         return 'Too many failed attempts. Please try again later.';
       default:
-        // Check for custom worker verification error
+        // Check for custom verification errors
         if (error.message === 'WORKER_NOT_VERIFIED') {
           return 'Your worker account is pending verification. Please wait for our team to review and approve your application. You will be notified via email once your account is verified.';
+        }
+        if (error.message === 'CLIENT_NOT_VERIFIED') {
+          return 'Your account is pending verification. Please wait for our team to review and approve your application. You will be notified via email once your account is verified.';
         }
         return 'Login failed. Please try again.';
     }
@@ -113,19 +118,62 @@ export class LoginPage implements OnInit {
     await alert.present();
   }
 
-  private async redirectBasedOnRole(role: 'client' | 'worker' | 'admin'): Promise<void> {
+  private async redirectBasedOnRole(
+    role: 'client' | 'worker' | 'admin'
+  ): Promise<void> {
     console.log('LoginPage: Redirecting based on role:', role);
-    
+
     switch (role) {
       case 'client':
-        this.router.navigate(['/pages/client/dashboard'], { replaceUrl: true });
+        // Check if client is verified before allowing login
+        try {
+          const user = this.authService.getCurrentUser();
+          if (user) {
+            const { ClientVerificationService } = await import(
+              '../../../services/client-verification.service'
+            );
+            const clientVerificationService =
+              new (ClientVerificationService as any)();
+
+            const isVerified = await clientVerificationService.isClientVerified(
+              user.uid
+            );
+            if (isVerified) {
+              console.log(
+                'LoginPage: Client is verified, redirecting to dashboard'
+              );
+              this.router.navigate(['/pages/client/dashboard'], {
+                replaceUrl: true,
+              });
+            } else {
+              console.log(
+                'LoginPage: Client not verified, showing error and logging out'
+              );
+              await this.authService.logout();
+              await this.showErrorAlert(
+                'Your account is pending verification. Please wait for our team to review and approve your application. You will be notified via email once your account is verified.'
+              );
+            }
+          }
+        } catch (error) {
+          console.error(
+            'LoginPage: Error checking client verification:',
+            error
+          );
+          await this.authService.logout();
+          await this.showErrorAlert(
+            'Unable to verify account status. Please try again later.'
+          );
+        }
         break;
       case 'worker':
         try {
           const user = this.authService.getCurrentUser();
           if (user) {
             // Import WorkerService dynamically to avoid circular dependency
-            const { WorkerService } = await import('../../../services/worker.service');
+            const { WorkerService } = await import(
+              '../../../services/worker.service'
+            );
             const workerService = new (WorkerService as any)(
               (this.authService as any).firestore
             );
@@ -135,16 +183,24 @@ export class LoginPage implements OnInit {
             );
 
             if (!hasCompleted) {
-              this.router.navigate(['/pages/worker/interview'], { replaceUrl: true });
+              this.router.navigate(['/pages/worker/interview'], {
+                replaceUrl: true,
+              });
             } else {
-              this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+              this.router.navigate(['/pages/worker/dashboard'], {
+                replaceUrl: true,
+              });
             }
           } else {
-            this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+            this.router.navigate(['/pages/worker/dashboard'], {
+              replaceUrl: true,
+            });
           }
         } catch (error) {
           console.error('LoginPage: Error checking worker status:', error);
-          this.router.navigate(['/pages/worker/dashboard'], { replaceUrl: true });
+          this.router.navigate(['/pages/worker/dashboard'], {
+            replaceUrl: true,
+          });
         }
         break;
       case 'admin':

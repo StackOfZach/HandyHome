@@ -1451,6 +1451,28 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
       });
   }
 
+  navigateToLiabilities() {
+    if (!this.userProfile?.uid) {
+      console.warn('⚠️ No user profile found, cannot navigate to liabilities');
+      this.showToast(
+        'Unable to access liabilities. Please try again.',
+        'medium'
+      );
+      return;
+    }
+
+    console.log('✅ Navigating to /pages/worker/liabilities');
+    this.router
+      .navigate(['/pages/worker/liabilities'])
+      .then((success) => {
+        console.log('Navigation result:', success);
+      })
+      .catch((error) => {
+        console.error('Navigation error:', error);
+        this.showToast('Navigation failed. Please try again.', 'danger');
+      });
+  }
+
   async logout() {
     const alert = await this.alertController.create({
       header: 'Confirm Logout',

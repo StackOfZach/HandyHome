@@ -129,14 +129,8 @@ export class SignupPage implements OnInit {
       this.isLoading = true;
       await this.authService.signup(email, password, fullName, phone, role);
 
-      // Handle redirect based on role
-      if (role === 'client') {
-        // For clients, redirect to verification page
-        this.router.navigate(['/pages/auth/client-verification']);
-      } else {
-        // For workers and admins, use the original redirect logic
-        await this.redirectBasedOnRole(role);
-      }
+      // Redirect based on role - all roles now handled consistently
+      await this.redirectBasedOnRole(role);
     } catch (error: any) {
       await this.showErrorAlert(this.getErrorMessage(error));
     } finally {
@@ -176,7 +170,10 @@ export class SignupPage implements OnInit {
 
     switch (role) {
       case 'client':
-        this.router.navigate(['/pages/client/dashboard'], { replaceUrl: true });
+        // For new client signups, always redirect to verification page
+        this.router.navigate(['/pages/auth/client-verification'], {
+          replaceUrl: true,
+        });
         break;
       case 'worker':
         try {

@@ -1,0 +1,205 @@
+/* Modern Modal Styles */
+.gcash-modal,
+.payment-modal {
+  --backdrop-opacity: 0.6;
+  --border-radius: 24px;
+  --box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+
+  ion-backdrop {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* Custom Safe Area Support */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Modern Button Animations */
+button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(-1px);
+    transition-duration: 0.1s;
+  }
+
+  &.group:hover .absolute {
+    animation: shimmer 0.7s ease-in-out;
+  }
+}
+
+/* Card Hover Effects */
+.group {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-4px);
+    
+    .shadow-lg {
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    }
+    
+    .shadow-md {
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+/* Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(100%) skewX(-12deg);
+  }
+}
+
+/* Loading Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animation-delay-75 {
+  animation-delay: 0.075s;
+}
+
+/* Custom Gradient Backgrounds */
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+/* Enhanced Backdrop Blur */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+/* Custom Input Styles */
+input[type="text"] {
+  transition: all 0.2s ease-in-out;
+  
+  &:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(34, 197, 94, 0.15);
+  }
+}
+
+/* Custom Scrollbar */
+ion-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+ion-content::-webkit-scrollbar-track {
+  background: rgba(156, 163, 175, 0.1);
+  border-radius: 3px;
+}
+
+ion-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #8b5cf6, #6366f1);
+  border-radius: 3px;
+}
+
+ion-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #7c3aed, #4f46e5);
+}
+
+/* Enhanced Image Styling */
+.payment-proof-preview {
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 16px;
+  border: 3px solid #e5e7eb;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    border-color: #10b981;
+    transform: scale(1.02);
+  }
+}
+
+/* QR Code Enhancement */
+.qr-container {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 2px solid rgba(148, 163, 184, 0.1);
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+  .fixed.inset-0 > div {
+    margin: 0.75rem;
+    max-height: calc(100vh - 1.5rem);
+  }
+}
+
+/* Loading State Enhancements */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(243, 244, 246, 0.8) 25%,
+    rgba(229, 231, 235, 0.8) 50%,
+    rgba(243, 244, 246, 0.8) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-loading 2s infinite;
+}
+
+@keyframes shimmer-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Status colors */
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+
+.status-paid {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.status-overdue {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #f87171;
+}
