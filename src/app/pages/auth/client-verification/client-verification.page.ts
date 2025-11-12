@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import {
@@ -16,9 +16,12 @@ import { ClientVerificationService } from '../../../services/client-verification
   styleUrls: ['./client-verification.page.scss'],
   standalone: false,
 })
-export class ClientVerificationPage implements OnInit {
+export class ClientVerificationPage implements OnInit, OnDestroy {
   verificationForm: FormGroup;
   isLoading = false;
+  private lastUserId: string | null = null; // Track which user last used this form
+  private currentUserId: string | null = null; // Current user ID
+  public formId: string = ''; // Unique form identifier to prevent browser caching
 
   // Image handling
   idImageUrl: string | null = null;
@@ -43,12 +46,70 @@ export class ClientVerificationPage implements OnInit {
     });
   }
 
-  ngOnInit() {
-    // Check if user is authenticated and is a client
-    const userProfile = this.authService.getCurrentUserProfile();
-    if (!userProfile || userProfile.role !== 'client') {
-      this.router.navigate(['/pages/auth/login']);
+  async ngOnInit() {
+    console.log('ClientVerificationPage: Component initialized');
+
+    try {
+      // Get current user
+      const currentUser = await this.authService.getCurrentUser();
+      console.log('Current user:', currentUser?.uid);
+
+      if (currentUser) {
+        this.currentUserId = currentUser.uid;
+
+        // Check if this is a different user than the last one
+        if (this.lastUserId && this.lastUserId !== this.currentUserId) {
+          console.log('Different user detected, clearing form completely');
+          this.clearBrowserFormData();
+        }
+
+        // Update last user ID
+        this.lastUserId = this.currentUserId;
+
+        // Generate unique form ID for this user session
+        this.formId = `verification-form-${this.currentUserId}-${Date.now()}`;
+
+        // Always reset the form for fresh start
+        this.resetForm();
+
+        // Check if user is already verified
+        await this.checkExistingVerification();
+      } else {
+        console.error('No authenticated user found');
+        this.router.navigate(['/auth/login']);
+      }
+    } catch (error) {
+      console.error('Error in ngOnInit:', error);
+      this.router.navigate(['/auth/login']);
     }
+  }
+
+  private resetForm() {
+    // Reset the form to initial state with explicit empty values
+    this.verificationForm.reset();
+    this.verificationForm.patchValue({
+      idType: '',
+      idNumber: '',
+      address: '',
+      birthDate: '',
+    });
+
+    // Clear image data completely
+    this.idImageUrl = null;
+    this.profileImageUrl = null;
+    this.idImageFile = null;
+    this.profileImageFile = null;
+
+    // Reset form validation state
+    this.verificationForm.markAsUntouched();
+    this.verificationForm.markAsPristine();
+
+    // Clear any validation errors
+    Object.keys(this.verificationForm.controls).forEach((key) => {
+      this.verificationForm.get(key)?.setErrors(null);
+    });
+
+    console.log('ClientVerificationPage: Form reset completed');
   }
 
   async selectIdImage() {
@@ -284,5 +345,62 @@ export class ClientVerificationPage implements OnInit {
 
   goBack() {
     this.router.navigate(['/pages/auth/login']);
+  }
+
+  /**
+   * Clear browser form data and cache
+   */
+  private clearBrowserFormData() {
+    try {
+      // Clear any potential form caching
+      const formElements = document.querySelectorAll('form');
+      formElements.forEach((form) => {
+        form.reset();
+      });
+
+      // Clear any localStorage that might be related to form data
+      Object.keys(localStorage).forEach((key) => {
+        if (key.includes('verification') || key.includes('client-form')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      console.log('Browser form data cleared');
+    } catch (error) {
+      console.error('Error clearing browser form data:', error);
+    }
+  }
+
+  /**
+   * Check if user already has a verification record
+   */
+  private async checkExistingVerification() {
+    try {
+      if (!this.currentUserId) return;
+
+      // Check if user already has verification in progress or completed
+      const existingVerification =
+        await this.clientVerificationService.getVerificationByUserId(
+          this.currentUserId
+        );
+
+      if (existingVerification) {
+        console.log(
+          'User already has verification record:',
+          existingVerification.status
+        );
+        // You might want to navigate to a different page or show status based on verification status
+        // if (existingVerification.status === 'approved') {
+        //   this.router.navigate(['/client/dashboard']);
+        // }
+      }
+    } catch (error) {
+      console.error('Error checking existing verification:', error);
+    }
+  }
+
+  ngOnDestroy() {
+    // Clean up when component is destroyed
+    this.resetForm();
   }
 }

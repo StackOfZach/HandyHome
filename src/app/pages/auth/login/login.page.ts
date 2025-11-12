@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../../services/auth.service';
+import { ClientVerificationService } from '../../../services/client-verification.service';
 import { LoadingController, AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
 
@@ -18,6 +19,7 @@ export class LoginPage implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
+    private clientVerificationService: ClientVerificationService,
     private loadingController: LoadingController,
     private alertController: AlertController,
     private router: Router
@@ -129,15 +131,8 @@ export class LoginPage implements OnInit {
         try {
           const user = this.authService.getCurrentUser();
           if (user) {
-            const { ClientVerificationService } = await import(
-              '../../../services/client-verification.service'
-            );
-            const clientVerificationService =
-              new (ClientVerificationService as any)();
-
-            const isVerified = await clientVerificationService.isClientVerified(
-              user.uid
-            );
+            const isVerified =
+              await this.clientVerificationService.isClientVerified(user.uid);
             if (isVerified) {
               console.log(
                 'LoginPage: Client is verified, redirecting to dashboard'
@@ -147,12 +142,12 @@ export class LoginPage implements OnInit {
               });
             } else {
               console.log(
-                'LoginPage: Client not verified, showing error and logging out'
+                'LoginPage: Client not verified, redirecting to verification page'
               );
-              await this.authService.logout();
-              await this.showErrorAlert(
-                'Your account is pending verification. Please wait for our team to review and approve your application. You will be notified via email once your account is verified.'
-              );
+              // Redirect to verification instead of logging out
+              this.router.navigate(['/pages/auth/client-verification'], {
+                replaceUrl: true,
+              });
             }
           }
         } catch (error) {
@@ -160,10 +155,10 @@ export class LoginPage implements OnInit {
             'LoginPage: Error checking client verification:',
             error
           );
-          await this.authService.logout();
-          await this.showErrorAlert(
-            'Unable to verify account status. Please try again later.'
-          );
+          // On error, redirect to verification instead of logging out
+          this.router.navigate(['/pages/auth/client-verification'], {
+            replaceUrl: true,
+          });
         }
         break;
       case 'worker':

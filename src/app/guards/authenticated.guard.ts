@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ClientVerificationService } from '../services/client-verification.service';
 import { Observable, from } from 'rxjs';
 import { map, take, switchMap } from 'rxjs/operators';
 
@@ -8,7 +9,11 @@ import { map, take, switchMap } from 'rxjs/operators';
   providedIn: 'root',
 })
 export class AuthenticatedGuard implements CanActivate {
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private clientVerificationService: ClientVerificationService
+  ) {}
 
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
     console.log(
@@ -38,24 +43,31 @@ export class AuthenticatedGuard implements CanActivate {
         console.log('AuthenticatedGuard: Current path:', currentPath);
         console.log('AuthenticatedGuard: User role:', userProfile.role);
 
+        // Allow access to signup page even for authenticated users
+        // This handles cases where users want to create new accounts or have session issues
+        if (currentPath === 'pages/auth/signup') {
+          console.log('AuthenticatedGuard: Allowing access to signup page');
+          return true;
+        }
+
         if (
           currentPath === 'pages/auth/client-verification' &&
           userProfile.role === 'client'
         ) {
-          // Client verification page should not be accessible to logged in clients
-          // Unverified clients should not be able to login at all
+          // Client verification page access logic
           console.log(
             'AuthenticatedGuard: Client trying to access verification page, checking status'
           );
           try {
-            const { ClientVerificationService } = await import(
-              '../services/client-verification.service'
-            );
-            const clientVerificationService =
-              new (ClientVerificationService as any)();
-
-            const isVerified = await clientVerificationService.isClientVerified(
+            console.log(
+              'AuthenticatedGuard: About to check if client is verified for user:',
               user.uid
+            );
+            const isVerified =
+              await this.clientVerificationService.isClientVerified(user.uid);
+            console.log(
+              'AuthenticatedGuard: Verification check result:',
+              isVerified
             );
             if (isVerified) {
               console.log(
@@ -67,19 +79,21 @@ export class AuthenticatedGuard implements CanActivate {
               return false;
             } else {
               console.log(
-                'AuthenticatedGuard: Client not verified, should not be logged in - redirecting to login'
+                'AuthenticatedGuard: Client not verified, allowing access to verification page'
               );
-              // Unverified clients shouldn't be logged in, redirect to login
-              this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
-              return false;
+              // Allow unverified clients to access verification page
+              return true;
             }
           } catch (error) {
             console.error(
               'AuthenticatedGuard: Error checking client verification:',
               error
             );
-            this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
-            return false;
+            // On error, allow access to verification page
+            console.log(
+              'AuthenticatedGuard: Verification check failed, allowing access to verification page'
+            );
+            return true;
           }
         }
 
@@ -103,19 +117,12 @@ export class AuthenticatedGuard implements CanActivate {
 
     switch (role) {
       case 'client':
-        // Check if client is verified - unverified clients should not be logged in
+        // For authenticated clients, check verification and redirect appropriately
         try {
           const user = this.authService.getCurrentUser();
           if (user) {
-            const { ClientVerificationService } = await import(
-              '../services/client-verification.service'
-            );
-            const clientVerificationService =
-              new (ClientVerificationService as any)();
-
-            const isVerified = await clientVerificationService.isClientVerified(
-              user.uid
-            );
+            const isVerified =
+              await this.clientVerificationService.isClientVerified(user.uid);
             if (isVerified) {
               console.log(
                 'AuthenticatedGuard: Client is verified, redirecting to dashboard'
@@ -125,11 +132,12 @@ export class AuthenticatedGuard implements CanActivate {
               });
             } else {
               console.log(
-                'AuthenticatedGuard: Client not verified, logging out and redirecting to login'
+                'AuthenticatedGuard: Client not verified, redirecting to verification page'
               );
-              // Unverified clients should not be logged in
-              await this.authService.logout();
-              this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
+              // Don't logout, redirect to verification page
+              this.router.navigate(['/pages/auth/client-verification'], {
+                replaceUrl: true,
+              });
             }
           } else {
             this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
@@ -139,7 +147,10 @@ export class AuthenticatedGuard implements CanActivate {
             'AuthenticatedGuard: Error checking client verification:',
             error
           );
-          this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
+          // On error, redirect to verification page instead of login
+          this.router.navigate(['/pages/auth/client-verification'], {
+            replaceUrl: true,
+          });
         }
         break;
       case 'worker':

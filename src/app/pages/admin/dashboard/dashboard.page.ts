@@ -2505,7 +2505,7 @@ export class AdminDashboardPage implements OnInit {
       // Refresh both the payment submissions and bookings overview
       await Promise.all([
         this.loadPaymentSubmissions(),
-        this.loadBookingsWithPaymentStatus()
+        this.loadBookingsWithPaymentStatus(),
       ]);
     } catch (error) {
       console.error('Error verifying payment submission:', error);

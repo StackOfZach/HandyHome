@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from './services/auth.service';
+import { ClientVerificationService } from './services/client-verification.service';
 import { NavigationBlockService } from './services/navigation-block.service';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -23,7 +24,8 @@ export class AppComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private navigationBlockService: NavigationBlockService
+    private navigationBlockService: NavigationBlockService,
+    private clientVerificationService: ClientVerificationService
   ) {}
 
   async ngOnInit() {
@@ -63,13 +65,14 @@ export class AppComponent implements OnInit {
         const currentUrl = this.router.url;
         console.log('AppComponent: Current URL:', currentUrl);
 
-        // Don't redirect if client is already on verification page
+        // Don't redirect if client is already on verification page or auth pages
         if (
           currentProfile.role === 'client' &&
-          currentUrl.includes('/pages/auth/client-verification')
+          (currentUrl.includes('/pages/auth/client-verification') ||
+            currentUrl.includes('/pages/auth/'))
         ) {
           console.log(
-            'AppComponent: Client already on verification page, not redirecting'
+            'AppComponent: Client already on auth page, not redirecting'
           );
         } else {
           // User is authenticated, navigate to appropriate dashboard
@@ -128,17 +131,10 @@ export class AppComponent implements OnInit {
 
     switch (role) {
       case 'client':
-        // Check if client is verified - unverified clients should not stay logged in
+        // Check if client is verified but don't logout if not
         try {
-          const { ClientVerificationService } = await import(
-            './services/client-verification.service'
-          );
-          const clientVerificationService =
-            new (ClientVerificationService as any)();
-
-          const isVerified = await clientVerificationService.isClientVerified(
-            uid
-          );
+          const isVerified =
+            await this.clientVerificationService.isClientVerified(uid);
           if (isVerified) {
             console.log(
               'AppComponent: Client is verified, navigating to dashboard'
@@ -147,17 +143,23 @@ export class AppComponent implements OnInit {
               replaceUrl: true,
             });
           } else {
-            console.log('AppComponent: Client not verified, logging out');
-            // Unverified clients should not be logged in
-            await this.authService.logout();
-            this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
+            console.log(
+              'AppComponent: Client not verified, redirecting to verification'
+            );
+            // Redirect to verification instead of logging out
+            this.router.navigate(['/pages/auth/client-verification'], {
+              replaceUrl: true,
+            });
           }
         } catch (error) {
           console.error(
             'AppComponent: Error checking client verification:',
             error
           );
-          this.router.navigate(['/pages/auth/login'], { replaceUrl: true });
+          // On error, redirect to verification instead of login
+          this.router.navigate(['/pages/auth/client-verification'], {
+            replaceUrl: true,
+          });
         }
         break;
       case 'worker':

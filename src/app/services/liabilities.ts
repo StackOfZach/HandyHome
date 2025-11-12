@@ -119,7 +119,7 @@ export class LiabilitiesService {
             new Date(currentDate),
             totalLiability
           );
-          
+
           liabilities.push({
             date: new Date(currentDate),
             bookingsCount: bookingsData.count,
@@ -345,23 +345,26 @@ export class LiabilitiesService {
   ): Promise<'pending' | 'paid' | 'overdue'> {
     try {
       // Check if there's a verified payment submission for this date and worker
-      const paymentSubmissionsRef = collection(this.firestore, 'paymentSubmissions');
+      const paymentSubmissionsRef = collection(
+        this.firestore,
+        'paymentSubmissions'
+      );
       const dateStart = new Date(date);
       dateStart.setHours(0, 0, 0, 0);
-      
+
       const dateEnd = new Date(date);
       dateEnd.setHours(23, 59, 59, 999);
-      
+
       console.log('🔍 Checking payment status for:', {
         workerId,
         date: date.toDateString(),
         dateRange: {
           start: dateStart.toISOString(),
-          end: dateEnd.toISOString()
+          end: dateEnd.toISOString(),
         },
-        amount
+        amount,
       });
-      
+
       const q = query(
         paymentSubmissionsRef,
         where('workerId', '==', workerId),
@@ -369,17 +372,21 @@ export class LiabilitiesService {
         where('date', '<=', Timestamp.fromDate(dateEnd)),
         where('status', '==', 'verified')
       );
-      
+
       const snapshot = await getDocs(q);
-      
-      console.log(`📊 Found ${snapshot.size} verified payments for date ${date.toDateString()}`);
-      
+
+      console.log(
+        `📊 Found ${
+          snapshot.size
+        } verified payments for date ${date.toDateString()}`
+      );
+
       // If there's a verified payment for this date, status is 'paid'
       if (!snapshot.empty) {
         console.log('✅ Payment found - status: PAID');
         return 'paid';
       }
-      
+
       // Otherwise, use the original date-based calculation
       const status = this.calculateStatus(date);
       console.log(`⏰ No verified payment found - status: ${status}`);
@@ -425,7 +432,7 @@ export class LiabilitiesService {
         workerId: submissionData.workerId,
         date: submissionData.date.toDate(),
         amount: submissionData.amount,
-        status: submissionData.status
+        status: submissionData.status,
       });
 
       const docRef = await addDoc(paymentSubmissionsRef, submissionData);
@@ -479,7 +486,9 @@ export class LiabilitiesService {
   }
 
   // Get real-time worker liability updates
-  getWorkerLiabilitiesObservable(workerId: string): Observable<DailyLiability[]> {
+  getWorkerLiabilitiesObservable(
+    workerId: string
+  ): Observable<DailyLiability[]> {
     return new Observable((observer) => {
       const refreshLiabilities = async () => {
         try {
@@ -487,21 +496,22 @@ export class LiabilitiesService {
           const endDate = new Date();
           const startDate = new Date();
           startDate.setDate(startDate.getDate() - 30);
-          
+
           const liabilities = await this.calculateDailyLiabilities(
             workerId,
             startDate,
             endDate
           );
-          
-          console.log(`📋 Calculated ${liabilities.length} liabilities:`, 
-            liabilities.map(l => ({ 
-              date: l.date.toDateString(), 
-              amount: l.totalLiability, 
-              status: l.status 
+
+          console.log(
+            `📋 Calculated ${liabilities.length} liabilities:`,
+            liabilities.map((l) => ({
+              date: l.date.toDateString(),
+              amount: l.totalLiability,
+              status: l.status,
             }))
           );
-          
+
           observer.next(liabilities);
         } catch (error) {
           console.error('❌ Error refreshing liabilities:', error);
@@ -510,16 +520,21 @@ export class LiabilitiesService {
       };
 
       // Listen for changes in payment submissions
-      const paymentSubmissionsRef = collection(this.firestore, 'paymentSubmissions');
-      const q = query(
-        paymentSubmissionsRef,
-        where('workerId', '==', workerId)
+      const paymentSubmissionsRef = collection(
+        this.firestore,
+        'paymentSubmissions'
+      );
+      const q = query(paymentSubmissionsRef, where('workerId', '==', workerId));
+
+      console.log(
+        '👂 Setting up real-time listener for payment submissions for worker:',
+        workerId
       );
 
-      console.log('👂 Setting up real-time listener for payment submissions for worker:', workerId);
-
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        console.log(`🔔 Payment submission change detected: ${snapshot.size} submissions`);
+        console.log(
+          `🔔 Payment submission change detected: ${snapshot.size} submissions`
+        );
         refreshLiabilities();
       });
 
@@ -547,11 +562,11 @@ export class LiabilitiesService {
       };
 
       // Listen for changes in payment submissions
-      const paymentSubmissionsRef = collection(this.firestore, 'paymentSubmissions');
-      const q = query(
-        paymentSubmissionsRef,
-        where('workerId', '==', workerId)
+      const paymentSubmissionsRef = collection(
+        this.firestore,
+        'paymentSubmissions'
       );
+      const q = query(paymentSubmissionsRef, where('workerId', '==', workerId));
 
       const unsubscribe = onSnapshot(q, () => {
         calculateTodayLiability();
@@ -566,7 +581,9 @@ export class LiabilitiesService {
   }
 
   // Get today's liability with status for a worker with real-time updates
-  getTodayLiabilityWithStatusObservable(workerId: string): Observable<{amount: number, status: 'pending' | 'paid' | 'overdue'}> {
+  getTodayLiabilityWithStatusObservable(
+    workerId: string
+  ): Observable<{ amount: number; status: 'pending' | 'paid' | 'overdue' }> {
     return new Observable((observer) => {
       const calculateTodayLiabilityWithStatus = async () => {
         try {
@@ -578,16 +595,16 @@ export class LiabilitiesService {
             today,
             today
           );
-          
+
           if (liabilities.length > 0) {
             observer.next({
               amount: liabilities[0].totalLiability,
-              status: liabilities[0].status
+              status: liabilities[0].status,
             });
           } else {
             observer.next({
               amount: 0,
-              status: 'pending'
+              status: 'pending',
             });
           }
         } catch (error) {
@@ -596,16 +613,21 @@ export class LiabilitiesService {
       };
 
       // Listen for changes in payment submissions
-      const paymentSubmissionsRef = collection(this.firestore, 'paymentSubmissions');
-      const q = query(
-        paymentSubmissionsRef,
-        where('workerId', '==', workerId)
+      const paymentSubmissionsRef = collection(
+        this.firestore,
+        'paymentSubmissions'
+      );
+      const q = query(paymentSubmissionsRef, where('workerId', '==', workerId));
+
+      console.log(
+        "👂 Setting up real-time listener for today's liability with status for worker:",
+        workerId
       );
 
-      console.log('👂 Setting up real-time listener for today\'s liability with status for worker:', workerId);
-
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        console.log(`🔔 Today's liability payment submission change detected: ${snapshot.size} submissions`);
+        console.log(
+          `🔔 Today's liability payment submission change detected: ${snapshot.size} submissions`
+        );
         calculateTodayLiabilityWithStatus();
       });
 
@@ -614,7 +636,7 @@ export class LiabilitiesService {
 
       // Return cleanup function
       return () => {
-        console.log('🧹 Cleaning up today\'s liability status listener');
+        console.log("🧹 Cleaning up today's liability status listener");
         unsubscribe();
       };
     });

@@ -1,39 +1,66 @@
 <!-- Simple Header -->
 <ion-header [translucent]="true">
-  <ion-toolbar style="--background: #2563eb; border-radius: 0 0 24px 24px;">
+  <ion-toolbar style="--background: #2563eb; border-radius: 0 0 24px 24px">
     <div class="flex items-center justify-between px-4 py-3">
-      <button 
-        (click)="goBack()" 
+      <button
+        (click)="goBack()"
         class="p-2 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-200"
-        style="background-color: rgba(255, 255, 255, 0.2);"
+        style="background-color: rgba(255, 255, 255, 0.2)"
       >
-        <ion-icon name="arrow-back-outline" style="color: white; font-size: 20px;"></ion-icon>
+        <ion-icon
+          name="arrow-back-outline"
+          style="color: white; font-size: 20px"
+        ></ion-icon>
       </button>
-      
+
       <div class="text-center">
-        <h1 style="color: white; font-size: 20px; font-weight: bold; margin: 0; margin-bottom: 4px;">Payment Center</h1>
-        <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; margin: 0;">Manage your service fees</p>
+        <h1
+          style="
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+            margin-bottom: 4px;
+          "
+        >
+          Payment Center
+        </h1>
+        <p style="color: rgba(255, 255, 255, 0.8); font-size: 14px; margin: 0">
+          Manage your service fees
+        </p>
       </div>
-      
-      <button 
-        (click)="refreshData()" 
+
+      <button
+        (click)="refreshData()"
         class="p-2 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-200"
-        style="background-color: rgba(255, 255, 255, 0.2);"
+        style="background-color: rgba(255, 255, 255, 0.2)"
       >
-        <ion-icon name="refresh-outline" style="color: white; font-size: 20px;"></ion-icon>
+        <ion-icon
+          name="refresh-outline"
+          style="color: white; font-size: 20px"
+        ></ion-icon>
       </button>
     </div>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="bg-gradient-to-br from-slate-50 via-white to-purple-50">
-  
+<ion-content
+  [fullscreen]="true"
+  class="bg-gradient-to-br from-slate-50 via-white to-purple-50"
+>
   <!-- Loading State -->
-  <div *ngIf="isLoading" class="flex justify-center items-center h-screen bg-gray-50">
+  <div
+    *ngIf="isLoading"
+    class="flex justify-center items-center h-screen bg-gray-50"
+  >
     <div class="text-center">
       <div class="relative mb-4">
-        <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-        <div class="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-indigo-400 rounded-full animate-spin animation-delay-75"></div>
+        <div
+          class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"
+        ></div>
+        <div
+          class="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-indigo-400 rounded-full animate-spin animation-delay-75"
+        ></div>
       </div>
       <p class="text-gray-600 font-medium">Loading payment data...</p>
     </div>
@@ -41,51 +68,77 @@
 
   <!-- Main Content -->
   <div *ngIf="!isLoading" class="px-4 py-6 space-y-8">
-    
     <!-- Today's Payment Section -->
     <div class="space-y-4">
       <div class="flex items-center space-x-3 mb-6">
-        <div class="p-3 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-lg">
+        <div
+          class="p-3 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-lg"
+        >
           <ion-icon name="today-outline" class="text-white text-xl"></ion-icon>
         </div>
         <div>
           <h2 class="text-2xl font-bold text-gray-800">Today's Payment</h2>
-          <p class="text-gray-500 text-sm">Due: {{ formatDate(getCurrentDate()) }}</p>
+          <p class="text-gray-500 text-sm">
+            Due: {{ formatDate(getCurrentDate()) }}
+          </p>
         </div>
       </div>
-      
+
       <!-- Payment Card -->
       <div class="relative group">
-        <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-        <div class="relative bg-white rounded-3xl shadow-xl overflow-hidden border border-purple-100">
+        <div
+          class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-300"
+        ></div>
+        <div
+          class="relative bg-white rounded-3xl shadow-xl overflow-hidden border border-purple-100"
+        >
           <!-- Card Header -->
-          <div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-6 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-white bg-opacity-10 rounded-full -mr-16 -mt-16"></div>
-            <div class="absolute bottom-0 left-0 w-24 h-24 bg-white bg-opacity-10 rounded-full -ml-12 -mb-12"></div>
+          <div
+            class="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-6 relative overflow-hidden"
+          >
+            <div
+              class="absolute top-0 right-0 w-32 h-32 bg-white bg-opacity-10 rounded-full -mr-16 -mt-16"
+            ></div>
+            <div
+              class="absolute bottom-0 left-0 w-24 h-24 bg-white bg-opacity-10 rounded-full -ml-12 -mb-12"
+            ></div>
             <div class="relative">
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-3">
                   <div class="p-2 bg-white bg-opacity-20 rounded-xl">
-                    <ion-icon name="wallet-outline" class="text-white text-lg"></ion-icon>
+                    <ion-icon
+                      name="wallet-outline"
+                      class="text-white text-lg"
+                    ></ion-icon>
                   </div>
-                  <span class="text-white text-sm font-medium opacity-90">Amount Due</span>
+                  <span class="text-white text-sm font-medium opacity-90"
+                    >Amount Due</span
+                  >
                 </div>
                 <div class="px-3 py-1 bg-white bg-opacity-20 rounded-full">
-                  <span class="text-white text-xs font-medium">{{ getStatusText(todayLiabilityStatus) }}</span>
+                  <span class="text-white text-xs font-medium"
+                    >{{ getStatusText(todayLiabilityStatus) }}</span
+                  >
                 </div>
               </div>
-              
+
               <div class="text-white text-4xl font-bold mb-2">
-                ₱{{ todayLiability.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+                ₱{{ todayLiability.toLocaleString('en-US', {
+                minimumFractionDigits: 2 }) }}
               </div>
-              
+
               <div class="flex items-center space-x-2">
-                <ion-icon name="time-outline" class="text-white text-opacity-70"></ion-icon>
-                <span class="text-white text-opacity-70 text-sm">Due today at 11:59 PM</span>
+                <ion-icon
+                  name="time-outline"
+                  class="text-white text-opacity-70"
+                ></ion-icon>
+                <span class="text-white text-opacity-70 text-sm"
+                  >Due today at 11:59 PM</span
+                >
               </div>
             </div>
           </div>
-          
+
           <!-- Card Body -->
           <div class="p-6">
             <!-- Pay Button - only show if status is pending or overdue -->
@@ -106,27 +159,35 @@
                 <ion-icon name="card-outline" class="text-lg"></ion-icon>
                 <span>Pay Now</span>
               </div>
-              <div class="absolute inset-0 bg-white bg-opacity-10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+              <div
+                class="absolute inset-0 bg-white bg-opacity-10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"
+              ></div>
             </button>
-            
+
             <!-- Payment Completed Status -->
-            <div 
+            <div
               *ngIf="todayLiabilityStatus === 'paid'"
               class="w-full bg-green-100 text-green-800 font-semibold py-4 px-6 rounded-2xl text-center border-2 border-green-200"
             >
               <div class="flex items-center justify-center space-x-2">
-                <ion-icon name="checkmark-circle" class="text-green-600 text-lg"></ion-icon>
+                <ion-icon
+                  name="checkmark-circle"
+                  class="text-green-600 text-lg"
+                ></ion-icon>
                 <span>Payment Completed</span>
               </div>
             </div>
-            
+
             <!-- No Payment Due -->
-            <div 
+            <div
               *ngIf="todayLiability <= 0"
               class="w-full bg-gray-100 text-gray-600 font-semibold py-4 px-6 rounded-2xl text-center border-2 border-gray-200"
             >
               <div class="flex items-center justify-center space-x-2">
-                <ion-icon name="checkmark-circle-outline" class="text-gray-500 text-lg"></ion-icon>
+                <ion-icon
+                  name="checkmark-circle-outline"
+                  class="text-gray-500 text-lg"
+                ></ion-icon>
                 <span>No Payment Due Today</span>
               </div>
             </div>
@@ -139,8 +200,13 @@
     <div class="space-y-6">
       <!-- Section Header -->
       <div class="flex items-center space-x-3 mb-6">
-        <div class="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg">
-          <ion-icon name="receipt-outline" class="text-white text-xl"></ion-icon>
+        <div
+          class="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg"
+        >
+          <ion-icon
+            name="receipt-outline"
+            class="text-white text-xl"
+          ></ion-icon>
         </div>
         <div>
           <h2 class="text-2xl font-bold text-gray-800">Payment History</h2>
@@ -151,18 +217,36 @@
       <!-- No Data State -->
       <div *ngIf="dailyLiabilities.length === 0" class="text-center py-16">
         <div class="relative mb-8">
-          <div class="w-24 h-24 mx-auto bg-gradient-to-br from-purple-100 to-indigo-100 rounded-3xl flex items-center justify-center">
-            <ion-icon name="document-outline" class="text-4xl text-purple-400"></ion-icon>
+          <div
+            class="w-24 h-24 mx-auto bg-gradient-to-br from-purple-100 to-indigo-100 rounded-3xl flex items-center justify-center"
+          >
+            <ion-icon
+              name="document-outline"
+              class="text-4xl text-purple-400"
+            ></ion-icon>
           </div>
-          <div class="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+          <div
+            class="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center"
+          >
             <ion-icon name="star" class="text-white text-sm"></ion-icon>
           </div>
         </div>
-        <h3 class="text-xl font-bold text-gray-700 mb-2">No Service Fees Yet</h3>
-        <p class="text-gray-500 mb-4">Complete more bookings to see your service fees here</p>
-        <div class="inline-flex items-center px-4 py-2 bg-purple-50 rounded-full">
-          <ion-icon name="trending-up-outline" class="text-purple-500 mr-2"></ion-icon>
-          <span class="text-purple-700 text-sm font-medium">Start earning today!</span>
+        <h3 class="text-xl font-bold text-gray-700 mb-2">
+          No Service Fees Yet
+        </h3>
+        <p class="text-gray-500 mb-4">
+          Complete more bookings to see your service fees here
+        </p>
+        <div
+          class="inline-flex items-center px-4 py-2 bg-purple-50 rounded-full"
+        >
+          <ion-icon
+            name="trending-up-outline"
+            class="text-purple-500 mr-2"
+          ></ion-icon>
+          <span class="text-purple-700 text-sm font-medium"
+            >Start earning today!</span
+          >
         </div>
       </div>
 
@@ -173,30 +257,46 @@
           class="group relative"
         >
           <!-- Hover gradient background -->
-          <div class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl opacity-0 group-hover:opacity-20 transition duration-300 blur"></div>
-          
-          <div class="relative bg-white rounded-2xl shadow-lg border border-purple-50 overflow-hidden hover:shadow-xl transition-all duration-300">
+          <div
+            class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl opacity-0 group-hover:opacity-20 transition duration-300 blur"
+          ></div>
+
+          <div
+            class="relative bg-white rounded-2xl shadow-lg border border-purple-50 overflow-hidden hover:shadow-xl transition-all duration-300"
+          >
             <!-- Date Header with Status -->
             <div class="relative overflow-hidden">
-              <div class="absolute inset-0 bg-gradient-to-r from-slate-50 to-purple-50"></div>
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-slate-50 to-purple-50"
+              ></div>
               <div class="relative px-6 py-4">
                 <div class="flex justify-between items-center">
                   <div class="flex items-center space-x-3">
                     <div class="p-2 bg-white rounded-xl shadow-sm">
-                      <ion-icon name="calendar-outline" class="text-purple-600"></ion-icon>
+                      <ion-icon
+                        name="calendar-outline"
+                        class="text-purple-600"
+                      ></ion-icon>
                     </div>
                     <div>
-                      <p class="text-gray-800 font-semibold">{{ formatDate(liability.date) }}</p>
-                      <p class="text-gray-500 text-xs">Service charges for this date</p>
+                      <p class="text-gray-800 font-semibold">
+                        {{ formatDate(liability.date) }}
+                      </p>
+                      <p class="text-gray-500 text-xs">
+                        Service charges for this date
+                      </p>
                     </div>
                   </div>
-                  
+
                   <div class="relative">
                     <div
                       class="px-4 py-2 rounded-full text-xs font-semibold flex items-center space-x-2 shadow-sm"
                       [ngClass]="getModernStatusColor(liability.status)"
                     >
-                      <div class="w-2 h-2 rounded-full" [ngClass]="getStatusDotColor(liability.status)"></div>
+                      <div
+                        class="w-2 h-2 rounded-full"
+                        [ngClass]="getStatusDotColor(liability.status)"
+                      ></div>
                       <span>{{ getStatusText(liability.status) }}</span>
                     </div>
                   </div>
@@ -208,42 +308,70 @@
             <div class="p-6 pt-4">
               <!-- Booking Stats -->
               <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 border border-blue-200">
+                <div
+                  class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 border border-blue-200"
+                >
                   <div class="flex items-center space-x-3">
                     <div class="p-2 bg-blue-500 rounded-xl">
-                      <ion-icon name="briefcase-outline" class="text-white text-sm"></ion-icon>
+                      <ion-icon
+                        name="briefcase-outline"
+                        class="text-white text-sm"
+                      ></ion-icon>
                     </div>
                     <div>
-                      <div class="text-2xl font-bold text-blue-700">{{ liability.bookingsCount }}</div>
-                      <div class="text-xs text-blue-600 font-medium">Regular Bookings</div>
+                      <div class="text-2xl font-bold text-blue-700">
+                        {{ liability.bookingsCount }}
+                      </div>
+                      <div class="text-xs text-blue-600 font-medium">
+                        Regular Bookings
+                      </div>
                     </div>
                   </div>
                 </div>
-                
-                <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 border border-purple-200">
+
+                <div
+                  class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 border border-purple-200"
+                >
                   <div class="flex items-center space-x-3">
                     <div class="p-2 bg-purple-500 rounded-xl">
-                      <ion-icon name="flash-outline" class="text-white text-sm"></ion-icon>
+                      <ion-icon
+                        name="flash-outline"
+                        class="text-white text-sm"
+                      ></ion-icon>
                     </div>
                     <div>
-                      <div class="text-2xl font-bold text-purple-700">{{ liability.quickBookingsCount }}</div>
-                      <div class="text-xs text-purple-600 font-medium">Quick Bookings</div>
+                      <div class="text-2xl font-bold text-purple-700">
+                        {{ liability.quickBookingsCount }}
+                      </div>
+                      <div class="text-xs text-purple-600 font-medium">
+                        Quick Bookings
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Total Amount Section -->
-              <div class="bg-gradient-to-r from-gray-50 to-slate-50 rounded-2xl p-4 mb-4 border border-gray-200">
+              <div
+                class="bg-gradient-to-r from-gray-50 to-slate-50 rounded-2xl p-4 mb-4 border border-gray-200"
+              >
                 <div class="flex justify-between items-center">
                   <div class="flex items-center space-x-3">
-                    <div class="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl">
-                      <ion-icon name="cash-outline" class="text-white"></ion-icon>
+                    <div
+                      class="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl"
+                    >
+                      <ion-icon
+                        name="cash-outline"
+                        class="text-white"
+                      ></ion-icon>
                     </div>
-                    <span class="font-semibold text-gray-700">Total Service Charge</span>
+                    <span class="font-semibold text-gray-700"
+                      >Total Service Charge</span
+                    >
                   </div>
                   <span class="text-2xl font-bold text-green-600">
-                    ₱{{ liability.totalLiability.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+                    ₱{{ liability.totalLiability.toLocaleString('en-US', {
+                    minimumFractionDigits: 2 }) }}
                   </span>
                 </div>
               </div>
@@ -256,15 +384,26 @@
               >
                 <div class="flex items-center justify-center space-x-2">
                   <ion-icon name="card-outline"></ion-icon>
-                  <span>Pay ₱{{ liability.totalLiability.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+                  <span
+                    >Pay ₱{{ liability.totalLiability.toLocaleString('en-US', {
+                    minimumFractionDigits: 2 }) }}</span
+                  >
                 </div>
-                <div class="absolute inset-0 bg-white bg-opacity-20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
+                <div
+                  class="absolute inset-0 bg-white bg-opacity-20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-500"
+                ></div>
               </button>
-              
+
               <!-- Paid Status -->
-              <div *ngIf="liability.status === 'paid'" class="w-full bg-green-100 text-green-800 font-semibold py-3 px-6 rounded-2xl text-center border-2 border-green-200">
+              <div
+                *ngIf="liability.status === 'paid'"
+                class="w-full bg-green-100 text-green-800 font-semibold py-3 px-6 rounded-2xl text-center border-2 border-green-200"
+              >
                 <div class="flex items-center justify-center space-x-2">
-                  <ion-icon name="checkmark-circle" class="text-green-600"></ion-icon>
+                  <ion-icon
+                    name="checkmark-circle"
+                    class="text-green-600"
+                  ></ion-icon>
                   <span>Payment Completed</span>
                 </div>
               </div>
@@ -275,44 +414,67 @@
     </div>
 
     <!-- Summary Card -->
-    <div
-      *ngIf="dailyLiabilities.length > 0"
-      class="relative group"
-    >
-      <div class="absolute -inset-1 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 rounded-3xl opacity-75 group-hover:opacity-100 transition duration-300 blur"></div>
-      <div class="relative bg-white rounded-3xl p-6 border border-orange-100 shadow-lg">
+    <div *ngIf="dailyLiabilities.length > 0" class="relative group">
+      <div
+        class="absolute -inset-1 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 rounded-3xl opacity-75 group-hover:opacity-100 transition duration-300 blur"
+      ></div>
+      <div
+        class="relative bg-white rounded-3xl p-6 border border-orange-100 shadow-lg"
+      >
         <div class="flex items-center space-x-3 mb-4">
-          <div class="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl">
-            <ion-icon name="analytics-outline" class="text-white text-xl"></ion-icon>
+          <div
+            class="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl"
+          >
+            <ion-icon
+              name="analytics-outline"
+              class="text-white text-xl"
+            ></ion-icon>
           </div>
           <div>
             <h3 class="text-xl font-bold text-gray-800">Payment Summary</h3>
-            <p class="text-gray-500 text-sm">Overview of your payment obligations</p>
+            <p class="text-gray-500 text-sm">
+              Overview of your payment obligations
+            </p>
           </div>
         </div>
-        
+
         <div class="grid grid-cols-2 gap-6">
-          <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-4 border border-orange-200">
+          <div
+            class="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-4 border border-orange-200"
+          >
             <div class="flex items-center space-x-3">
               <div class="p-2 bg-orange-500 rounded-xl">
-                <ion-icon name="hourglass-outline" class="text-white text-sm"></ion-icon>
+                <ion-icon
+                  name="hourglass-outline"
+                  class="text-white text-sm"
+                ></ion-icon>
               </div>
               <div>
-                <p class="text-orange-600 text-xs font-medium mb-1">Total Pending</p>
+                <p class="text-orange-600 text-xs font-medium mb-1">
+                  Total Pending
+                </p>
                 <div class="text-xl font-bold text-orange-800">
-                  ₱{{ totalPendingLiabilities.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+                  ₱{{ totalPendingLiabilities.toLocaleString('en-US', {
+                  minimumFractionDigits: 2 }) }}
                 </div>
               </div>
             </div>
           </div>
-          
-          <div class="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-4 border border-purple-200">
+
+          <div
+            class="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-4 border border-purple-200"
+          >
             <div class="flex items-center space-x-3">
               <div class="p-2 bg-purple-500 rounded-xl">
-                <ion-icon name="calendar-number-outline" class="text-white text-sm"></ion-icon>
+                <ion-icon
+                  name="calendar-number-outline"
+                  class="text-white text-sm"
+                ></ion-icon>
               </div>
               <div>
-                <p class="text-purple-600 text-xs font-medium mb-1">Active Days</p>
+                <p class="text-purple-600 text-xs font-medium mb-1">
+                  Active Days
+                </p>
                 <div class="text-xl font-bold text-purple-800">
                   {{ dailyLiabilities.length }}
                 </div>
@@ -338,16 +500,27 @@
   <!-- Modern GCash Modal -->
   <ion-modal [isOpen]="showGcashModal" class="gcash-modal">
     <ng-template>
-      <div class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-hidden shadow-2xl">
+      <div
+        class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      >
+        <div
+          class="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-hidden shadow-2xl"
+        >
           <!-- Header -->
-          <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-white bg-opacity-10 rounded-full -mr-16 -mt-16"></div>
+          <div
+            class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative overflow-hidden"
+          >
+            <div
+              class="absolute top-0 right-0 w-32 h-32 bg-white bg-opacity-10 rounded-full -mr-16 -mt-16"
+            ></div>
             <div class="relative p-6">
               <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center space-x-3">
                   <div class="p-2 bg-white bg-opacity-20 rounded-xl">
-                    <ion-icon name="wallet-outline" class="text-white text-xl"></ion-icon>
+                    <ion-icon
+                      name="wallet-outline"
+                      class="text-white text-xl"
+                    ></ion-icon>
                   </div>
                   <h3 class="text-white text-xl font-bold">GCash Payment</h3>
                 </div>
@@ -355,10 +528,13 @@
                   (click)="closeGcashModal()"
                   class="p-2 bg-white bg-opacity-20 rounded-xl hover:bg-opacity-30 transition-all"
                 >
-                  <ion-icon name="close-outline" class="text-white text-lg"></ion-icon>
+                  <ion-icon
+                    name="close-outline"
+                    class="text-white text-lg"
+                  ></ion-icon>
                 </button>
               </div>
-              
+
               <div class="text-white text-opacity-80 text-sm">
                 Scan the QR code below to send payment
               </div>
@@ -368,15 +544,22 @@
           <!-- Content -->
           <div class="p-6 text-center space-y-6">
             <!-- Amount Display -->
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-200">
-              <p class="text-blue-600 text-sm font-medium mb-1">Amount to Pay</p>
+            <div
+              class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-200"
+            >
+              <p class="text-blue-600 text-sm font-medium mb-1">
+                Amount to Pay
+              </p>
               <p class="text-2xl font-bold text-blue-800">
-                ₱{{ (selectedLiability?.totalLiability || 0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
+                ₱{{ (selectedLiability?.totalLiability ||
+                0).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}
               </p>
             </div>
 
             <!-- QR Code -->
-            <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
+            <div
+              class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200"
+            >
               <img
                 [src]="adminGcashQR"
                 alt="GCash QR Code"
@@ -416,28 +599,46 @@
   <!-- Modern Payment Confirmation Modal -->
   <ion-modal [isOpen]="showPaymentModal" class="payment-modal">
     <ng-template>
-      <div class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div
+        class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      >
+        <div
+          class="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        >
           <!-- Header -->
-          <div class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-white bg-opacity-10 rounded-full -mr-16 -mt-16"></div>
-            <div class="absolute bottom-0 left-0 w-24 h-24 bg-white bg-opacity-10 rounded-full -ml-12 -mb-12"></div>
+          <div
+            class="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 relative overflow-hidden"
+          >
+            <div
+              class="absolute top-0 right-0 w-32 h-32 bg-white bg-opacity-10 rounded-full -mr-16 -mt-16"
+            ></div>
+            <div
+              class="absolute bottom-0 left-0 w-24 h-24 bg-white bg-opacity-10 rounded-full -ml-12 -mb-12"
+            ></div>
             <div class="relative p-6">
               <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center space-x-3">
                   <div class="p-2 bg-white bg-opacity-20 rounded-xl">
-                    <ion-icon name="document-text-outline" class="text-white text-xl"></ion-icon>
+                    <ion-icon
+                      name="document-text-outline"
+                      class="text-white text-xl"
+                    ></ion-icon>
                   </div>
-                  <h3 class="text-white text-xl font-bold">Submit Payment Proof</h3>
+                  <h3 class="text-white text-xl font-bold">
+                    Submit Payment Proof
+                  </h3>
                 </div>
                 <button
                   (click)="cancelPayment()"
                   class="p-2 bg-white bg-opacity-20 rounded-xl hover:bg-opacity-30 transition-all"
                 >
-                  <ion-icon name="close-outline" class="text-white text-lg"></ion-icon>
+                  <ion-icon
+                    name="close-outline"
+                    class="text-white text-lg"
+                  ></ion-icon>
                 </button>
               </div>
-              
+
               <div class="text-white text-opacity-80 text-sm">
                 Upload your payment screenshot and reference number
               </div>
@@ -450,7 +651,10 @@
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-700">
                 <div class="flex items-center space-x-2 mb-2">
-                  <ion-icon name="key-outline" class="text-green-600"></ion-icon>
+                  <ion-icon
+                    name="key-outline"
+                    class="text-green-600"
+                  ></ion-icon>
                   <span>Reference Number</span>
                   <span class="text-red-500">*</span>
                 </div>
@@ -462,7 +666,10 @@
                   placeholder="Enter GCash reference number"
                   class="w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                 />
-                <ion-icon name="receipt-outline" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></ion-icon>
+                <ion-icon
+                  name="receipt-outline"
+                  class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                ></ion-icon>
               </div>
             </div>
 
@@ -470,7 +677,10 @@
             <div class="space-y-2">
               <label class="block text-sm font-semibold text-gray-700">
                 <div class="flex items-center space-x-2 mb-2">
-                  <ion-icon name="image-outline" class="text-green-600"></ion-icon>
+                  <ion-icon
+                    name="image-outline"
+                    class="text-green-600"
+                  ></ion-icon>
                   <span>Payment Proof</span>
                   <span class="text-red-500">*</span>
                 </div>
@@ -481,22 +691,31 @@
                 [ngClass]="{'border-green-500 bg-green-50': paymentProofImage}"
               >
                 <div *ngIf="!paymentProofImage" class="space-y-3">
-                  <div class="w-16 h-16 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center group-hover:from-green-100 group-hover:to-green-200 transition-all">
-                    <ion-icon name="camera-outline" class="text-3xl text-gray-400 group-hover:text-green-500"></ion-icon>
+                  <div
+                    class="w-16 h-16 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center group-hover:from-green-100 group-hover:to-green-200 transition-all"
+                  >
+                    <ion-icon
+                      name="camera-outline"
+                      class="text-3xl text-gray-400 group-hover:text-green-500"
+                    ></ion-icon>
                   </div>
                   <div>
-                    <p class="text-gray-600 font-medium">Tap to upload payment screenshot</p>
+                    <p class="text-gray-600 font-medium">
+                      Tap to upload payment screenshot
+                    </p>
                     <p class="text-gray-400 text-sm mt-1">PNG, JPG up to 5MB</p>
                   </div>
                 </div>
-                
+
                 <div *ngIf="paymentProofImage" class="space-y-3">
                   <img
                     [src]="paymentProofImage"
                     alt="Payment Proof"
                     class="max-w-full h-32 object-contain mx-auto rounded-xl border border-green-200"
                   />
-                  <p class="text-green-600 font-medium text-sm">✓ Payment proof uploaded</p>
+                  <p class="text-green-600 font-medium text-sm">
+                    ✓ Payment proof uploaded
+                  </p>
                 </div>
               </div>
             </div>
@@ -509,10 +728,15 @@
                 class="w-full relative overflow-hidden bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 hover:shadow-lg group"
               >
                 <div class="flex items-center justify-center space-x-2">
-                  <ion-icon name="cloud-upload-outline" class="text-lg"></ion-icon>
+                  <ion-icon
+                    name="cloud-upload-outline"
+                    class="text-lg"
+                  ></ion-icon>
                   <span>Submit Payment</span>
                 </div>
-                <div class="absolute inset-0 bg-white bg-opacity-10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                <div
+                  class="absolute inset-0 bg-white bg-opacity-10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"
+                ></div>
               </button>
 
               <button

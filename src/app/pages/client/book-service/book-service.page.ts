@@ -622,6 +622,8 @@ export class BookServicePage implements OnInit {
         ...locationData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+        // Add automatic cleanup timeout (30 minutes from now)
+        autoCleanupAt: new Date(Date.now() + 30 * 60 * 1000),
       };
 
       console.log('📝 Creating booking with data:', bookingData);

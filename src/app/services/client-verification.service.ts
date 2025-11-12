@@ -242,8 +242,18 @@ export class ClientVerificationService {
    */
   async isClientVerified(userId: string): Promise<boolean> {
     try {
+      console.log(
+        'ClientVerificationService: Checking verification for userId:',
+        userId
+      );
       const verification = await this.getVerificationByUserId(userId);
-      return verification?.status === 'approved';
+      console.log(
+        'ClientVerificationService: Verification record found:',
+        verification
+      );
+      const isVerified = verification?.status === 'approved';
+      console.log('ClientVerificationService: Is verified:', isVerified);
+      return isVerified;
     } catch (error) {
       console.error('Error checking client verification status:', error);
       return false; // Default to not verified if error occurs

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
   AlertController,
@@ -26,6 +26,7 @@ import {
   WorkerAvailabilityService,
   BookingConflictCheck,
 } from '../../../services/worker-availability.service';
+import { BookingCleanupService } from '../../../services/booking-cleanup.service';
 
 interface ServicePrice {
   name: string;
@@ -89,7 +90,7 @@ interface BookingData {
   styleUrls: ['./worker-results.page.scss'],
   standalone: false,
 })
-export class WorkerResultsPage implements OnInit {
+export class WorkerResultsPage implements OnInit, OnDestroy {
   workers: WorkerProfile[] = [];
   filteredWorkers: WorkerProfile[] = [];
   booking: BookingData | null = null;
@@ -97,6 +98,7 @@ export class WorkerResultsPage implements OnInit {
   isLoading = true;
   currentUser: any = null;
   serviceCategories: ServiceCategory[] = []; // Add serviceCategories array
+  private hasBookedWorker = false; // Track if user actually booked someone
 
   // Filter options - DEFAULT: Sort by distance (nearby workers first)
   filters = {
@@ -116,7 +118,8 @@ export class WorkerResultsPage implements OnInit {
     private firestore: Firestore,
     private authService: AuthService,
     private dashboardService: DashboardService,
-    private workerAvailabilityService: WorkerAvailabilityService
+    private workerAvailabilityService: WorkerAvailabilityService,
+    private bookingCleanupService: BookingCleanupService
   ) {}
 
   async ngOnInit() {
@@ -129,14 +132,64 @@ export class WorkerResultsPage implements OnInit {
     this.route.queryParams.subscribe(async (params) => {
       this.bookingId = params['bookingId'];
       if (this.bookingId) {
+        // Register this booking for cleanup tracking
+        this.bookingCleanupService.setActiveBooking(
+          this.bookingId,
+          this.currentUser?.uid
+        );
+
         await this.loadBookingData();
         await this.loadWorkers();
       }
     });
   }
 
-  goBack() {
-    this.router.navigate(['/client/book-service']);
+  ngOnDestroy() {
+    // If user successfully booked a worker, clear the cleanup tracking
+    if (this.hasBookedWorker) {
+      this.bookingCleanupService.clearActiveBooking();
+    }
+    // If not booked, the service will handle cleanup
+    console.log(
+      '🔄 WorkerResultsPage destroyed, hasBookedWorker:',
+      this.hasBookedWorker
+    );
+  }
+
+  async goBack() {
+    // Check if user is leaving without booking
+    if (
+      this.booking &&
+      this.booking.status === 'searching' &&
+      !this.hasBookedWorker
+    ) {
+      const alert = await this.alertController.create({
+        header: 'Cancel Booking?',
+        message:
+          "You haven't selected a worker yet. Do you want to cancel this booking request?",
+        buttons: [
+          {
+            text: 'Keep Searching',
+            role: 'cancel',
+            handler: () => {
+              // User wants to continue, don't navigate
+              // Extend the cleanup timeout since user is actively engaging
+              this.bookingCleanupService.extendCleanupTimeout(15);
+            },
+          },
+          {
+            text: 'Cancel Booking',
+            handler: async () => {
+              await this.cancelAndDeleteBooking();
+              this.router.navigate(['/client/book-service']);
+            },
+          },
+        ],
+      });
+      await alert.present();
+    } else {
+      this.router.navigate(['/client/book-service']);
+    }
   }
 
   async loadBookingData() {
@@ -163,6 +216,37 @@ export class WorkerResultsPage implements OnInit {
     } catch (error) {
       console.error('Error loading service categories:', error);
     }
+  }
+
+  private async cancelAndDeleteBooking() {
+    if (!this.bookingId) return;
+
+    const loading = await this.loadingController.create({
+      message: 'Cancelling booking...',
+    });
+    await loading.present();
+
+    try {
+      // Use the cleanup service to force delete the booking
+      await this.bookingCleanupService.forceCleanupBooking(this.bookingId);
+
+      await this.showToast('Booking cancelled successfully', 'success');
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      await this.showToast('Error cancelling booking', 'danger');
+    } finally {
+      await loading.dismiss();
+    }
+  }
+
+  private async showToast(message: string, color: string) {
+    const toast = await this.toastController.create({
+      message,
+      duration: 3000,
+      color,
+      position: 'bottom',
+    });
+    await toast.present();
   }
 
   /**
@@ -1538,7 +1622,7 @@ export class WorkerResultsPage implements OnInit {
             'Worker is no longer available at this time slot - conflicting bookings detected'
           );
         }
-        console.log('� Reserving worker time slot...');
+        console.log('🕰 Reserving worker time slot...');
         await this.workerAvailabilityService.bookWorkerTimeSlot(
           worker.uid,
           this.booking.scheduleDate.toDate(),
@@ -1549,7 +1633,7 @@ export class WorkerResultsPage implements OnInit {
         console.log('✅ Time slot reserved successfully');
       }
 
-      console.log('�🔄 Updating booking with worker assignment:', {
+      console.log('🔄 Updating booking with worker assignment:', {
         bookingId: this.bookingId,
         assignedWorker: worker.uid,
         workerId: worker.uid,
@@ -1570,6 +1654,12 @@ export class WorkerResultsPage implements OnInit {
       });
 
       console.log('✅ Booking successfully updated with worker assignment');
+
+      // Mark that user has successfully booked a worker
+      this.hasBookedWorker = true;
+
+      // Clear cleanup tracking since booking is successful
+      this.bookingCleanupService.clearActiveBooking();
 
       // Create a notification for the selected worker
       try {
@@ -1636,6 +1726,36 @@ export class WorkerResultsPage implements OnInit {
         toast.present();
       }
     }
+  }
+
+  /**
+   * Get time remaining until booking auto-cleanup
+   */
+  getTimeUntilCleanup(): string | null {
+    const timeRemaining = this.bookingCleanupService.getTimeUntilCleanup();
+    if (timeRemaining === null) return null;
+
+    const minutes = Math.floor(timeRemaining / (1000 * 60));
+    if (minutes <= 0) return 'Expiring soon';
+    if (minutes === 1) return '1 minute';
+    return `${minutes} minutes`;
+  }
+
+  /**
+   * Check if booking is close to expiring (5 minutes or less)
+   */
+  isBookingExpiringsoon(): boolean {
+    const timeRemaining = this.bookingCleanupService.getTimeUntilCleanup();
+    if (timeRemaining === null) return false;
+    return timeRemaining <= 5 * 60 * 1000; // 5 minutes in milliseconds
+  }
+
+  /**
+   * Extend the cleanup timeout when user is actively browsing
+   */
+  extendBookingTime() {
+    this.bookingCleanupService.extendCleanupTimeout(15);
+    this.showToast('Booking time extended by 15 minutes', 'primary');
   }
 
   getStarRating(rating: number): string[] {

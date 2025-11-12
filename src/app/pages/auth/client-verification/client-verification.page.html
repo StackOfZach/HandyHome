@@ -54,7 +54,12 @@
       <div
         class="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-6 border border-white/20 animate-fade-scale"
       >
-        <form [formGroup]="verificationForm" (ngSubmit)="submitVerification()">
+        <form
+          [id]="formId"
+          [formGroup]="verificationForm"
+          (ngSubmit)="submitVerification()"
+          autocomplete="off"
+        >
           <!-- ID Type Selection -->
           <div class="mb-6">
             <label
@@ -71,6 +76,7 @@
               <select
                 id="idType"
                 formControlName="idType"
+                autocomplete="off"
                 class="p-3 border-2 border-gray-200 rounded-xl w-full shadow-sm focus:ring-3 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300 text-handy-navy-700 bg-white/70 appearance-none cursor-pointer"
               >
                 <option value="">Select ID Type</option>
@@ -112,6 +118,11 @@
               type="text"
               id="idNumber"
               formControlName="idNumber"
+              autocomplete="off"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+              data-form-type="other"
               placeholder="Enter your ID number"
               class="p-3 border-2 border-gray-200 rounded-xl w-full shadow-sm focus:ring-3 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300 text-handy-navy-700 bg-white/70"
             />
@@ -139,6 +150,11 @@
             <textarea
               id="address"
               formControlName="address"
+              autocomplete="off"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+              data-form-type="other"
               placeholder="Enter your complete address"
               rows="3"
               class="p-3 border-2 border-gray-200 rounded-xl w-full shadow-sm focus:ring-3 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300 text-handy-navy-700 bg-white/70 resize-none"
@@ -168,6 +184,8 @@
               type="date"
               id="birthDate"
               formControlName="birthDate"
+              autocomplete="off"
+              data-form-type="other"
               class="p-3 border-2 border-gray-200 rounded-xl w-full shadow-sm focus:ring-3 focus:ring-handy-blue-200 focus:border-handy-blue-500 transition-all duration-300 text-handy-navy-700 bg-white/70"
             />
             <div

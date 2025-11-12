@@ -26,6 +26,7 @@ export class SignupPage implements OnInit {
   showTermsModal = false;
   showPassword = false;
   showConfirmPassword = false;
+  private hasRedirected = false; // Flag to prevent multiple redirects
 
   constructor(
     private formBuilder: FormBuilder,
@@ -56,24 +57,29 @@ export class SignupPage implements OnInit {
   }
 
   async ngOnInit() {
-    // Check if user is already logged in (additional safety check)
+    // Check if user is already logged in and offer them options
     if (this.authService.isAuthenticated()) {
       const profile = this.authService.getCurrentUserProfile();
       if (profile) {
-        console.log('SignupPage: User already authenticated, redirecting...');
-        await this.redirectBasedOnRole(profile.role);
-        return;
+        console.log(
+          'SignupPage: User already authenticated with role:',
+          profile.role
+        );
+        // Don't auto-redirect, let them choose what to do
+        // They might want to create a new account or logout first
       }
     }
 
-    // Also listen for authentication changes
+    // Listen for authentication changes during signup process
     this.authService.currentUser$.subscribe(async (user) => {
-      if (user) {
+      // Only redirect if this is a fresh signup (not an existing session)
+      if (user && !this.hasRedirected && this.isLoading) {
         const profile = this.authService.getCurrentUserProfile();
         if (profile) {
           console.log(
-            'SignupPage: User authenticated during session, redirecting...'
+            'SignupPage: User authenticated during signup, redirecting...'
           );
+          this.hasRedirected = true;
           await this.redirectBasedOnRole(profile.role);
         }
       }
@@ -130,7 +136,10 @@ export class SignupPage implements OnInit {
       await this.authService.signup(email, password, fullName, phone, role);
 
       // Redirect based on role - all roles now handled consistently
-      await this.redirectBasedOnRole(role);
+      if (!this.hasRedirected) {
+        this.hasRedirected = true;
+        await this.redirectBasedOnRole(role);
+      }
     } catch (error: any) {
       await this.showErrorAlert(this.getErrorMessage(error));
     } finally {

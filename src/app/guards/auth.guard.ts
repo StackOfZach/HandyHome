@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ClientVerificationService } from '../services/client-verification.service';
 import { Observable } from 'rxjs';
 import { map, take, switchMap } from 'rxjs/operators';
 
@@ -8,7 +9,11 @@ import { map, take, switchMap } from 'rxjs/operators';
   providedIn: 'root',
 })
 export class AuthGuard implements CanActivate {
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private clientVerificationService: ClientVerificationService
+  ) {}
 
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
     console.log(
@@ -155,6 +160,45 @@ export class AuthGuard implements CanActivate {
       }
     }
 
+    // Special handling for client routes
+    if (userProfile.role === 'client') {
+      const currentPath = route.routeConfig?.path;
+
+      try {
+        const isVerified =
+          await this.clientVerificationService.isClientVerified(user.uid);
+
+        // Check verification status for client dashboard access
+        if (currentPath === 'pages/client/dashboard') {
+          if (isVerified) {
+            console.log(
+              'AuthGuard: Client is verified, allowing dashboard access'
+            );
+            return true;
+          } else {
+            console.log(
+              'AuthGuard: Client not verified, redirecting to verification page'
+            );
+            this.router.navigate(['/pages/auth/client-verification']);
+            return false;
+          }
+        }
+
+        // If trying to access other client routes and not verified, redirect to verification
+        if (currentPath?.startsWith('pages/client/') && !isVerified) {
+          console.log(
+            'AuthGuard: Client not verified for protected route, redirecting to verification'
+          );
+          this.router.navigate(['/pages/auth/client-verification']);
+          return false;
+        }
+      } catch (error) {
+        console.error('AuthGuard: Error checking client verification:', error);
+        // On error checking client status, allow access to prevent logout
+        return true;
+      }
+    }
+
     // User has access
     console.log('AuthGuard: Access granted');
     return true;
@@ -165,25 +209,17 @@ export class AuthGuard implements CanActivate {
   ): Promise<void> {
     switch (role) {
       case 'client':
-        // Check if client is verified - unverified clients should not be logged in
+        // Check if client is verified but don't logout if not verified
         try {
           const user = this.authService.getCurrentUser();
           if (user) {
-            const { ClientVerificationService } = await import(
-              '../services/client-verification.service'
-            );
-            const clientVerificationService =
-              new (ClientVerificationService as any)();
-
-            const isVerified = await clientVerificationService.isClientVerified(
-              user.uid
-            );
+            const isVerified =
+              await this.clientVerificationService.isClientVerified(user.uid);
             if (isVerified) {
               this.router.navigate(['/pages/client/dashboard']);
             } else {
-              // Unverified clients should not be logged in
-              await this.authService.logout();
-              this.router.navigate(['/pages/auth/login']);
+              // Redirect unverified clients to verification page instead of logging out
+              this.router.navigate(['/pages/auth/client-verification']);
             }
           } else {
             this.router.navigate(['/pages/auth/login']);
@@ -193,7 +229,8 @@ export class AuthGuard implements CanActivate {
             'AuthGuard: Error checking client verification:',
             error
           );
-          this.router.navigate(['/pages/auth/login']);
+          // On error, redirect to verification page instead of login
+          this.router.navigate(['/pages/auth/client-verification']);
         }
         break;
       case 'worker':

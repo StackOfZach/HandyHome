@@ -275,21 +275,48 @@ export class AuthService {
 
         // Check verification status for clients
         if (profile.role === 'client') {
-          if (profile.verificationStatus === 'not_submitted') {
-            // Client needs to complete verification
-            throw new Error('Please complete your account verification first.');
-          } else if (profile.verificationStatus === 'pending') {
-            // Client verification is under review
-            throw new Error(
-              'Your account verification is pending. Please wait for admin approval.'
-            );
-          } else if (profile.verificationStatus === 'rejected') {
-            // Client verification was rejected
-            throw new Error(
-              'Your account verification was rejected. Please contact support.'
+          try {
+            const isVerified =
+              await this.clientVerificationService.isClientVerified(user.uid);
+            if (!isVerified) {
+              // Check if client has submitted verification
+              const verification =
+                await this.clientVerificationService.getVerificationByUserId(
+                  user.uid
+                );
+              if (!verification) {
+                // Client needs to complete verification
+                throw new Error(
+                  'Please complete your account verification first.'
+                );
+              } else if (verification.status === 'pending') {
+                // Client verification is under review
+                throw new Error(
+                  'Your account verification is pending. Please wait for admin approval.'
+                );
+              } else if (verification.status === 'rejected') {
+                // Client verification was rejected
+                throw new Error(
+                  'Your account verification was rejected. Please contact support.'
+                );
+              }
+            }
+            // If verified, continue with login
+          } catch (verificationError: any) {
+            // If it's a verification-related error, re-throw it
+            if (
+              verificationError.message.includes('verification') ||
+              verificationError.message.includes('rejected') ||
+              verificationError.message.includes('pending')
+            ) {
+              throw verificationError;
+            }
+            // For other errors, log and allow login to proceed
+            console.warn(
+              'Error checking client verification during login:',
+              verificationError
             );
           }
-          // If approved, continue with login
         }
 
         // Save session and set navigation state
@@ -519,24 +546,23 @@ export class AuthService {
               );
               this.router.navigate(['/pages/client/dashboard']);
             } else {
-              console.log('AuthService: Client not verified, logging out');
-              // Don't redirect to verification, just logout
-              await this.logout();
-              throw new Error('CLIENT_NOT_VERIFIED');
+              console.log(
+                'AuthService: Client not verified, redirecting to verification page'
+              );
+              // Don't logout, just redirect to verification page
+              this.router.navigate(['/pages/auth/client-verification']);
             }
           } else {
             console.log('AuthService: No user found, redirecting to login');
             this.router.navigate(['/pages/auth/login']);
           }
-        } catch (error: any) {
+        } catch (error) {
           console.error(
             'AuthService: Error checking client verification:',
             error
           );
-          if (error.message === 'CLIENT_NOT_VERIFIED') {
-            throw error; // Re-throw to be handled by login page
-          }
-          this.router.navigate(['/pages/auth/login']);
+          // On error, redirect to verification page rather than logging out
+          this.router.navigate(['/pages/auth/client-verification']);
         }
         break;
       case 'worker':

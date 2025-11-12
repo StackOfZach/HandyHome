@@ -19,7 +19,7 @@
 /* Modern Button Animations */
 button {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   &:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
@@ -38,14 +38,14 @@ button {
 /* Card Hover Effects */
 .group {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   &:hover {
     transform: translateY(-4px);
-    
+
     .shadow-lg {
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
     }
-    
+
     .shadow-md {
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     }
@@ -70,7 +70,8 @@ button {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -107,7 +108,7 @@ button {
 /* Custom Input Styles */
 input[type="text"] {
   transition: all 0.2s ease-in-out;
-  
+
   &:focus {
     transform: translateY(-1px);
     box-shadow: 0 8px 25px rgba(34, 197, 94, 0.15);
@@ -140,7 +141,7 @@ ion-content::-webkit-scrollbar-thumb:hover {
   border-radius: 16px;
   border: 3px solid #e5e7eb;
   transition: all 0.3s ease;
-  
+
   &:hover {
     border-color: #10b981;
     transform: scale(1.02);

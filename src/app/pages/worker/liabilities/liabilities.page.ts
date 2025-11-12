@@ -101,9 +101,12 @@ export class LiabilitiesPage implements OnInit, OnDestroy {
           },
           error: (error) => {
             console.error('Error loading liabilities:', error);
-            this.showToast('Error loading liabilities. Please try again.', 'danger');
+            this.showToast(
+              'Error loading liabilities. Please try again.',
+              'danger'
+            );
             this.isLoading = false;
-          }
+          },
         });
 
       this.subscriptions.push(liabilitiesSubscription);
@@ -115,14 +118,14 @@ export class LiabilitiesPage implements OnInit, OnDestroy {
           next: (todayData) => {
             this.todayLiability = todayData.amount;
             this.todayLiabilityStatus = todayData.status;
-            console.log('📅 Today\'s liability updated:', {
+            console.log("📅 Today's liability updated:", {
               amount: todayData.amount,
-              status: todayData.status
+              status: todayData.status,
             });
           },
           error: (error) => {
-            console.error('Error loading today\'s liability:', error);
-          }
+            console.error("Error loading today's liability:", error);
+          },
         });
 
       this.subscriptions.push(todayLiabilitySubscription);
