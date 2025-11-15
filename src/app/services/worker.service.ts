@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   doc,
@@ -365,8 +365,47 @@ export class WorkerService {
         suspendedUntil: suspendedUntil,
         updatedAt: new Date(),
       });
+
+      // Clear cached user profile to ensure fresh data on next login
+      try {
+        localStorage.removeItem(`userProfile_${uid}`);
+      } catch (cacheError) {
+        console.error('Error clearing cached user profile:', cacheError);
+      }
     } catch (error) {
       console.error('Error suspending worker:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Unsuspend a worker by clearing suspension info
+   */
+  async unsuspendWorker(uid: string): Promise<void> {
+    try {
+      // Update users collection to remove suspension
+      const userDocRef = doc(this.firestore, 'users', uid);
+      await updateDoc(userDocRef, {
+        suspendedUntil: null,
+        updatedAt: new Date(),
+      });
+
+      // Update worker status back to verified
+      const workerDocRef = doc(this.firestore, 'workers', uid);
+      await updateDoc(workerDocRef, {
+        status: 'verified',
+        suspendedUntil: null,
+        updatedAt: new Date(),
+      });
+
+      // Clear cached user profile to ensure fresh data on next login
+      try {
+        localStorage.removeItem(`userProfile_${uid}`);
+      } catch (cacheError) {
+        console.error('Error clearing cached user profile:', cacheError);
+      }
+    } catch (error) {
+      console.error('Error unsuspending worker:', error);
       throw error;
     }
   }
@@ -388,6 +427,14 @@ export class WorkerService {
         status: isBanned ? 'banned' : 'verified',
         updatedAt: new Date(),
       });
+
+      // Clear cached user profile to ensure fresh data on next login
+      // We'll clear the cache from localStorage directly to avoid circular dependency
+      try {
+        localStorage.removeItem(`userProfile_${uid}`);
+      } catch (cacheError) {
+        console.error('Error clearing cached user profile:', cacheError);
+      }
     } catch (error) {
       console.error('Error updating worker ban status:', error);
       throw error;

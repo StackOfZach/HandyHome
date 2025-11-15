@@ -70,7 +70,14 @@ export class LoginPage implements OnInit {
         await this.authService.login(email, password);
         // Navigation is handled by AuthService
       } catch (error: any) {
-        await this.showErrorAlert(this.getErrorMessage(error));
+        // Check if it's a ban or suspension error and show special modal
+        if (error.message && error.message.includes('banned')) {
+          await this.showBannedUserModal();
+        } else if (error.message && error.message.includes('suspended')) {
+          await this.showSuspendedUserModal(error.message);
+        } else {
+          await this.showErrorAlert(this.getErrorMessage(error));
+        }
       } finally {
         this.isLoading = false;
         await loading.dismiss();
@@ -95,6 +102,14 @@ export class LoginPage implements OnInit {
       case 'auth/too-many-requests':
         return 'Too many failed attempts. Please try again later.';
       default:
+        // Skip ban and suspension errors as they have special modals
+        if (
+          error.message &&
+          (error.message.includes('banned') ||
+            error.message.includes('suspended'))
+        ) {
+          return 'Authentication failed.';
+        }
         // Check for custom verification errors
         if (error.message === 'WORKER_NOT_VERIFIED') {
           return 'Your worker account is pending verification. Please wait for our team to review and approve your application. You will be notified via email once your account is verified.';
@@ -118,6 +133,80 @@ export class LoginPage implements OnInit {
       buttons: ['OK'],
     });
     await alert.present();
+  }
+
+  private async showBannedUserModal() {
+    const alert = await this.alertController.create({
+      header: 'Account Banned',
+      message: `Your Account Has Been Banned
+
+We regret to inform you that your account has been suspended from our platform.
+
+If you believe this is a mistake or would like to appeal this decision, please send an email to:
+
+Handyhome2026@gmail.com
+
+Thank you for your understanding.`,
+      buttons: [
+        {
+          text: 'OK',
+          role: 'cancel',
+        },
+      ],
+      cssClass: 'banned-user-modal',
+    });
+    await alert.present();
+  }
+
+  private async showSuspendedUserModal(errorMessage: string) {
+    // Extract the suspension end date from the error message
+    const suspensionEndMatch = errorMessage.match(/suspended until (.+)\./);
+    const suspensionEndDate = suspensionEndMatch
+      ? suspensionEndMatch[1]
+      : 'an undetermined time';
+
+    const alert = await this.alertController.create({
+      header: 'Account Suspended',
+      message: `
+        <div style="text-align: center; padding: 20px;">
+          <ion-icon name="time" style="font-size: 48px; color: #ffc107; margin-bottom: 16px;"></ion-icon>
+          <h3 style="color: #ffc107; margin-bottom: 16px;">Your Account Is Temporarily Suspended</h3>
+          <p style="margin-bottom: 16px;">Your account access has been temporarily restricted.</p>
+          <p style="margin-bottom: 16px; font-weight: bold;">Suspension ends: ${suspensionEndDate}</p>
+          <p style="margin-bottom: 16px;">If you believe this is a mistake or have questions about your suspension, please contact our administrator.</p>
+          <p style="color: #666; font-size: 14px;">Thank you for your patience.</p>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Contact Administrator',
+          handler: () => {
+            this.showContactInfo();
+          },
+        },
+        {
+          text: 'OK',
+          role: 'cancel',
+        },
+      ],
+      cssClass: 'suspended-user-modal',
+    });
+    await alert.present();
+  }
+
+  private async showContactInfo() {
+    const contactAlert = await this.alertController.create({
+      header: 'Contact Administrator',
+      message: `
+        <div style="text-align: center; padding: 16px;">
+          <p style="margin-bottom: 12px;"><strong>Email:</strong> support@handyhome.com</p>
+          <p style="margin-bottom: 12px;"><strong>Support Hours:</strong> Mon-Fri 9AM-6PM</p>
+          <p style="color: #666; font-size: 14px;">Please provide your registered email address and reason for appeal when contacting support.</p>
+        </div>
+      `,
+      buttons: ['OK'],
+    });
+    await contactAlert.present();
   }
 
   private async redirectBasedOnRole(

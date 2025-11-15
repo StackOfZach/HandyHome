@@ -255,11 +255,21 @@ export class JobManagementService {
       const bookingType = await this.determineBookingType(bookingId);
       const collection = bookingType === 'quick' ? 'quickbookings' : 'bookings';
 
+      // Get worker details for the notification
+      const workerDocRef = doc(this.firestore, `workers/${this.currentUserId}`);
+      const workerDoc = await getDoc(workerDocRef);
+      let workerName = 'Worker';
+      if (workerDoc.exists()) {
+        const workerData = workerDoc.data();
+        workerName = workerData['fullName'] || workerData['name'] || 'Worker';
+      }
+
       // Update booking status and assign worker
       const bookingRef = doc(this.firestore, `${collection}/${bookingId}`);
       await updateDoc(bookingRef, {
         status: 'accepted',
         assignedWorker: this.currentUserId,
+        workerName: workerName,
         acceptedAt: serverTimestamp(),
       });
 
@@ -278,11 +288,22 @@ export class JobManagementService {
       // Create acceptance notification for client
       const bookingData = await this.getBookingData(bookingId, collection);
       if (bookingData?.clientId) {
+        console.log('Creating client notification for booking acceptance:', {
+          clientId: bookingData.clientId,
+          bookingId,
+          workerName,
+          collection,
+        });
         await this.createClientNotification(
           bookingData.clientId,
           'Worker Assigned',
-          'A qualified worker has accepted your booking and will contact you soon.',
+          `${workerName} has accepted your booking and will contact you soon.`,
           bookingId
+        );
+      } else {
+        console.warn(
+          'No clientId found in booking data for notification:',
+          bookingData
         );
       }
 

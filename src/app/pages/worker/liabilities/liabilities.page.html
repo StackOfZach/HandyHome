@@ -560,23 +560,63 @@
             <div
               class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200"
             >
-              <img
-                [src]="adminGcashQR"
-                alt="GCash QR Code"
-                class="w-48 h-48 mx-auto object-contain rounded-xl"
-              />
-              <p class="text-xs text-gray-500 mt-3">Scan with GCash app</p>
+              <!-- QR Code with Enhanced Mobile Support -->
+              <div class="relative group">
+                <img
+                  [src]="adminGcashQR"
+                  alt="GCash QR Code"
+                  class="w-48 h-48 mx-auto object-contain rounded-xl shadow-md transition-transform duration-300 group-hover:scale-105"
+                  style="cursor: pointer; max-width: 100%; height: auto"
+                  (contextmenu)="$event.stopPropagation()"
+                />
+
+                <!-- Mobile save instructions overlay -->
+                <div
+                  class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 rounded-xl transition-all duration-300 flex items-center justify-center"
+                >
+                  <div
+                    class="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  >
+                    <div class="bg-white bg-opacity-90 rounded-lg px-3 py-1">
+                      <p class="text-xs text-gray-800 font-medium">
+                        Long press to save
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 space-y-2">
+                <p class="text-xs text-gray-500 text-center">
+                  Scan with GCash app
+                </p>
+                <p class="text-xs text-gray-400 text-center">
+                  💡 Long press image to save to gallery
+                </p>
+              </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="space-y-3">
+              <!-- Primary Save Button -->
               <button
                 (click)="downloadQRCode()"
                 class="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white py-3 px-4 rounded-2xl transition-all duration-300 transform hover:scale-105 font-semibold"
               >
                 <div class="flex items-center justify-center space-x-2">
                   <ion-icon name="download-outline"></ion-icon>
-                  <span>Download QR Code</span>
+                  <span>Save QR Code</span>
+                </div>
+              </button>
+
+              <!-- Alternative Save Options -->
+              <button
+                (click)="showQRSaveOptions()"
+                class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-xl transition-all duration-300 font-medium text-sm"
+              >
+                <div class="flex items-center justify-center space-x-2">
+                  <ion-icon name="options-outline"></ion-icon>
+                  <span>Other Save Options</span>
                 </div>
               </button>
 

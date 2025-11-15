@@ -110,10 +110,21 @@
                   {{ formatCurrency(getFinalPrice(booking)) }}
                 </p>
                 <!-- Show price breakdown for completed bookings -->
-                <div *ngIf="booking.finalPricing && (booking.status === 'completed' || booking.status === 'payment-confirmed')" class="text-xs text-handy-navy-500 mt-1">
-                  <div>Base: {{ formatCurrency(booking.finalPricing.basePrice) }}</div>
-                  <div *ngIf="booking.finalPricing.transportFee">Transport: {{ formatCurrency(booking.finalPricing.transportFee) }}</div>
-                  <div>Service: {{ formatCurrency(booking.finalPricing.serviceCharge) }}</div>
+                <div
+                  *ngIf="booking.finalPricing && (booking.status === 'completed' || booking.status === 'payment-confirmed')"
+                  class="text-xs text-handy-navy-500 mt-1"
+                >
+                  <div>
+                    Base: {{ formatCurrency(booking.finalPricing.basePrice) }}
+                  </div>
+                  <div *ngIf="booking.finalPricing.transportFee">
+                    Transport: {{
+                    formatCurrency(booking.finalPricing.transportFee) }}
+                  </div>
+                  <div>
+                    Service: {{
+                    formatCurrency(booking.finalPricing.serviceCharge) }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -122,7 +133,7 @@
                 name="time-outline"
                 class="text-handy-navy-500 mr-2"
               ></ion-icon>
-              <div>
+              <!-- <div>
                 <p class="text-sm text-handy-navy-700 font-medium">
                   Duration
                   <span *ngIf="hasActualDuration(booking)" class="text-green-600 text-xs ml-1">✓ Actual</span>
@@ -131,7 +142,11 @@
                 <p class="text-sm text-handy-navy-600 font-semibold">
                   {{ formatDuration(getActualDuration(booking)) }}
                 </p>
-              </div>
+            
+                <p class="text-xs text-gray-500 opacity-75">
+                  Source: {{ getDurationSource(booking) }}
+                </p>
+              </div> -->
             </div>
           </div>
 
@@ -175,8 +190,12 @@
                 {{ booking.completedAt | date:'MMM d, y \'at\' h:mm a' }}
               </p>
               <!-- Show job timer details for completed bookings -->
-              <div *ngIf="booking.jobTimer && booking.jobTimer.startTime && booking.jobTimer.endTime" class="text-xs text-green-600 mt-1">
-                Work Time: {{ booking.jobTimer.startTime | date:'h:mm a' }} - {{ booking.jobTimer.endTime | date:'h:mm a' }}
+              <div
+                *ngIf="booking.jobTimer && booking.jobTimer.startTime && booking.jobTimer.endTime"
+                class="text-xs text-green-600 mt-1"
+              >
+                Work Time: {{ booking.jobTimer.startTime | date:'h:mm a' }} - {{
+                booking.jobTimer.endTime | date:'h:mm a' }}
               </div>
             </div>
           </div>

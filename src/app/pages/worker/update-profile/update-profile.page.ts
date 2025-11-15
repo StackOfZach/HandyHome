@@ -56,7 +56,7 @@ export class UpdateProfilePage implements OnInit {
     { value: 'tuesday', label: 'Tuesday', icon: 'calendar' },
     { value: 'wednesday', label: 'Wednesday', icon: 'calendar' },
     { value: 'thursday', label: 'Thursday', icon: 'calendar' },
-    { value: 'friday', label: 'Friday', icon: 'calendar' },
+    { value: 'friday', label: 'Friday', icon: 'calendar' },        
     { value: 'saturday', label: 'Saturday', icon: 'calendar' },
     { value: 'sunday', label: 'Sunday', icon: 'calendar' },
   ];

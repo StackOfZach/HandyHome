@@ -863,6 +863,9 @@ export class AdminDashboardPage implements OnInit {
                 updatedAt: new Date(),
               });
 
+              // Clear cached user profile to ensure fresh data on next login
+              this.authService.clearUserProfileCache(client.uid);
+
               // Update local clients list
               this.filteredClients = this.filteredClients.filter(
                 (c) => c.uid !== client.uid
@@ -875,6 +878,39 @@ export class AdminDashboardPage implements OnInit {
               this.showErrorToast('Failed to suspend client');
             }
             return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  async unsuspendClient(client: UserProfile) {
+    const alert = await this.alertController.create({
+      header: 'Unsuspend Client',
+      message: `Remove suspension for ${client.fullName}?`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Unsuspend',
+          handler: async () => {
+            try {
+              // Update users collection to remove suspension
+              const userDocRef = doc(this.firestore, 'users', client.uid);
+              await updateDoc(userDocRef, {
+                suspendedUntil: null,
+                updatedAt: new Date(),
+              });
+
+              // Clear cached user profile to ensure fresh data on next login
+              this.authService.clearUserProfileCache(client.uid);
+
+              await this.loadClients();
+              this.showSuccessToast(`${client.fullName} has been unsuspended`);
+            } catch (err) {
+              console.error('Unsuspend client failed', err);
+              this.showErrorToast('Failed to unsuspend client');
+            }
           },
         },
       ],
@@ -899,6 +935,10 @@ export class AdminDashboardPage implements OnInit {
                 bannedAt: new Date(),
                 updatedAt: new Date(),
               });
+
+              // Clear cached user profile to ensure fresh data
+              this.authService.clearUserProfileCache(client.uid);
+
               this.filteredClients = this.filteredClients.filter(
                 (c) => c.uid !== client.uid
               );
@@ -919,6 +959,10 @@ export class AdminDashboardPage implements OnInit {
                 bannedAt: null,
                 updatedAt: new Date(),
               });
+
+              // Clear cached user profile to ensure fresh data on next login
+              this.authService.clearUserProfileCache(client.uid);
+
               await this.loadClients();
               this.showSuccessToast(`${client.fullName} has been unbanned`);
             } catch (err) {

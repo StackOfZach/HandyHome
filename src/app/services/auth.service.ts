@@ -261,6 +261,10 @@ export class AuthService {
 
         if (isBanned) {
           await signOut(this.auth);
+          console.log('Login blocked: User is banned', {
+            uid: user.uid,
+            email: profile.email,
+          });
           throw new Error(
             'Your account has been banned. Please contact support.'
           );
@@ -268,6 +272,11 @@ export class AuthService {
 
         if (suspendedUntil && suspendedUntil > now) {
           await signOut(this.auth);
+          console.log('Login blocked: User is suspended', {
+            uid: user.uid,
+            email: profile.email,
+            suspendedUntil,
+          });
           throw new Error(
             `Your account is suspended until ${suspendedUntil.toLocaleString()}.`
           );
@@ -383,6 +392,13 @@ export class AuthService {
     } catch (error) {
       console.error('Error clearing cached user profile:', error);
     }
+  }
+
+  /**
+   * Clear cached user profile (public method for admin operations)
+   */
+  public clearUserProfileCache(uid: string): void {
+    this.clearCachedUserProfile(uid);
   }
 
   /**

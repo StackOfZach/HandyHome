@@ -269,6 +269,7 @@ export class QuickBookingService {
       const quickBookingRef = doc(this.firestore, 'quickbookings', bookingId);
       await updateDoc(quickBookingRef, {
         assignedWorker: workerId,
+        workerName: workerName,
         status: 'accepted',
         acceptedAt: Timestamp.now(),
       });

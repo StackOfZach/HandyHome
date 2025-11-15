@@ -191,6 +191,9 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
       // Load dashboard notifications
       this.loadDashboardNotifications();
 
+      // Load client notifications for the notification system
+      this.loadClientNotificationsForModal();
+
       this.isLoading = false;
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -423,45 +426,73 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
     const bookingsRef = collection(this.firestore, 'bookings');
     const quickBookingsRef = collection(this.firestore, 'quickbookings');
 
-    // Query for bookings where clientId matches and status changed to 'accepted'
+    // Query for ALL client bookings to catch status transitions
     const bookingsQuery = query(
       bookingsRef,
       where('clientId', '==', this.userProfile.uid),
-      where('status', 'in', ['accepted', 'on-the-way', 'in-progress'])
+      orderBy('updatedAt', 'desc')
     );
 
-    // Query for quick bookings
+    // Query for ALL quick bookings to catch status transitions
     const quickBookingsQuery = query(
       quickBookingsRef,
       where('clientId', '==', this.userProfile.uid),
-      where('status', 'in', ['accepted', 'on-the-way', 'in-progress'])
+      orderBy('createdAt', 'desc')
     );
 
     // Listen for booking changes
     const unsubscribeBookings = onSnapshot(
       bookingsQuery,
       (snapshot) => {
+        console.log(
+          'Dashboard: Booking snapshot received, changes:',
+          snapshot.docChanges().length
+        );
         snapshot.docChanges().forEach((change) => {
-          if (change.type === 'modified' || change.type === 'added') {
+          console.log('Dashboard: Booking change detected:', {
+            type: change.type,
+            id: change.doc.id,
+            status: change.doc.data()['status'],
+            workerName: change.doc.data()['workerName'],
+            assignedWorker: change.doc.data()['assignedWorker'],
+          });
+
+          if (change.type === 'modified') {
             const bookingData = change.doc.data();
             const bookingId = change.doc.id;
 
             // Check if we've already notified about this status change
             const notificationKey = `${bookingId}-${bookingData['status']}`;
             if (this.notifiedBookingIds.has(notificationKey)) {
+              console.log(
+                'Dashboard: Already notified about this status change:',
+                notificationKey
+              );
               return;
             }
 
-            // Only notify if status is accepted or in-progress
+            // Only notify if status is accepted, on-the-way, or in-progress
             if (
               bookingData['status'] === 'accepted' ||
+              bookingData['status'] === 'on-the-way' ||
               bookingData['status'] === 'in-progress'
             ) {
               this.notifiedBookingIds.add(notificationKey);
+              console.log('Creating notification for booking status change:', {
+                bookingId,
+                status: bookingData['status'],
+                workerName: bookingData['workerName'],
+                assignedWorker: bookingData['assignedWorker'],
+              });
               this.createBookingAcceptedNotification(
                 bookingData,
                 bookingId,
                 'booking'
+              );
+            } else {
+              console.log(
+                'Dashboard: Status not eligible for notification:',
+                bookingData['status']
               );
             }
           }
@@ -477,7 +508,7 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
       quickBookingsQuery,
       (snapshot) => {
         snapshot.docChanges().forEach((change) => {
-          if (change.type === 'modified' || change.type === 'added') {
+          if (change.type === 'modified') {
             const bookingData = change.doc.data();
             const bookingId = change.doc.id;
 
@@ -487,12 +518,21 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
               return;
             }
 
-            // Only notify if status is accepted or in-progress
+            // Only notify if status is accepted, on-the-way, or in-progress
             if (
               bookingData['status'] === 'accepted' ||
+              bookingData['status'] === 'on-the-way' ||
               bookingData['status'] === 'in-progress'
             ) {
               this.notifiedBookingIds.add(notificationKey);
+              console.log(
+                'Creating notification for quick booking status change:',
+                {
+                  bookingId,
+                  status: bookingData['status'],
+                  assignedWorker: bookingData['assignedWorker'],
+                }
+              );
               this.createBookingAcceptedNotification(
                 bookingData,
                 bookingId,
@@ -535,15 +575,16 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
       );
 
       const workerName =
+        booking.workerName ||
         booking.assignedWorkerName ||
         booking.workerDetails?.name ||
-        booking.workerName ||
         'Worker';
 
       const serviceName =
         booking.categoryName ||
         booking.neededService ||
         booking.subService ||
+        booking.specificService ||
         'Service';
 
       const notificationData = {
@@ -693,19 +734,23 @@ export class ClientDashboardPage implements OnInit, OnDestroy {
     if (notification.metadata?.bookingId) {
       const metadata = notification.metadata as any;
       const bookingType = metadata.bookingType || 'booking';
+      const bookingId = notification.metadata.bookingId;
 
-      if (bookingType === 'quick') {
-        this.router.navigate(['/pages/quick-booking-details'], {
-          queryParams: { bookingId: notification.metadata.bookingId },
-        });
-      } else {
-        // Navigate to booking details
-        this.router.navigate(['/pages/book-service'], {
-          queryParams: { bookingId: notification.metadata.bookingId },
-        });
-      }
+      console.log('Navigating to booking progress for:', {
+        bookingId,
+        bookingType,
+        metadata,
+      });
+
+      // Navigate to booking progress page for both regular and quick bookings
+      this.router.navigate(['/client/booking-progress', bookingId]);
 
       this.closeNotificationModal();
+    } else {
+      console.warn(
+        'No booking ID found in notification metadata:',
+        notification
+      );
     }
   }
 

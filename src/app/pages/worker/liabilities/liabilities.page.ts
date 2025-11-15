@@ -8,6 +8,7 @@ import {
   ToastController,
   ModalController,
   LoadingController,
+  Platform,
 } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import { AuthService, UserProfile } from '../../../services/auth.service';
@@ -18,6 +19,8 @@ import {
   PaymentSubmission,
 } from '../../../services/liabilities';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 
 @Component({
   selector: 'app-liabilities',
@@ -57,7 +60,8 @@ export class LiabilitiesPage implements OnInit, OnDestroy {
     private alertController: AlertController,
     private toastController: ToastController,
     private modalController: ModalController,
-    private loadingController: LoadingController
+    private loadingController: LoadingController,
+    private platform: Platform
   ) {}
 
   async ngOnInit() {
@@ -147,19 +151,317 @@ export class LiabilitiesPage implements OnInit, OnDestroy {
   }
 
   async downloadQRCode() {
+    const loading = await this.loadingController.create({
+      message: 'Saving QR Code...',
+    });
+    await loading.present();
+
     try {
-      // Create a temporary link to download the QR code
+      if (Capacitor.isNativePlatform()) {
+        // Mobile platform - save to photo gallery
+        await this.saveQRToMobileGallery();
+      } else {
+        // Web platform - download as file
+        await this.downloadQRForWeb();
+      }
+
+      await loading.dismiss();
+      this.showToast('QR Code saved successfully!', 'success');
+    } catch (error) {
+      await loading.dismiss();
+      console.error('Error saving QR code:', error);
+      this.showToast('Error saving QR code. Please try again.', 'danger');
+    }
+  }
+
+  private async saveQRToMobileGallery(): Promise<void> {
+    try {
+      // Convert the image URL to base64
+      const base64Data = await this.convertImageToBase64(this.adminGcashQR);
+
+      // Remove data URL prefix to get pure base64
+      const base64String = base64Data.split(',')[1];
+
+      // Generate filename with timestamp
+      const fileName = `gcash-qr-${
+        new Date().toISOString().split('T')[0]
+      }-${Date.now()}.png`;
+
+      if (this.platform.is('ios')) {
+        // For iOS, save to Documents directory and then use share
+        await this.saveToIOSGallery(base64String, fileName);
+      } else if (this.platform.is('android')) {
+        // For Android, save to Downloads directory
+        await this.saveToAndroidGallery(base64String, fileName);
+      } else {
+        // Fallback to instructions
+        await this.showInstructionsForManualSave();
+      }
+    } catch (error) {
+      console.error('Error saving to mobile gallery:', error);
+      // Fallback to manual save instructions
+      await this.showInstructionsForManualSave();
+    }
+  }
+
+  private async saveToIOSGallery(
+    base64Data: string,
+    fileName: string
+  ): Promise<void> {
+    try {
+      // Save to app's documents directory first
+      await Filesystem.writeFile({
+        path: fileName,
+        data: base64Data,
+        directory: Directory.Documents,
+      });
+
+      // Show success message with instructions to move to Photos
+      const alert = await this.alertController.create({
+        header: 'QR Code Saved!',
+        message: `
+          <div style="text-align: center;">
+            <p>✅ QR code has been saved to your device!</p>
+            <br>
+            <p style="font-size: 12px; color: #666;">
+              You can find it in Files app > On My iPhone > HandyHome > Documents
+            </p>
+            <br>
+            <p style="font-size: 12px;">
+              To move to Photos: Open Files app → Long press the QR image → Share → Save to Photos
+            </p>
+          </div>
+        `,
+        buttons: ['OK'],
+      });
+      await alert.present();
+    } catch (error) {
+      console.error('Error saving to iOS:', error);
+      throw error;
+    }
+  }
+
+  private async saveToAndroidGallery(
+    base64Data: string,
+    fileName: string
+  ): Promise<void> {
+    try {
+      // On Android, save to the Downloads directory
+      await Filesystem.writeFile({
+        path: fileName,
+        data: base64Data,
+        directory: Directory.Documents, // Changed from ExternalStorage as it needs permission
+      });
+
+      // Show success message
+      const toast = await this.toastController.create({
+        message: '✅ QR code saved to app documents folder!',
+        duration: 3000,
+        position: 'bottom',
+        color: 'success',
+        buttons: [
+          {
+            text: 'Open Folder',
+            handler: () => {
+              // Could implement file manager opening here
+              this.showToast(
+                'Check your file manager for the saved QR code',
+                'medium'
+              );
+            },
+          },
+        ],
+      });
+      await toast.present();
+    } catch (error) {
+      console.error('Error saving to Android:', error);
+      throw error;
+    }
+  }
+
+  private async convertImageToBase64(imageUrl: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Cannot create canvas context'));
+          return;
+        }
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+
+        try {
+          const base64 = canvas.toDataURL('image/png');
+          resolve(base64);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = imageUrl;
+    });
+  }
+
+  private async downloadQRForWeb(): Promise<void> {
+    // Enhanced web download with better error handling
+    try {
+      const response = await fetch(this.adminGcashQR);
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = this.adminGcashQR;
-      link.download = 'gcash-payment-qr.png';
+      link.href = url;
+      link.download = `gcash-payment-qr-${
+        new Date().toISOString().split('T')[0]
+      }.png`;
+
+      // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      this.showToast('QR Code downloaded successfully!', 'success');
+      // Clean up object URL
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading QR code:', error);
-      this.showToast('Error downloading QR code. Please try again.', 'danger');
+      console.error('Error downloading for web:', error);
+      throw error;
+    }
+  }
+
+  private async showInstructionsForManualSave(): Promise<void> {
+    const alert = await this.alertController.create({
+      header: 'Save QR Code',
+      message: `
+        <div style="text-align: center;">
+          <p>To save the QR code to your gallery:</p>
+          <ol style="text-align: left; margin: 10px 0;">
+            <li>Long press on the QR code image</li>
+            <li>Select "Save to Photos" or "Save Image"</li>
+            <li>The QR code will be saved to your gallery</li>
+          </ol>
+          <p style="margin-top: 15px; font-size: 12px; color: #666;">
+            <strong>Alternative:</strong> Take a screenshot of this screen
+          </p>
+        </div>
+      `,
+      buttons: [
+        {
+          text: 'Got it',
+          role: 'cancel',
+        },
+        {
+          text: 'Take Screenshot',
+          handler: async () => {
+            // Give user time to take screenshot
+            const screenshotAlert = await this.alertController.create({
+              header: 'Ready for Screenshot',
+              message: 'The QR code is displayed below. Take a screenshot now.',
+              buttons: ['Done'],
+            });
+            await screenshotAlert.present();
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  async showQRSaveOptions() {
+    const alert = await this.alertController.create({
+      header: 'Save QR Code',
+      subHeader: 'Choose how to save the QR code',
+      buttons: [
+        {
+          text: 'Auto Save',
+          handler: () => {
+            this.downloadQRCode();
+          },
+        },
+        {
+          text: 'Share QR Code',
+          handler: () => {
+            this.shareQRCode();
+          },
+        },
+        {
+          text: 'Manual Save (Long Press)',
+          handler: async () => {
+            const instructionAlert = await this.alertController.create({
+              header: 'Manual Save Instructions',
+              message: `
+                <div style="text-align: left;">
+                  <p><strong>On Mobile:</strong></p>
+                  <ol>
+                    <li>Long press on the QR code image below</li>
+                    <li>Select "Save Image" or "Save to Photos"</li>
+                  </ol>
+                  <br>
+                  <p><strong>On Desktop:</strong></p>
+                  <ol>
+                    <li>Right-click on the QR code image</li>
+                    <li>Select "Save image as..."</li>
+                  </ol>
+                </div>
+              `,
+              buttons: ['Got it'],
+            });
+            await instructionAlert.present();
+          },
+        },
+        {
+          text: 'Take Screenshot',
+          handler: async () => {
+            await this.showToast(
+              'Take a screenshot now! The QR code is visible on screen.',
+              'success'
+            );
+          },
+        },
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  async shareQRCode() {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        // Use Web Share API or Capacitor Share if available
+        const base64Data = await this.convertImageToBase64(this.adminGcashQR);
+
+        // Create a blob and share it
+        const response = await fetch(base64Data);
+        const blob = await response.blob();
+        const file = new File([blob], 'gcash-qr.png', { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'GCash Payment QR Code',
+            text: 'QR Code for GCash payment',
+            files: [file],
+          });
+        } else {
+          // Fallback to manual save
+          await this.showInstructionsForManualSave();
+        }
+      } else {
+        // On web, download the file
+        await this.downloadQRForWeb();
+      }
+    } catch (error) {
+      console.error('Error sharing QR code:', error);
+      this.showToast(
+        'Sharing not available. Try the download option.',
+        'medium'
+      );
     }
   }
 

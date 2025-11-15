@@ -505,6 +505,8 @@ export class BookingDetailsPage implements OnInit, OnDestroy {
         return 'ACCEPTED';
       case 'on-the-way':
         return 'ON THE WAY';
+      case 'worker-arrived':
+        return 'WORKER ARRIVED';
       case 'service-started':
         return 'SERVICE STARTED';
       case 'awaiting-payment':

@@ -327,6 +327,16 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
             return;
           }
 
+          // Check if worker has any active bookings today (from both collections)
+          const hasActiveBookingsToday =
+            await this.checkForActiveBookingsToday();
+          if (hasActiveBookingsToday) {
+            console.log(
+              'Worker has active bookings today, not showing quick booking notification'
+            );
+            return;
+          }
+
           // Check for new quick bookings that need worker assignment
           const availableQuickBookings = quickBookings.filter(
             (booking) => booking.status === 'pending'
@@ -335,13 +345,13 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
           if (availableQuickBookings.length > 0) {
             const latestBooking = availableQuickBookings[0];
 
-            // Check if worker has availability for today (quick bookings are usually immediate)
+            // Additional check for time slot availability (existing logic)
             const hasAvailability = await this.checkTodayAvailability();
             if (hasAvailability) {
               this.showQuickBookingNotification(latestBooking);
             } else {
               console.log(
-                'Worker has conflicting bookings, not showing quick booking notification'
+                'Worker has conflicting time slots, not showing quick booking notification'
               );
             }
           }
@@ -1354,6 +1364,24 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
       return;
     }
 
+    // Additional safety check: verify no active bookings today before accepting
+    const hasActiveBookingsToday = await this.checkForActiveBookingsToday();
+    if (hasActiveBookingsToday) {
+      this.showToast(
+        'You have active bookings today. Please complete them before accepting new quick bookings.',
+        'medium'
+      );
+      this.dismissQuickNotification();
+      console.log(
+        '❌ Cannot accept quick booking - worker has active bookings today'
+      );
+      return;
+    }
+
+    console.log(
+      `✅ Accepting quick booking: ${this.quickBookingNotification.bookingId}`
+    );
+
     // Accept booking step
     try {
       await this.quickBookingService.acceptBooking(
@@ -1755,40 +1783,109 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
 
     try {
       this.isOnline = !this.isOnline;
+
+      // When going offline, automatically disable quick bookings
+      const previousQuickBookingStatus = this.isAvailableForQuickBookings;
+      if (!this.isOnline) {
+        this.isAvailableForQuickBookings = false;
+      }
+
       await this.workerAvailabilityService.setWorkerOnlineStatus(
         this.userProfile.uid,
         this.isOnline,
         this.isAvailableForQuickBookings
       );
 
-      const message = this.isOnline
+      let message = this.isOnline
         ? 'You are now online and available for bookings'
         : 'You are now offline and unavailable for bookings';
+
+      // Add additional message if quick bookings were automatically disabled
+      if (!this.isOnline && previousQuickBookingStatus) {
+        message +=
+          '. Quick booking notifications have been automatically disabled.';
+      }
+
       const toast = await this.toastController.create({
         message,
-        duration: 2000,
+        duration: this.isOnline ? 2000 : 3000,
         position: 'bottom',
         color: this.isOnline ? 'success' : 'warning',
+        icon: this.isOnline ? 'wifi' : 'wifi-outline',
       });
-      toast.present();
+      await toast.present();
 
-      // If going offline, stop quick booking monitoring
+      console.log(`📡 Worker status: ${this.isOnline ? 'ONLINE' : 'OFFLINE'}`);
+      console.log(
+        `⚡ Quick bookings: ${
+          this.isAvailableForQuickBookings ? 'ENABLED' : 'DISABLED'
+        }`
+      );
+
+      // If going offline, stop quick booking monitoring and clear notifications
       if (!this.isOnline) {
-        this.isAvailableForQuickBookings = false;
         this.quickBookingNotification = null;
         this.showQuickNotification = false;
+        this.availableBookings = [];
       }
     } catch (error) {
       console.error('Error updating online status:', error);
       this.isOnline = !this.isOnline; // Revert on error
+
+      const toast = await this.toastController.create({
+        message: 'Failed to update online status. Please try again.',
+        duration: 3000,
+        position: 'bottom',
+        color: 'danger',
+        icon: 'alert-circle-outline',
+      });
+      await toast.present();
     }
   }
 
   /**
    * Toggle availability for quick bookings (only when online)
    */
+  /**
+   * Toggle availability for quick bookings (only when online)
+   */
   async toggleQuickBookingAvailability() {
-    if (!this.userProfile?.uid || !this.isOnline) return;
+    if (!this.userProfile?.uid) return;
+
+    // Prevent enabling quick bookings when offline
+    if (!this.isOnline) {
+      const toast = await this.toastController.create({
+        message:
+          'You must be online to enable quick booking notifications. Go online first.',
+        duration: 3000,
+        position: 'bottom',
+        color: 'warning',
+        icon: 'warning-outline',
+      });
+      await toast.present();
+      console.log('❌ Cannot enable quick bookings while offline');
+      return;
+    }
+
+    // If trying to enable quick bookings, check for active bookings today
+    if (!this.isAvailableForQuickBookings) {
+      const hasActiveBookingsToday = await this.checkForActiveBookingsToday();
+      if (hasActiveBookingsToday) {
+        const toast = await this.toastController.create({
+          message:
+            'You have active bookings today. Complete them before enabling quick bookings.',
+          duration: 4000,
+          position: 'bottom',
+          color: 'warning',
+          icon: 'calendar-outline',
+        });
+        await toast.present();
+        console.log(
+          '❌ Cannot enable quick bookings - worker has active bookings today'
+        );
+        return;
+      }
+    }
 
     try {
       this.isAvailableForQuickBookings = !this.isAvailableForQuickBookings;
@@ -1806,9 +1903,16 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
         message,
         duration: 2000,
         position: 'bottom',
-        color: 'primary',
+        color: this.isAvailableForQuickBookings ? 'success' : 'medium',
+        icon: this.isAvailableForQuickBookings ? 'flash' : 'flash-off-outline',
       });
-      toast.present();
+      await toast.present();
+
+      console.log(
+        `✅ Quick booking availability: ${
+          this.isAvailableForQuickBookings ? 'ENABLED' : 'DISABLED'
+        }`
+      );
 
       // If disabling quick bookings, hide any current notification and clear bookings list
       if (!this.isAvailableForQuickBookings) {
@@ -1822,6 +1926,15 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error updating quick booking availability:', error);
       this.isAvailableForQuickBookings = !this.isAvailableForQuickBookings; // Revert on error
+
+      const toast = await this.toastController.create({
+        message: 'Failed to update quick booking settings. Please try again.',
+        duration: 3000,
+        position: 'bottom',
+        color: 'danger',
+        icon: 'alert-circle-outline',
+      });
+      await toast.present();
     }
   }
 
@@ -1841,6 +1954,97 @@ export class WorkerDashboardPage implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.error('Error loading worker availability status:', error);
+    }
+  }
+
+  /**
+   * Check if worker has any active bookings on the current day from both collections
+   */
+  async checkForActiveBookingsToday(): Promise<boolean> {
+    if (!this.userProfile?.uid) return false;
+
+    const today = new Date();
+    const todayStart = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const todayEnd = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 1
+    );
+
+    try {
+      console.log(
+        `🔍 Checking for active bookings on ${todayStart.toDateString()}`
+      );
+
+      // Check regular bookings collection
+      const regularBookingsQuery = query(
+        collection(this.firestore, 'bookings'),
+        where('workerId', '==', this.userProfile.uid),
+        where('scheduleDate', '>=', Timestamp.fromDate(todayStart)),
+        where('scheduleDate', '<', Timestamp.fromDate(todayEnd)),
+        where('status', 'in', ['confirmed', 'in-progress', 'pending'])
+      );
+
+      // Check quickbookings collection
+      const quickBookingsQuery = query(
+        collection(this.firestore, 'quickbookings'),
+        where('workerId', '==', this.userProfile.uid),
+        where('createdAt', '>=', Timestamp.fromDate(todayStart)),
+        where('createdAt', '<', Timestamp.fromDate(todayEnd)),
+        where('status', 'in', [
+          'confirmed',
+          'in-progress',
+          'pending',
+          'worker_assigned',
+        ])
+      );
+
+      const [regularBookings, quickBookings] = await Promise.all([
+        getDocs(regularBookingsQuery),
+        getDocs(quickBookingsQuery),
+      ]);
+
+      const totalActiveBookings = regularBookings.size + quickBookings.size;
+
+      console.log(`📊 Active bookings found for today:`, {
+        regularBookings: regularBookings.size,
+        quickBookings: quickBookings.size,
+        total: totalActiveBookings,
+      });
+
+      if (totalActiveBookings > 0) {
+        console.log(
+          `⚠️ Worker has ${totalActiveBookings} active booking(s) today - blocking quick booking notifications`
+        );
+
+        // Log booking details for debugging
+        regularBookings.forEach((doc) => {
+          const data = doc.data();
+          console.log(
+            `- Regular booking: ${doc.id} (${data['status']}) at ${
+              data['scheduleTime'] || 'No time'
+            }`
+          );
+        });
+
+        quickBookings.forEach((doc) => {
+          const data = doc.data();
+          console.log(
+            `- Quick booking: ${doc.id} (${data['status']}) created at ${data[
+              'createdAt'
+            ]?.toDate()}`
+          );
+        });
+      }
+
+      return totalActiveBookings > 0;
+    } catch (error) {
+      console.error('Error checking for active bookings today:', error);
+      return true; // Return true to be safe - block notifications if we can't check
     }
   }
 

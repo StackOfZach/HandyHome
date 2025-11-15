@@ -7,6 +7,7 @@ import {
   IonModal,
   AlertController,
   ToastController,
+  LoadingController,
 } from '@ionic/angular';
 import { AuthService, UserProfile } from '../../services/auth.service';
 import {
@@ -29,6 +30,7 @@ import { ClientVerificationService } from '../../services/client-verification.se
 import { ImageService } from '../../services/image.service';
 import { MapPickerComponent } from '../../components/map-picker/map-picker.component';
 import { TermsPrivacyModalComponent } from '../../components/terms-privacy-modal/terms-privacy-modal.component';
+import { LocationService } from '../../services/location.service';
 
 export interface Address {
   id?: string;
@@ -36,6 +38,7 @@ export interface Address {
   contactPerson: string;
   phoneNumber: string;
   fullAddress: string;
+  locationName?: string; // Name from nominatim geocoding
   isDefault: boolean;
   latitude?: number;
   longitude?: number;
@@ -127,9 +130,15 @@ export class ProfilePage implements OnInit {
     contactPerson: '',
     phoneNumber: '',
     fullAddress: '',
+    locationName: '',
     isDefault: false,
     createdAt: new Date(),
   };
+
+  // Map picker properties
+  showMapPicker = false;
+  mapPickedLocation: { lat: number; lng: number } | null = null;
+  isLoadingMapAddress = false;
 
   serviceCategories = [
     { id: 'cleaning', name: 'Cleaning', icon: 'sparkles-outline' },
@@ -161,8 +170,10 @@ export class ProfilePage implements OnInit {
     private auth: Auth,
     private alertController: AlertController,
     private toastController: ToastController,
+    private loadingController: LoadingController,
     private clientVerificationService: ClientVerificationService,
-    private imageService: ImageService
+    private imageService: ImageService,
+    private locationService: LocationService
   ) {}
 
   ngOnInit() {
@@ -243,6 +254,7 @@ export class ProfilePage implements OnInit {
                 contactPerson: location.contactPerson || '',
                 phoneNumber: location.phoneNumber || '',
                 fullAddress: location.fullAddress || '',
+                locationName: location.locationName || '', // Include location name
                 isDefault: location.isDefault || false,
                 latitude: location.coordinates?.latitude,
                 longitude: location.coordinates?.longitude,
@@ -338,9 +350,16 @@ export class ProfilePage implements OnInit {
       contactPerson: this.userProfile?.fullName || '',
       phoneNumber: this.userProfile?.phone || '',
       fullAddress: '',
+      locationName: '',
       isDefault: this.addresses.length === 0,
       createdAt: new Date(),
     };
+
+    // Reset map state
+    this.showMapPicker = false;
+    this.mapPickedLocation = null;
+    this.isLoadingMapAddress = false;
+
     this.addressModal.present();
   }
 
@@ -369,6 +388,7 @@ export class ProfilePage implements OnInit {
           contactPerson: this.newAddress.contactPerson,
           phoneNumber: this.newAddress.phoneNumber,
           fullAddress: this.newAddress.fullAddress,
+          locationName: this.newAddress.locationName || '', // Include location name from nominatim
           coordinates:
             this.newAddress.latitude && this.newAddress.longitude
               ? {
@@ -479,6 +499,122 @@ export class ProfilePage implements OnInit {
     } catch (error) {
       console.error('Error setting default address:', error);
       this.showToast('Error updating default address', 'danger');
+    }
+  }
+
+  // Map picker methods
+  toggleMapPicker() {
+    this.showMapPicker = !this.showMapPicker;
+    if (this.showMapPicker && !this.mapPickedLocation) {
+      this.initializeMapLocation();
+    }
+  }
+
+  async initializeMapLocation() {
+    try {
+      // Try to get current location for map initialization
+      const location = await this.locationService.getCurrentLocation();
+      this.mapPickedLocation = {
+        lat: location.latitude,
+        lng: location.longitude,
+      };
+    } catch (error) {
+      console.warn('Could not get current location for map:', error);
+      // Use default location (Manila, Philippines)
+      this.mapPickedLocation = { lat: 14.5995, lng: 120.9842 };
+    }
+  }
+
+  async onMapLocationSelected(location: { lat: number; lng: number }) {
+    this.mapPickedLocation = location;
+    console.log('Map location selected:', location);
+
+    // Update the newAddress with coordinates
+    this.newAddress.latitude = location.lat;
+    this.newAddress.longitude = location.lng;
+
+    // Get address and location name from coordinates using nominatim
+    await this.getAddressFromCoordinates(location);
+  }
+
+  async getAddressFromCoordinates(location: { lat: number; lng: number }) {
+    try {
+      this.isLoadingMapAddress = true;
+
+      // Use the LocationService for reverse geocoding
+      const geocodeResult = await this.locationService.reverseGeocode({
+        latitude: location.lat,
+        longitude: location.lng,
+      });
+
+      if (geocodeResult) {
+        // Set the full address from nominatim
+        this.newAddress.fullAddress = geocodeResult.address;
+
+        // Set the location name (city/town name)
+        this.newAddress.locationName =
+          geocodeResult.city ||
+          geocodeResult.address.split(',')[0] ||
+          'Location';
+
+        console.log('Address retrieved:', {
+          fullAddress: this.newAddress.fullAddress,
+          locationName: this.newAddress.locationName,
+        });
+      } else {
+        // Fallback to coordinates
+        this.newAddress.fullAddress = `${location.lat.toFixed(
+          6
+        )}, ${location.lng.toFixed(6)}`;
+        this.newAddress.locationName = 'Unknown Location';
+      }
+    } catch (error) {
+      console.error('Error getting address from coordinates:', error);
+      this.newAddress.fullAddress = `${location.lat.toFixed(
+        6
+      )}, ${location.lng.toFixed(6)}`;
+      this.newAddress.locationName = 'Unknown Location';
+    } finally {
+      this.isLoadingMapAddress = false;
+    }
+  }
+
+  async getCurrentLocationForAddress() {
+    const loading = await this.loadingController.create({
+      message: 'Getting your location...',
+    });
+    await loading.present();
+
+    try {
+      const location = await this.locationService.getCurrentLocation();
+
+      // Update map and form
+      this.mapPickedLocation = {
+        lat: location.latitude,
+        lng: location.longitude,
+      };
+
+      this.newAddress.latitude = location.latitude;
+      this.newAddress.longitude = location.longitude;
+
+      // Get address details
+      await this.getAddressFromCoordinates({
+        lat: location.latitude,
+        lng: location.longitude,
+      });
+
+      // Show map if not already visible
+      this.showMapPicker = true;
+
+      this.showToast('Current location selected', 'success');
+    } catch (error) {
+      console.error('Error getting current location:', error);
+      this.showToast(
+        'Unable to get current location. Please check your location permissions.',
+        'danger'
+      );
+    } finally {
+      await loading.dismiss();
     }
   }
 

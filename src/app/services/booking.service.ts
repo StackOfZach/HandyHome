@@ -263,21 +263,25 @@ export class BookingService {
   ): Promise<void> {
     try {
       const bookingRef = doc(this.firestore, 'bookings', bookingId);
-      
+
       // If cancelling or rejecting, release worker's time slot
       if (status === 'cancelled' || status === 'rejected') {
         const bookingDoc = await getDoc(bookingRef);
         if (bookingDoc.exists()) {
           const bookingData = bookingDoc.data();
           if (bookingData['workerId'] && bookingData['scheduleDate']) {
-            const dateString = this.workerAvailabilityService.parseScheduleDate(bookingData['scheduleDate']);
+            const dateString = this.workerAvailabilityService.parseScheduleDate(
+              bookingData['scheduleDate']
+            );
             if (dateString) {
               await this.workerAvailabilityService.releaseWorkerTimeSlot(
                 bookingData['workerId'],
                 dateString,
                 bookingId
               );
-              console.log(`Released time slot for worker ${bookingData['workerId']} for booking ${bookingId}`);
+              console.log(
+                `Released time slot for worker ${bookingData['workerId']} for booking ${bookingId}`
+              );
             }
           }
         }
@@ -675,48 +679,76 @@ export class BookingService {
       // First, get the booking data to extract schedule information
       const bookingRef = doc(this.firestore, 'bookings', bookingId);
       const bookingDoc = await getDoc(bookingRef);
-      
+
       if (!bookingDoc.exists()) {
         throw new Error('Booking not found');
       }
 
       const bookingData = bookingDoc.data();
-      
+
       // Book the worker's time slot if scheduling info is available
       if (bookingData['scheduleDate'] && bookingData['scheduleTime']) {
-        const dateString = this.workerAvailabilityService.parseScheduleDate(bookingData['scheduleDate']);
+        const dateString = this.workerAvailabilityService.parseScheduleDate(
+          bookingData['scheduleDate']
+        );
         if (dateString) {
           const duration = 1; // Default 1 hour, could be made dynamic based on service type
-          const booked = await this.workerAvailabilityService.bookWorkerTimeSlot(
-            workerId,
-            dateString,
-            bookingData['scheduleTime'],
-            duration,
-            bookingId
-          );
-          
+          const booked =
+            await this.workerAvailabilityService.bookWorkerTimeSlot(
+              workerId,
+              dateString,
+              bookingData['scheduleTime'],
+              duration,
+              bookingId
+            );
+
           if (!booked) {
-            throw new Error('Failed to book worker time slot - worker may have a conflicting booking');
+            throw new Error(
+              'Failed to book worker time slot - worker may have a conflicting booking'
+            );
           }
         }
+      }
+
+      // Get worker details to include in the booking update
+      const workerRef = doc(this.firestore, 'workers', workerId);
+      const workerDoc = await getDoc(workerRef);
+      let workerName = 'Worker';
+      if (workerDoc.exists()) {
+        const workerData = workerDoc.data();
+        workerName = workerData['fullName'] || workerData['name'] || 'Worker';
       }
 
       // Update booking status
       await updateDoc(bookingRef, {
         status: 'accepted',
         workerId: workerId,
+        assignedWorker: workerId,
+        workerName: workerName,
         progress: 'Worker accepted your booking!',
         updatedAt: Timestamp.now(),
+        acceptedAt: Timestamp.now(),
       });
 
       // Update worker's current job
-      const workerRef = doc(this.firestore, 'workers', workerId);
       await updateDoc(workerRef, {
         currentJobId: bookingId,
         updatedAt: Timestamp.now(),
       });
 
-      console.log(`Booking ${bookingId} accepted by worker ${workerId} and time slot booked`);
+      // Create client notification
+      if (bookingData['clientId']) {
+        await this.createClientAcceptedNotification(
+          bookingData['clientId'],
+          bookingId,
+          workerName,
+          bookingData['subService'] || bookingData['categoryName'] || 'Service'
+        );
+      }
+
+      console.log(
+        `Booking ${bookingId} accepted by worker ${workerId} and time slot booked`
+      );
     } catch (error) {
       console.error('Error accepting booking:', error);
       throw error;
@@ -837,5 +869,50 @@ export class BookingService {
 
       return () => unsubscribe();
     });
+  }
+
+  /**
+   * Create client notification when booking is accepted
+   */
+  private async createClientAcceptedNotification(
+    clientId: string,
+    bookingId: string,
+    workerName: string,
+    serviceName: string
+  ): Promise<void> {
+    try {
+      const notificationRef = collection(
+        this.firestore,
+        `users/${clientId}/notifications`
+      );
+
+      const notificationData = {
+        title: '🎉 Your booking has been accepted!',
+        message: `${workerName} has accepted your ${serviceName} booking and will contact you soon.`,
+        userId: clientId,
+        type: 'worker_found' as const,
+        priority: 'high' as const,
+        isRead: false,
+        createdAt: Timestamp.now(),
+        metadata: {
+          bookingId: bookingId,
+          bookingType: 'booking',
+          workerId: '', // Will be populated by the calling method
+          workerName: workerName,
+        },
+        bookingData: {
+          categoryName: serviceName,
+          workerName: workerName,
+        },
+      };
+
+      await addDoc(notificationRef, notificationData);
+      console.log(
+        '✅ Created booking accepted notification for client:',
+        clientId
+      );
+    } catch (error) {
+      console.error('Error creating client notification:', error);
+    }
   }
 }

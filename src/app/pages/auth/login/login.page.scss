@@ -9,3 +9,145 @@ input:focus {
 }
 
 /* Loading spinner animation is handled by Tailwind */
+
+/* Banned User Modal Styles */
+:host ::ng-deep .banned-user-modal {
+  .alert-wrapper {
+    --border-radius: 16px;
+    --background: #fff;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-width: 400px;
+    width: 90%;
+  }
+
+  .alert-head {
+    padding-top: 24px;
+    padding-bottom: 8px;
+
+    h2 {
+      color: #dc3545;
+      font-weight: bold;
+      font-size: 18px;
+    }
+  }
+
+  .alert-message {
+    padding: 0 24px 20px 24px;
+
+    div {
+      color: #374151;
+      line-height: 1.6;
+    }
+
+    h3 {
+      font-size: 16px !important;
+      margin: 12px 0 !important;
+    }
+
+    p {
+      font-size: 14px !important;
+      margin: 8px 0 !important;
+    }
+  }
+
+  .alert-button-group {
+    flex-direction: column;
+
+    .alert-button {
+      margin: 4px 8px;
+      border-radius: 8px;
+      font-weight: 500;
+
+      &:first-child {
+        background-color: #dc3545;
+        color: white;
+
+        &:hover {
+          background-color: #c82333;
+        }
+      }
+
+      &:last-child {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+
+        &:hover {
+          background-color: #e9ecef;
+        }
+      }
+    }
+  }
+}
+
+/* Suspended User Modal Styles */
+:host ::ng-deep .suspended-user-modal {
+  .alert-wrapper {
+    --border-radius: 16px;
+    --background: #fff;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-width: 400px;
+    width: 90%;
+  }
+
+  .alert-head {
+    padding-top: 24px;
+    padding-bottom: 8px;
+
+    h2 {
+      color: #ffc107;
+      font-weight: bold;
+      font-size: 18px;
+    }
+  }
+
+  .alert-message {
+    padding: 0 24px 20px 24px;
+
+    div {
+      color: #374151;
+      line-height: 1.6;
+    }
+
+    h3 {
+      font-size: 16px !important;
+      margin: 12px 0 !important;
+    }
+
+    p {
+      font-size: 14px !important;
+      margin: 8px 0 !important;
+    }
+  }
+
+  .alert-button-group {
+    flex-direction: column;
+
+    .alert-button {
+      margin: 4px 8px;
+      border-radius: 8px;
+      font-weight: 500;
+
+      &:first-child {
+        background-color: #ffc107;
+        color: #212529;
+
+        &:hover {
+          background-color: #e0a800;
+        }
+      }
+
+      &:last-child {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+
+        &:hover {
+          background-color: #e9ecef;
+        }
+      }
+    }
+  }
+}
